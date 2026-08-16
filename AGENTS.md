@@ -7,9 +7,9 @@ Regras deste projeto (somam-se às regras globais de `~/.config/opencode/AGENTS.
 - **LEITURISTA** — visão computacional de medidores de energia elétrica: leitura OCR do
   display + extração do serial + validação de cena/coerência.
 - Disciplina **Projeto 4 - DADOS (Cesar School, BD2026.2)**, Grupo 3, cliente
-  **distribuidora**. Professor Erick Simões.
+  **distribuidora de energia elétrica**.
 - Desmembrado do repositório `mapen` em 2026-08-10 (o `mapen` ficou só com a camada de
-  dados de consumo/perdas/redes). Contexto do desafio em `docs/projeto4_distribuidora.md` e
+  dados de consumo/perdas/redes). Contexto do desafio em `docs/projeto4_desafio.md` e
   `docs/plano_subprojeto_cv.md`.
 
 ## Objetivo
@@ -64,7 +64,7 @@ leiturista/
 
 ## Referências
 
-- Desafio distribuidora: `docs/projeto4_distribuidora.md` + `docs/pedido_kickoff_distribuidora.md`.
+- Desafio: `docs/projeto4_desafio.md` + `docs/pedido_kickoff.md`.
 - Dados: `docs/origem_dos_dados.md` (imagens + modelos), `docs/candidatos_nao_baixados.md`.
 - Papers: `docs/artigos.md` (UFPR-AMR = Laroca IJCNN 2020, DOI 10.1109/IJCNN48605.2020.9207318).
 - Projeto irmão (camada de dados): `~/Developer/mapen` (ONS/EPE/ANEEL, perdas, mapas).

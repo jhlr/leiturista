@@ -1,10 +1,10 @@
-# Análise de suficiência — docs/ + data/ vs desafio distribuidora
+# Análise de suficiência — docs/ + data/ vs desafio da distribuidora
 
 **Data:** 2026-08-08 | **Autor:** grupo MAPEN (análise interna)
-**Referência:** `projeto4_distribuidora.md` (desafio do cliente)
+**Referência:** `projeto4_desafio.md` (desafio do cliente)
 
 > Status: análise interna, feita após leitura dos PDFs da disciplina (Projeto 4 - DADOS)
-> e do desafio da distribuidora PE. Nada ainda discutido com o grupo.
+> e do desafio da distribuidora de energia elétrica. Nada ainda discutido com o grupo.
 
 ---
 

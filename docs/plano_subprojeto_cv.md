@@ -1,7 +1,7 @@
 # Plano — Subprojeto Visão Computacional (leitura + validação de fotos de leitura)
 
 **Data:** 2026-08-08 | **Status:** RASCUNHO — nada ainda discutido com o grupo
-**Referência:** `projeto4_distribuidora.md` (desafio), `analise_suficiencia.md` (gap)
+**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap)
 **Contexto completo:** `contexto_mapen.md`
 
 > Este é um ponto de partida simples. Validar/alterar com o grupo antes de virar
@@ -11,7 +11,8 @@
 
 ## 1. Problema (recorte do desafio)
 
-A distribuidora PE quer fiscalizar as **fotos tiradas pelos leituristas em campo**. O
+A distribuidora de energia elétrica quer fiscalizar as **fotos tiradas pelos leituristas em
+campo**. O
 problema tem duas tarefas de visão:
 
 1. **Leitura**: extrair o número do display do medidor da foto (OCR).

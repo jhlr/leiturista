@@ -1,15 +1,15 @@
-# Projeto 4 — Desafio distribuidora (verificação de fotos de leitura)
+# Projeto 4 — Desafio de distribuidoras de energia elétrica (verificação de fotos de leitura)
 
 **Disciplina:** Projeto 4 - DADOS (Cesar School, BD2026.2)
-**Professor:** Erick Simões (erick.simoes@cesar.school, @Erick no Slack)
-**Cliente:** distribuidora
+**Cliente:** distribuidora de energia elétrica
 **Última atualização:** 2026-08-08
 
 ---
 
 ## Sobre a disciplina
 
-Grupos investigam um problema do contexto da distribuidora e propõem/desenvolvem uma
+Grupos investigam um problema do contexto de uma **distribuidora de energia elétrica** e
+propõem/desenvolvem uma
 solução aplicada, acompanhada pelo **CRISP-DM**. Disciplinas envolvidas: **Deep
 Learning** (Vitinho), **Visão Computacional** (Eron) e **ML Ops** (Galindo).
 
@@ -32,7 +32,7 @@ Learning** (Vitinho), **Visão Computacional** (Eron) e **ML Ops** (Galindo).
 
 ### Comunicação
 
-- Slack: `#projeto-4-bd-26-2`, `@Erick`
+- Slack: `#projeto-4-bd-26-2`
 - Plano de Ensino: no Classroom
 - Uso responsável de IA: política disponibilizada na disciplina
 
@@ -62,19 +62,18 @@ propostas e panorama de riscos/oportunidades (mini pitch oral).
 ### Orientação do professor
 
 > "O objetivo não é começar com a solução pronta. O objetivo é começar com clareza,
-> organização e método." — Erick Simões
+> organização e método."
 
 ---
 
-## O desafio do cliente (distribuidora PE)
+## O desafio do cliente (distribuidora)
 
 ### Contexto da empresa
 
-distribuidora é a distribuidora responsável por levar energia elétrica a
-praticamente todo o estado de PE. Começou como CELPE, privatizada em 2000, integrada ao
-grupo distribuidora (controlado pela Iberdrola); adotou o nome atual em 2021. Atende
-milhões de clientes e investe em modernização das redes, digitalização e
-sustentabilidade.
+A distribuidora é responsável por levar energia elétrica a praticamente todo o estado.
+Começou como estatal, foi privatizada em 2000 e integrada a um grupo global de energia;
+adotou o nome atual em 2021. Atende milhões de clientes e investe em modernização das
+redes, digitalização e sustentabilidade.
 
 A área de **leitura e entrega de contas** visita praticamente todos os clientes
 mensalmente, garantindo medição correta e fatura entregue — atividade estratégica para o

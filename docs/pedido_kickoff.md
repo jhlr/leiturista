@@ -1,7 +1,7 @@
-# Pedido de dados e questões para o Kickoff 12/09 — distribuidora PE
+# Pedido de dados e questões para o Kickoff 12/09 — distribuidora
 
 **Data:** 2026-08-08 | **Status:** rascunho pré-kickoff (validar com o professor/grupo)
-**Referência:** `projeto4_distribuidora.md` (desafio), `analise_suficiencia.md` (gap)
+**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap)
 **Meta:** sair do Kickoff com acesso a um lote real de fotos de campo da distribuidora.
 
 ---

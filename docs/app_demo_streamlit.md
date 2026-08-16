@@ -2,7 +2,7 @@
 
 **Data:** 2026-08-10 | **Status:** funcional (modelos off-the-shelf)
 
-App de demonstração do pipeline de leitura de medidores (Projeto 4 / distribuidora PE):
+App de demonstração do pipeline de leitura de medidores (Projeto 4 / distribuidoras de energia):
 upload de foto → **leitura do display (OCR)** + **serial** + **flags de coerência**.
 Serve de MVP visual para SR2 e de ferramenta de inspeção das caixas detectadas.
 
