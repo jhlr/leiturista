@@ -21,7 +21,7 @@ st.set_page_config(page_title="Leiturista — Leitura de medidor", page_icon="�
 
 st.title("🔢 Leiturista — leitura automática de medidor")
 st.caption(
-    "Projeto 4 · Neoenergia PE · Demo: OCR do display (PP-OCRv5 det + TrOCR-small rec, "
+    "Projeto 4 · Distribuidora de energia · Demo: OCR do display (PP-OCRv5 det + TrOCR-small rec, "
     "com retry por inversão p/ odômetro). Extrai a **leitura** e o **serial** do medidor "
     "e avalia a **legibilidade**."
 )

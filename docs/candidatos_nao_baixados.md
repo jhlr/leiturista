@@ -65,7 +65,7 @@ EOF
   (blur, sujeira, rotação, reflexo, sombra, oclusão; ~20% sem leitura legível).
   Dividido 5k train / 5k test / 2,5k valid. Anotações: leitura, 4 cantos do contador,
   bbox por dígito.
-- Relevante para o desafio da Neoenergia (foto real de campo, não display isolado) —
+- Relevante para o desafio da distribuidora (foto real de campo, não display isolado) —
   usado como piloto da tarefa de validação de cena (ver `plano_subprojeto_cv.md`).
 - **LICENÇA CONFIRMADA (2026-08-08):** propriedade da Copel, liberado **somente** a
   pesquisadores acadêmicos p/ uso não-comercial. Exige preencher o license agreement

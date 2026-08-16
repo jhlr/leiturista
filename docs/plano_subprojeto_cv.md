@@ -1,7 +1,7 @@
 # Plano — Subprojeto Visão Computacional (leitura + validação de fotos de leitura)
 
 **Data:** 2026-08-08 | **Status:** RASCUNHO — nada ainda discutido com o grupo
-**Referência:** `projeto4_neoenergia.md` (desafio), `analise_suficiencia.md` (gap)
+**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap)
 **Contexto completo:** `contexto_mapen.md`
 
 > Este é um ponto de partida simples. Validar/alterar com o grupo antes de virar
@@ -11,7 +11,8 @@
 
 ## 1. Problema (recorte do desafio)
 
-A Neoenergia PE quer fiscalizar as **fotos tiradas pelos leituristas em campo**. O
+A distribuidora de energia elétrica quer fiscalizar as **fotos tiradas pelos leituristas em
+campo**. O
 problema tem duas tarefas de visão:
 
 1. **Leitura**: extrair o número do display do medidor da foto (OCR).
@@ -49,7 +50,7 @@ cenário não controlado):
 **Estratégia (sem dados do cliente):**
 1. Piloto da tarefa 2 com Copel-AMR/UFPR-ADMR-v2 (foto real de campo BR): classificar
    "foto válida de medidor" e, se possível, "acesso/imóvel fechado" — proxies das notas.
-2. **Pedir à Neoenergia um lote real de fotos com as notas aplicadas no Kickoff (12/09).**
+2. **Pedir à distribuidora um lote real de fotos com as notas aplicadas no Kickoff (12/09).**
    Sem isso, a validação da nota específica fica limitada a piloto/proxy.
 
 ## 3. Modelos de partida (leves, preferencialmente já relacionados)
@@ -91,7 +92,7 @@ modelo pequeno):
 ## 5. Plano de trabalho (alinhado a CRISP-DM e marcos)
 
 1. **Entendimento + dados** (→ Kickoff 12/09): fechar recorte com o grupo; pedir lote
-   real à Neoenergia; baixar Copel-AMR/UFPR-ADMR-v2/IEEE DataPort (negociar licenças).
+   real à distribuidora; baixar Copel-AMR/UFPR-ADMR-v2/IEEE DataPort (negociar licenças).
 2. **Preparação** (→ SR1 03/10): extrair crops de display (UFPR-AMR); montar splits;
    criar rótulos do piloto de cena; pipeline reutilizável em `src/`.
 3. **Modelagem + baseline** (→ SR1): PP-OCRv6_tiny + TrOCR-small fine-tune; Moondream2
@@ -104,4 +105,4 @@ modelo pequeno):
 - [ ] Validar este recorte (duas tarefas, prioridade 1, piloto da 2).
 - [ ] Quem fica com o quê (papéis da disciplina).
 - [ ] Baixar/assinar Copel-AMR + UFPR-ADMR-v2 (negociar com o professor/grupo UFPR).
-- [ ] Pergunta oficial à Neoenergia no Kickoff sobre o lote real de fotos+notas.
+- [ ] Pergunta oficial à distribuidora no Kickoff sobre o lote real de fotos+notas.

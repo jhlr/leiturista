@@ -1,16 +1,16 @@
-# Análise de suficiência — docs/ + data/ vs desafio Neoenergia
+# Análise de suficiência — docs/ + data/ vs desafio da distribuidora
 
 **Data:** 2026-08-08 | **Autor:** grupo MAPEN (análise interna)
-**Referência:** `projeto4_neoenergia.md` (desafio do cliente)
+**Referência:** `projeto4_desafio.md` (desafio do cliente)
 
 > Status: análise interna, feita após leitura dos PDFs da disciplina (Projeto 4 - DADOS)
-> e do desafio da Neoenergia PE. Nada ainda discutido com o grupo.
+> e do desafio da distribuidora de energia elétrica. Nada ainda discutido com o grupo.
 
 ---
 
 ## Resumo
 
-O desafio da Neoenergia tem **duas camadas de visão computacional**. A infraestrutura de
+O desafio da distribuidora tem **duas camadas de visão computacional**. A infraestrutura de
 dados/docs do MAPEN cobre **bem** a primeira e **não cobre** a segunda (que é o coração
 do desafio):
 
@@ -51,7 +51,7 @@ Isso é **classificação de cena/contexto**, não OCR de display:
   (fachada, portão, caixa de padrão, instalação externa).
 - Não há dataset público equivalente identificado até aqui (ver `plano_subprojeto_cv.md`
   §"Dados" para os candidatos e a estratégia).
-- **Ação recomendada:** confirmar no Kickoff (12/09) se a Neoenergia disponibiliza um
+- **Ação recomendada:** confirmar no Kickoff (12/09) se a distribuidora disponibiliza um
   lote real de fotos de campo com as notas aplicadas. Sem isso, só treinaremos em dados
   sintéticos/abertos ou com um piloto montado à mão.
 
@@ -74,4 +74,4 @@ Isso é **classificação de cena/contexto**, não OCR de display:
 1. Dataset de fotos de campo com rótulo de ocorrência (buscar público / negociar com
    cliente / piloto manual).
 2. Doc de plano do subprojeto CV (arquitetura + pipeline + métricas).
-3. Confirmação no Kickoff sobre acesso aos dados reais da Neoenergia.
+3. Confirmação no Kickoff sobre acesso aos dados reais da distribuidora.

@@ -2,7 +2,7 @@
 
 **Data:** 2026-08-10 | **Status:** funcional (modelos off-the-shelf)
 
-App de demonstração do pipeline de leitura de medidores (Projeto 4 / Neoenergia PE):
+App de demonstração do pipeline de leitura de medidores (Projeto 4 / distribuidoras de energia):
 upload de foto → **leitura do display (OCR)** + **serial** + **flags de coerência**.
 Serve de MVP visual para SR2 e de ferramenta de inspeção das caixas detectadas.
 
@@ -71,5 +71,5 @@ medidores distintos ≈ 0.0.
 ## Próximos passos
 
 1. `leiturista train` (fine-tune TrOCR-small no UFPR-AMR) → comparar no app.
-2. Copel-AMR / lote real da Neoenergia (Kickoff 12/09) → piloto da tarefa de cena.
+2. Copel-AMR / lote real da distribuidora (Kickoff 12/09) → piloto da tarefa de cena.
 3. Flags de cena (Moondream2 zero-shot) no app: "a casa está fechada?" (I100).

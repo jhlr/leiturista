@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "leiturista"
 version = "0.1.0"
-description = "Leiturista - visao computacional de medidores: leitura OCR + serial + validacao de cena (Projeto 4 / Neoenergia)"
+description = "Leiturista - visao computacional de medidores: leitura OCR + serial + validacao de cena (Projeto 4 / distribuidoras de energia eletrica)"
 requires-python = ">=3.11"
 dependencies = [
     "torch",

@@ -1,8 +1,8 @@
-# Pedido de dados e questões para o Kickoff 12/09 — Neoenergia PE
+# Pedido de dados e questões para o Kickoff 12/09 — distribuidora
 
 **Data:** 2026-08-08 | **Status:** rascunho pré-kickoff (validar com o professor/grupo)
-**Referência:** `projeto4_neoenergia.md` (desafio), `analise_suficiencia.md` (gap)
-**Meta:** sair do Kickoff com acesso a um lote real de fotos de campo da Neoenergia.
+**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap)
+**Meta:** sair do Kickoff com acesso a um lote real de fotos de campo da distribuidora.
 
 ---
 
@@ -35,12 +35,12 @@ Lote de fotos tiradas por leituristas, **com a ocorrência aplicada**, idealment
 
 ### 2. Catálogo de ocorrências (leve)
 
-Lista dos códigos de nota/ocorrência que a Neoenergia usa (I100, I300, …) com o
+Lista dos códigos de nota/ocorrência que a distribuidora usa (I100, I300, …) com o
 **padrão esperado de foto** para cada um — vira a taxonomia de classes do modelo.
 
 ### 3. (Opcional, Camada 1) Benchmark real BR
 
-Amostra de fotos de medidores **brasileiros da base da Neoenergia** com a leitura
+Amostra de fotos de medidores **brasileiros da base da distribuidora** com a leitura
 correta, para validar o OCR do MAPEN em condições reais de campo (o UFPR-AMR é a base
 mais próxima, mas é antigo).
 
@@ -48,7 +48,7 @@ mais próxima, mas é antigo).
 
 1. É possível disponibilizar esse lote de fotos de campo com as ocorrências? Qual o
    volume aproximado e o prazo?
-2. A Neoenergia tem **histórico auditado** (fotos que já passaram por revisão com
+2. A distribuidora tem **histórico auditado** (fotos que já passaram por revisão com
    decisão aceita/rejeitada)? Isso habilitaria treino supervisionado direto.
 3. Quais tipos de ocorrência existem e existe um documento de padrões esperados de foto?
 4. Como fica a **anonimização/LGPD**: fotos podem conter dados pessoais (fachada,

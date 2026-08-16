@@ -1,14 +1,15 @@
-# Relatório / Benchmark — Leiturista (Projeto 4 · Neoenergia PE)
+# Relatório / Benchmark — Leiturista (Projeto 4 · distribuidora de energia)
 
-**Data:** 2026-08-15 | **Escopo:** achados e performance do que JÁ temos (modelos off-the-shelf + pipeline)
-**Disciplina:** Projeto 4 - DADOS (Cesar School, BD2026.2) | **Grupo 3** | **Professor:** Erick Simões
+**Data:** 2026-08-15 (rev. 2026-08-16) | **Escopo:** achados e performance do que JÁ temos (modelos off-the-shelf + pipeline)
+**Disciplina:** Projeto 4 - DADOS (Cesar School, BD2026.2) | **Grupo 3**
 **Repo:** `jhlr/leiturista` (privado)
 
 ---
 
 ## 1. Problema
 
-A Neoenergia PE quer automatizar a fiscalização das **fotos tiradas pelos leituristas**:
+Uma **distribuidora de energia elétrica** quer automatizar a fiscalização das **fotos tiradas
+pelos leituristas**:
 
 1. **Tarefa 1 — Leitura:** extrair o número do display do medidor de energia a partir da foto (OCR).
 2. **Tarefa 2 — Validação/coerência:** a foto corresponde ao medidor/cliente? É coerente com a
@@ -26,6 +27,15 @@ com números medidos no test set público UFPR-AMR e achados de campo de projeto
 | Imagens | recorte do display (text-line), prontas para o recognizer |
 | Comprimento médio da leitura | ~4,5 dígitos |
 | Modelos | off-the-shelf, sem qualquer fine-tune |
+| Origem | mirror HF `Chaymaa/UFPR-AMR` (base: dataset da UFPR, Laroca IJCNN 2020) |
+| Download | `hf download Chaymaa/UFPR-AMR --local-dir data/ufpr_amr` (3 parquets) |
+| Extração | `leiturista extract` → imagens + `labels.csv` (`split,image,label`) |
+| Fotos de campo p/ achados | `Praekelt/ElectricityMeterReadings1o4` (165 fotos reais — demo/inspeção §5) |
+
+**Preparação (detalhe):** o mirror HF guarda 3 parquets (`train`/`test`/`valid`) com a imagem e
+a leitura (`gt_parse`). `leiturista extract` lê os parquets e grava as imagens em arquivos flat +
+`labels.csv` em `data/finetune_ufpramr/` — a fonte que o baseline e o `leiturista eval` leem. O
+split **test (300 imagens)** é o avaliado aqui.
 
 **Métricas** (definidas em `scripts/ppocr_baseline.py` e `src/leiturista/eval.py`):
 - **exact-match:** fração de imagens com leitura 100% correta (idêntica ao rótulo).
@@ -34,7 +44,7 @@ com números medidos no test set público UFPR-AMR e achados de campo de projeto
 
 > Nota de transparência: o TrOCR (beam search) emite tokens separados por espaço. Reportamos as
 > métricas **cruas** (como logadas no MLflow, contando o espaço) **e limpas** (removendo os espaços,
-> comparável ao PP-OCR, que não emite espaço). Ver §4.
+> comparável ao PP-OCR, que não emite espaço). Ver §3 (linhas "cru"/"limpo").
 
 ## 3. Benchmark — Tarefa 1 (leitura do display)
 
@@ -117,7 +127,7 @@ O app já emite sinais usáveis na validação: legibilidade do crop (var. do La
 leiturista** (códigos tipo I100 são proprietários de cada distribuidora). Candidatos mapeados sem
 download (pendência de licença): Copel-AMR (12,5k fotos de campo BR), UFPR-ADMR-v2 (5k dials),
 IEEE DataPort (570). A estratégia é um **piloto** com esses dados e, sobretudo, o **lote real da
-Neoenergia no Kickoff (12/09)**.
+distribuidora no Kickoff (12/09)**.
 
 ## 7. Limitações honestas (o que o relatório NÃO esconde)
 
@@ -129,12 +139,101 @@ Neoenergia no Kickoff (12/09)**.
    invertido, e o TrOCR alucina no crop. Não há localização manual do display (o modelo não terá
    essa opção em produção).
 
-## 8. Artefatos e reprodução
+## 8. Reprodução completa (passo a passo)
 
-- Código: biblioteca `leiturista` (`src/leiturista/`), demo `app/app.py`.
-- Baselines: `scripts/ppocr_baseline.py` (PP-OCRv6 no test UFPR-AMR, registra MLflow).
-- Tracking: `mlflow.db` (runs `baseline-ppocrv6-tiny`, `trocr-small-printed-offtheshelf`; CSVs de
-  predição como blobs).
-- Modelos distribuídos via GitHub Release `modelos-1.0` (`docs/compartilhar_modelo_colega.md`).
-- Docs de referência: `docs/projeto4_neoenergia.md`, `docs/plano_subprojeto_cv.md`,
-  `docs/artigos.md`, `docs/origem_dos_dados.md`.
+Todo o pipeline vive na biblioteca `leiturista` (CLI instalada via `pip install -e .`).
+Números verificáveis: **0.357 / 0.846** (PP-OCRv6) e **0.160 / 0.642** (TrOCR cru),
+**0.253 / 0.776** (TrOCR limpo).
+
+### 8.1 Ambiente
+
+```bash
+git clone git@github.com:jhlr/leiturista.git && cd leiturista
+python3 -m venv .venv
+.venv/bin/pip install -e .        # instala o CLI `leiturista` + deps (torch, transformers, paddle…)
+```
+
+### 8.2 Dados (UFPR-AMR)
+
+```bash
+# 1) download do mirror HF (3 parquets; ~10 min, usar em background)
+HF_HUB_DISABLE_XET=1 .venv/bin/hf download Chaymaa/UFPR-AMR --local-dir data/ufpr_amr
+
+# 2) extrai imagens + labels.csv para data/finetune_ufpramr/
+.venv/bin/leiturista extract
+```
+
+`extract` grava `labels.csv` com colunas `split,image,label` (leitura) — é o que os baselines leem.
+
+### 8.3 Baselines (reproduzir os números do §3)
+
+```bash
+# PP-OCRv6_tiny_rec — baseline off-the-shelf no test (300 imgs)
+.venv/bin/python scripts/ppocr_baseline.py
+
+# TrOCR-small-printed — avalia o checkpoint (modelo) no test
+.venv/bin/leiturista eval --data data/finetune_ufpramr --out models/trocr-small-printed
+
+# TrOCR "limpo": remove os espaços do beam no eval_test.csv gerado e recomputa
+.venv/bin/python - <<'EOF'
+import pandas as pd
+df = pd.read_csv("models/trocr-small-printed/eval_test.csv")
+df["pred"] = df["pred"].str.replace(" ", "")
+exact = (df["pred"] == df["label"]).mean()
+digit = df.apply(lambda r: sum(p == l for p, l in zip(r["pred"].rjust(len(r["label"]))[-len(r["label"]):], r["label"])) / len(r["label"]) if r["label"] else 0.0, axis=1).mean()
+print(f"exact-match={exact:.4f} digit-acc={digit:.4f}")
+EOF
+```
+
+### 8.4 Tracking e inspeção (MLflow, tudo num `mlflow.db`)
+
+```bash
+.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db
+.venv/bin/leiturista artifacts <run_id>            # lista blobs (eval_test.csv, eval_summary.txt…)
+.venv/bin/leiturista artifacts <run_id> eval_test.csv -o eval_test.csv
+.venv/bin/leiturista restore <run_id> checkpoint.zip -o models/   # extrai checkpoint
+```
+
+Runs registrados (experimento `trocr-ufpramr`):
+
+| Run id | Nome | Conteúdo |
+|---|---|---|
+| `eff9834d` | `baseline-ppocrv6-tiny` | PP-OCRv6: exact 0.357 / digit 0.846 + `eval_test.csv` |
+| `9c14db62` | `trocr-small-printed-offtheshelf` | TrOCR cru: exact 0.160 / digit 0.642 + blobs do modelo |
+| `e2c212ee` | `eval-test` | re-avaliação `models/trocr-small-printed` (mesmos 0.160 / 0.642) |
+| `4021ef26` | `train-8ep` | fine-tune **incompleto** (sem checkpoint) — rerodar `leiturista train` |
+
+### 8.5 Modelos utilizados (off-the-shelf)
+
+| Modelo | Repo HF | Tamanho | Licença | Papel |
+|---|---|---|---|---|
+| PP-OCRv5_mobile_det (ONNX) | `PaddlePaddle/PP-OCRv5_mobile_det_onnx` | ~2 MB | Apache-2.0 | detecção de caixas de texto |
+| PP-OCRv6_tiny_rec (ONNX) | `PaddlePaddle/PP-OCRv6_tiny_rec_onnx` | 4,4 MB | Apache-2.0 | reconhecimento (1,1M params) |
+| TrOCR-small-printed | `microsoft/trocr-small-printed` | 493 MB | MIT | OCR end-to-end (62M params) |
+| TrOCR-small-stage1 | `microsoft/trocr-small-stage1` | 247 MB | MIT | base p/ fine-tune (`leiturista train`) |
+
+### 8.6 Artefatos pré-empacotados
+
+Os modelos já materializados estão na **GitHub Release `modelos-1.0`** do repo:
+`leiturista-models.tar.gz` (147 MB, SHA256 `f02c13ee5a…63e10`) com o detector ONNX, o recognizer
+ONNX e o TrOCR em `.model_cache/`. Extrair na raiz do repo habilita a demo imediatamente.
+
+```bash
+tar -xzf leiturista-models.tar.gz
+.venv/bin/streamlit run app/app.py --server.headless true   # demo (leitura + serial + flags)
+```
+
+## 9. Referências
+
+1. **UFPR-AMR (dataset + baselines).** Laroca, R., et al., *Deep Learning for Image-based Automatic
+   Dial Meter Reading: Dataset and Baselines*, IJCNN 2020. DOI: `10.1109/IJCNN48605.2020.9207318`.
+   Mirror HF: `Chaymaa/UFPR-AMR`.
+2. **TrOCR.** Li, M., et al., *TrOCR: Transformer-based Optical Character Recognition with
+   Pre-trained Models*, AAAI 2023. arXiv: `2109.10282` (checkpoint `microsoft/trocr-small-printed`).
+3. **PP-OCR (família PaddleOCR).** PaddlePaddle — detector/reconhecedor leves para cenas reais.
+   Checkpoints ONNX: `PaddlePaddle/PP-OCRv5_mobile_det_onnx`, `PaddlePaddle/PP-OCRv6_tiny_rec_onnx`.
+4. **Dados de campo p/ os achados (§5).** `Praekelt/ElectricityMeterReadings1o4` (HF, fotos reais).
+5. **Copel-AMR / UFPR-ADMR-v2 (candidatos da Tarefa 2).** datasets BR de campo sob licença
+   acadêmica — contato `menotti@inf.ufpr.br` (ver §6).
+6. **Contexto interno do projeto:** `docs/projeto4_desafio.md`, `docs/plano_subprojeto_cv.md`,
+   `docs/artigos.md`, `docs/origem_dos_dados.md` (não necessários para reproduzir o §3).

@@ -1,15 +1,15 @@
-# Projeto 4 — Desafio Neoenergia Pernambuco (verificação de fotos de leitura)
+# Projeto 4 — Desafio de distribuidoras de energia elétrica (verificação de fotos de leitura)
 
 **Disciplina:** Projeto 4 - DADOS (Cesar School, BD2026.2)
-**Professor:** Erick Simões (erick.simoes@cesar.school, @Erick no Slack)
-**Cliente:** Neoenergia Pernambuco
+**Cliente:** distribuidora de energia elétrica
 **Última atualização:** 2026-08-08
 
 ---
 
 ## Sobre a disciplina
 
-Grupos investigam um problema do contexto da Neoenergia e propõem/desenvolvem uma
+Grupos investigam um problema do contexto de uma **distribuidora de energia elétrica** e
+propõem/desenvolvem uma
 solução aplicada, acompanhada pelo **CRISP-DM**. Disciplinas envolvidas: **Deep
 Learning** (Vitinho), **Visão Computacional** (Eron) e **ML Ops** (Galindo).
 
@@ -32,7 +32,7 @@ Learning** (Vitinho), **Visão Computacional** (Eron) e **ML Ops** (Galindo).
 
 ### Comunicação
 
-- Slack: `#projeto-4-bd-26-2`, `@Erick`
+- Slack: `#projeto-4-bd-26-2`
 - Plano de Ensino: no Classroom
 - Uso responsável de IA: política disponibilizada na disciplina
 
@@ -62,19 +62,18 @@ propostas e panorama de riscos/oportunidades (mini pitch oral).
 ### Orientação do professor
 
 > "O objetivo não é começar com a solução pronta. O objetivo é começar com clareza,
-> organização e método." — Erick Simões
+> organização e método."
 
 ---
 
-## O desafio do cliente (Neoenergia PE)
+## O desafio do cliente (distribuidora)
 
 ### Contexto da empresa
 
-Neoenergia Pernambuco é a distribuidora responsável por levar energia elétrica a
-praticamente todo o estado de PE. Começou como CELPE, privatizada em 2000, integrada ao
-grupo Neoenergia (controlado pela Iberdrola); adotou o nome atual em 2021. Atende
-milhões de clientes e investe em modernização das redes, digitalização e
-sustentabilidade.
+A distribuidora é responsável por levar energia elétrica a praticamente todo o estado.
+Começou como estatal, foi privatizada em 2000 e integrada a um grupo global de energia;
+adotou o nome atual em 2021. Atende milhões de clientes e investe em modernização das
+redes, digitalização e sustentabilidade.
 
 A área de **leitura e entrega de contas** visita praticamente todos os clientes
 mensalmente, garantindo medição correta e fatura entregue — atividade estratégica para o
@@ -131,7 +130,7 @@ leiturista**. Exemplos:
 Este subprojeto de visão computacional (leitura automática do display do medidor) se
 alinha diretamente ao desafio: o MAPEN já reúne os datasets de imagem de medidores
 (`data/ufpr_amr/`, `data/praekelt_meter_readings/`, `data/utility_meters_*`, etc.)
-para OCR/leitura do display. O desafio da Neoenergia adiciona uma segunda camada:
+para OCR/leitura do display. O desafio da distribuidora adiciona uma segunda camada:
 **validação da coerência foto ↔ ocorrência registrada** (além da leitura do número).
 
 Ponto de atenção: os datasets do MAPEN são de medidores residenciais/smart meters

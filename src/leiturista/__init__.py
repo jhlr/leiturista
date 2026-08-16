@@ -1,4 +1,4 @@
-"""Leiturista - visão computacional para leitura de medidores (Projeto 4 / Neoenergia).
+"""Leiturista - visão computacional para leitura de medidores (Projeto 4 / distribuidoras de energia).
 
 Biblioteca reutilizável do pipeline CV/OCR:
 - `leiturista.data`  — extração de imagens (parquets UFPR-AMR) e preparação de datasets

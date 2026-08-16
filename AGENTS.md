@@ -7,9 +7,9 @@ Regras deste projeto (somam-se às regras globais de `~/.config/opencode/AGENTS.
 - **LEITURISTA** — visão computacional de medidores de energia elétrica: leitura OCR do
   display + extração do serial + validação de cena/coerência.
 - Disciplina **Projeto 4 - DADOS (Cesar School, BD2026.2)**, Grupo 3, cliente
-  **Neoenergia Pernambuco**. Professor Erick Simões.
+  **distribuidora de energia elétrica**.
 - Desmembrado do repositório `mapen` em 2026-08-10 (o `mapen` ficou só com a camada de
-  dados de consumo/perdas/redes). Contexto do desafio em `docs/projeto4_neoenergia.md` e
+  dados de consumo/perdas/redes). Contexto do desafio em `docs/projeto4_desafio.md` e
   `docs/plano_subprojeto_cv.md`.
 
 ## Objetivo
@@ -20,7 +20,7 @@ coerência foto ↔ ocorrência do leiturista (ex.: I100 = casa fechada). Duas t
 1. **Leitura (Tarefa 1):** extrair o número do display (OCR) — dados suficientes
    (~3.840+ imgs baixadas, base UFPR-AMR 2.000).
 2. **Validação (Tarefa 2):** a foto corresponde ao medidor/cliente? Coerente com a nota?
-   — **GAP**: sem dataset público; aguardando lote real da Neoenergia no Kickoff (12/09).
+   — **GAP**: sem dataset público; aguardando lote real da distribuidora no Kickoff (12/09).
 
 ## Estrutura
 
@@ -64,7 +64,7 @@ leiturista/
 
 ## Referências
 
-- Desafio Neoenergia: `docs/projeto4_neoenergia.md` + `docs/pedido_kickoff_neoenergia.md`.
+- Desafio: `docs/projeto4_desafio.md` + `docs/pedido_kickoff.md`.
 - Dados: `docs/origem_dos_dados.md` (imagens + modelos), `docs/candidatos_nao_baixados.md`.
 - Papers: `docs/artigos.md` (UFPR-AMR = Laroca IJCNN 2020, DOI 10.1109/IJCNN48605.2020.9207318).
 - Projeto irmão (camada de dados): `~/Developer/mapen` (ONS/EPE/ANEEL, perdas, mapas).

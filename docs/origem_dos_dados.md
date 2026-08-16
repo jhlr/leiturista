@@ -4,7 +4,7 @@
 
 Objetivo do projeto: **leitura automática de medidores de energia elétrica** por
 CV/OCR (imagem do display → número) + extração do **serial** + validação de cena
-(desafio Neoenergia PE, Projeto 4). Este doc cobre os datasets de **imagem** e os
+(desafio de distribuidoras de energia elétrica, Projeto 4). Este doc cobre os datasets de **imagem** e os
 **modelos de visão**. Séries de consumo/perdas/redes ficam no repo irmão `mapen`.
 
 ---
@@ -146,5 +146,5 @@ Baixados em 2026-08-08 para `models/` via `.venv/bin/hf download` (HF Hub,
 | `artigos.md` | Papers relevantes (UFPR-AMR = Laroca IJCNN 2020, DOI 10.1109/IJCNN48605.2020.9207318) |
 | `projetos_notaveis.md` | Projetos/open-source de leitura de medidores |
 | `candidatos_nao_baixados.md` | Datasets com acesso restrito (conta/licença) |
-| `projeto4_neoenergia.md` | Disciplina Projeto 4 (BD2026.2) + desafio Neoenergia PE |
+| `projeto4_desafio.md` | Disciplina Projeto 4 (BD2026.2) + desafio de distribuidora |
 | `analise_suficiencia.md` | docs/+data/ vs desafio: o que temos e o que falta |

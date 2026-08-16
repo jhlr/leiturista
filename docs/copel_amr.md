@@ -2,7 +2,7 @@
 
 **Data do registro:** 2026-08-08 | **Status:** NÃO BAIXADO — licença bloqueia
 **URL:** https://web.inf.ufpr.br/vri/databases/copel-amr/
-**Relevância:** piloto da tarefa de validação de cena (desafio Neoenergia) — ver
+**Relevância:** piloto da tarefa de validação de cena (desafio de distribuidora) — ver
 `plano_subprojeto_cv.md` §2 e `analise_suficiencia.md`.
 
 ---
@@ -30,7 +30,7 @@ localidades. Introduzido em:
 - **Anotações por imagem:** leitura do medidor, 4 cantos do contador (x,y) (permite
   retificação), bbox (x,y,w,h) por dígito.
 
-### Por que importa para o MAPEN/Neoenergia
+### Por que importa para o desafio da distribuidora
 
 É o dataset **mais próximo do cenário real do desafio** entre todos os mapeados:
 foto tirada em campo por leiturista (não display isolado em bancada como o UFPR-AMR).
