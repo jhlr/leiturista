@@ -57,13 +57,40 @@ Nossa solução real (`leiturista`, este repo) já tem material publicável:
 - **Gap identificado e documentado** para a Tarefa 2 (coerência foto↔ocorrência) —
   `docs/analise_suficiencia.md` — honesto sobre o que falta (dataset com notas do leiturista).
 
+## Escopo decidido (2026-08-25)
+
+**Tudo:** framing completo do problema de negócio (Tarefa 1 + Tarefa 2), os achados de engenharia
+como método reproduzível, e o benchmark como validação quantitativa. Artigo não se limita a "só
+OCR" nem só a heurísticas — conta a história completa: problema → pipeline → achados → números →
+gap da Tarefa 2 como trabalho futuro honesto.
+
+## Estrutura proposta (mapeada ao template SBTI)
+
+1. **INTRODUÇÃO** — contexto do problema de negócio (fiscalização de fotos de leitura, volume
+   50–70 mil imagens/mês, 6 analistas, carga de horas extras), motivação e objetivo geral.
+   Fonte: `entendimento_problema.docx` (framing, generalizado — sem dados específicos do cliente
+   de origem do docx) + `AGENTS.md` (objetivo do nosso projeto).
+2. **CONTEXTO** (trabalhos relacionados) — UFPR-AMR/Laroca IJCNN 2020, PP-OCR (PaddleOCR), TrOCR
+   (AAAI 2023); posicionar o gap de datasets públicos para Tarefa 2 (coerência foto↔ocorrência).
+   - 2.1 Dados e métricas (dataset, split, exact-match, digit-acc).
+3. **MÉTODO / PIPELINE** — arquitetura det→rec→classificação→seleção; os 6 achados de engenharia
+   como contribuições método (rotação-primeiro, duas fases, retry invertido, seleção anti-gambiarra,
+   serial vertical, assinatura do medidor via hash de tokens).
+4. **RESULTADOS** — benchmark Tarefa 1 (PP-OCRv6 35,7%/84,6%; TrOCR limpo 25,3%/77,6%), achados de
+   campo (Praekelt), status da Tarefa 2 como gap identificado e caminho proposto (piloto + dados
+   reais no Kickoff).
+5. **CONCLUSÃO** — ganho operacional esperado (redução de triagem manual), limitações honestas
+   (serial heurístico, legibilidade por Laplacian, números off-the-shelf sem fine-tune),
+   trabalhos futuros (fine-tune, dataset Tarefa 2).
+6. **REFERÊNCIAS** — ABNT: Laroca et al. 2020, Li et al. (TrOCR) 2023, PaddleOCR/PP-OCR.
+
 ## Próximos passos
 
-1. Decidir foco do artigo: (a) só Tarefa 1 (OCR de medidor, dados + benchmark prontos, resultado
-   fechado) vs. (b) as duas tarefas incluindo o framing do problema de negócio (mais amplo, mas
-   Tarefa 2 ainda é gap/proposta, não resultado).
-2. Mapear seções do artigo real → template (Introdução, Trabalhos Relacionados/Contexto,
-   Metodologia, Resultados, Conclusão) respeitando os nomes de seção do SBTI.
-3. Escrever em Português (regra global de inglês não se aplica — artigo em veículo PT vai em PT,
-   é conteúdo, não system prompt).
-4. Redigir preservando anonimato (sem nomes de autor/instituição no corpo do PDF submetido).
+1. Redigir seção a seção em Português, respeitando anonimato (sem nome de autor/instituição no
+   corpo nem em metadados do arquivo) e a formatação do template (TNR 12, A4, margens 3/2 cm,
+   12–20 páginas).
+2. Reaproveitar prosa de `docs/relatorio_benchmark.md` e `docs/analise_suficiencia.md` como base,
+   reescrevendo em registro acadêmico (não copiar tabelas/markdown cru).
+3. Gerar figura(s) do pipeline (diagrama do fluxo det→rec→seleção) para a seção de método.
+4. Rodar a skill `academic-article-writing` para lapidar registro formal e citações ABNT antes da
+   submissão.
