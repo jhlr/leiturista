@@ -1,8 +1,25 @@
 # Pedido de dados e questões para o Kickoff 12/09 — distribuidora
 
-**Data:** 2026-08-08 | **Status:** rascunho pré-kickoff (validar com o professor/grupo)
-**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap)
+**Data:** 2026-08-08 (rev. 2026-08-25) | **Status:** rascunho pré-kickoff (validar com o professor/grupo)
+**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap),
+`sbti_artigo/entendimento_problema.docx` (documento formal do Grupo 2/Luminus, 2026-08-25)
 **Meta:** sair do Kickoff com acesso a um lote real de fotos de campo da distribuidora.
+
+> **Nota (2026-08-25):** o doc `Imersão, Entendimento e Objetivos do Problema` já formalizou
+> volume (50–70 mil imagens), equipe (6 analistas), tipos de ocorrência que impedem leitura
+> convencional (imóvel fechado/desocupado/demolido, acesso impedido) e a existência de geração
+> própria (fotovoltaico). As questões abaixo foram revisadas para não repetir o que já está
+> respondido e focar no que ainda falta.
+>
+> **Achado importante (2026-08-25):** `perguntas_cliente_colegas.docx` (perguntas listadas por
+> colegas do grupo) mostra que já houve contato com uma amostra real de artefatos operacionais —
+> nome de arquivo `BaseExtracao_"data"_Dia.csv` com colunas (Número do medidor, Posição do medidor
+> lida, Nota de Leitura Atual, Foto do medidor), planilha `DESCRIÇÃO NOTAS LEITURISTAS X
+> SOLICITAÇÃO DE FOTO`, e convenção de nomes de pasta/arquivo de imagem (`PSP_EXTRATLEITIMPL_
+> <data>_<seq>` e `..._<matrícula/serial>_000`). Isso é mais concreto do que o "gap total de
+> dataset" assumido em `analise_suficiencia.md` — **confirmar no Kickoff se isso é uma amostra já
+> recebida (e então localizá-la no projeto) ou apenas material de referência mostrado em aula**,
+> antes de reafirmar o gap como bloqueante.
 
 ---
 
@@ -57,6 +74,38 @@ mais próxima, mas é antigo).
    ocorrência por tipo)? Servem de baseline de avaliação.
 6. Dá para cruzar as fotos com a região (bairro/CEP) para priorizar fiscalização onde a
    perda é alta?
+
+## Questões operacionais/técnicas (dos colegas — `perguntas_cliente_colegas.docx`)
+
+Complementam as questões acima com detalhe operacional fino, presumindo acesso a artefatos reais
+(`BaseExtracao_"data"_Dia.csv`, pastas de imagem, planilha de descrição de notas):
+
+**Fluxo de conferência**
+1. Como as imagens são baixadas para a máquina local? Com que frequência? Em lotes — de que tamanho?
+2. O `BaseExtracao_"data"_Dia.csv` é a lista/planilha de controle que guia o trabalho do analista?
+   Das 4 colunas (Número do medidor, Posição do medidor lida, Nota de Leitura Atual, Foto do
+   medidor), quais vêm pré-preenchidas, em branco, ou precisam de conferência via foto?
+3. O que faz uma foto ser rejeitada (ilegível, fora de contexto)? O que acontece na planilha de
+   controle quando isso ocorre?
+4. Após conferência, como a informação é consolidada no SAP? Sobe um CSV — é o mesmo
+   `BaseExtracao_"data"_Dia.csv` ou outro template?
+
+**Conteúdo e consistência dos dados**
+5. Por que algumas linhas de "Número do medidor" têm mais de um código? Foi trocado o medidor?
+   O número que aparece na foto sempre corresponde ao valor mais à esquerda na célula?
+6. Por que existem fotos com "Nota de Leitura Atual" = NA? O que o analista deve conferir nesse caso?
+7. Quando a nota exige foto mas "Foto do medidor" está NA, por que não há foto e o que acontece?
+8. Na planilha "DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO", para quais códigos (NOTA) é
+   necessário verificar o consumo ("Posição do medidor lida") a partir da imagem?
+9. Por que há mais arquivos de imagem na pasta do que linhas listadas no CSV correspondente?
+
+**Metadados e nomenclatura**
+10. Qual a regra de nomenclatura das pastas locais (ex.: `PSP_EXTRATLEITIMPL_030726_0121`) e dos
+    arquivos de imagem (ex.: `..._00000000000211765824_000`) — o que cada segmento significa?
+
+**Outras**
+11. Nome correto do departamento/cargo envolvido na conferência de imagens?
+12. Qual o modelo do leitor PDA usado em campo?
 
 ## Plano B (se não houver lote real)
 
