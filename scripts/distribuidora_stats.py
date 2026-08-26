@@ -1,4 +1,4 @@
-"""Estatísticas agregadas da base real Neoenergia PE (data/neoenergia_pe/).
+"""Estatísticas agregadas da base real de uma distribuidora de energia parceira (data/distribuidora_campo/).
 
 Junta os 4 lotes diários (`BaseExtracao_<data>_Dia.csv`) com o catálogo de ocorrências
 (`DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx`) e reporta, para o conjunto
@@ -7,7 +7,7 @@ medidor duplo (`A/B`), auditoria de imagens órfãs/ausentes e cruzamento SIM(ex
 Foto=NA.
 
 Uso:
-    .venv/bin/python scripts/neoenergia_stats.py [--json out.json]
+    .venv/bin/python scripts/distribuidora_stats.py [--json out.json]
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import zipfile
 from collections import Counter
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "neoenergia_pe"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "distribuidora_campo"
 CATALOG_XLSX = DATA_DIR / "DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx"
 
 

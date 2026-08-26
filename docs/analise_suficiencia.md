@@ -7,7 +7,7 @@
 > e do desafio da distribuidora de energia elétrica. Nada ainda discutido com o grupo.
 >
 > **DESATUALIZADO (2026-08-25):** o "GAP CRÍTICO" da Camada 2 descrito abaixo foi resolvido —
-> o grupo obteve uma amostra real da Neoenergia PE (`data/neoenergia_pe/`, ~12,3k fotos + CSV de
+> o grupo obteve uma amostra real da distribuidora parceira (`data/distribuidora_campo/`, ~12,3k fotos + CSV de
 > ocorrência + catálogo de 61 notas). Ver `pedido_kickoff.md` § "Achados a partir da amostra
 > real" para o estado atual. Texto original mantido abaixo como histórico.
 

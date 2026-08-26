@@ -123,8 +123,8 @@ O app já emite sinais usáveis na validação: legibilidade do crop (var. do La
 
 ## 6. Tarefa 2 — Validação de cena/coerência (status)
 
-**ATUALIZADO 2026-08-25 — gap resolvido:** o grupo obteve uma amostra real da **Neoenergia PE**
-(`data/neoenergia_pe/`, gitignored): ~12.343 imagens de campo em 4 lotes diários, os CSVs
+**ATUALIZADO 2026-08-25 — gap resolvido:** o grupo obteve uma amostra real de **uma distribuidora parceira**
+(`data/distribuidora_campo/`, gitignored): ~12.343 imagens de campo em 4 lotes diários, os CSVs
 `BaseExtracao_<data>_Dia.csv` com a nota/ocorrência aplicada pelo leiturista por foto, e o
 catálogo completo de 61 códigos de ocorrência (`DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE
 FOTO.xlsx`, 32 exigem foto / 29 não exigem). Falta apenas o rótulo de decisão da fiscalização

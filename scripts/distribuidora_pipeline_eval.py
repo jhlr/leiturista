@@ -1,4 +1,4 @@
-"""Testa, sobre fotos reais da Neoenergia PE, se os sinais que o pipeline MeterOCR já emite
+"""Testa, sobre fotos reais de uma distribuidora de energia parceira, se os sinais que o pipeline MeterOCR já emite
 (leitura não detectada, legibilidade via Laplaciano) se correlacionam com o que a semântica da
 ocorrência registrada pelo leiturista sugere — sem depender do rótulo de aceite/rejeição que
 ainda não temos.
@@ -13,7 +13,12 @@ Hipóteses testadas (grupos amostrados do CSV real, coluna "Nota de Leitura Atua
   Baseline: NA (nota normal, leitura esperada e presumivelmente obtida sem problema).
 
 Uso:
-    .venv/bin/python scripts/neoenergia_pipeline_eval.py --n-per-group 60 --json out.json
+    .venv/bin/python scripts/distribuidora_pipeline_eval.py --n-per-group 60 \
+        --json data/distribuidora_campo/pipeline_eval.json
+
+ATENÇÃO: o --json inclui, em "detalhe", número de medidor e nome de arquivo reais do
+cliente. Sempre gravar dentro de data/ (gitignored) — nunca em docs/ ou outro caminho
+rastreado pelo git.
 """
 
 from __future__ import annotations
@@ -27,7 +32,7 @@ from pathlib import Path
 
 from PIL import Image
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "neoenergia_pe"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "distribuidora_campo"
 GROUPS = ["NA", "T111", "L101"]
 
 

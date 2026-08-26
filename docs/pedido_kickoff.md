@@ -1,12 +1,12 @@
-# Pedido de dados e questões para o Kickoff 12/09 — Neoenergia PE
+# Pedido de dados e questões para o Kickoff 12/09 — distribuidora parceira
 
 **Data:** 2026-08-08 (rev. 2026-08-25) | **Status:** GAP DA TAREFA 2 RESOLVIDO — dados reais em mãos
 **Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap, **desatualizado**),
-`sbti_artigo/entendimento_problema.docx`, `data/neoenergia_pe/` (amostra real)
+`sbti_artigo/entendimento_problema.docx`, `data/distribuidora_campo/` (amostra real)
 **Meta:** confirmar no Kickoff os pontos que a amostra real não responde sozinha.
 
-> **ATUALIZAÇÃO CRÍTICA (2026-08-25):** o grupo já tem em mãos uma amostra real da
-> **Neoenergia PE** (`data/neoenergia_pe/`, gitignored): 4 lotes diários
+> **ATUALIZAÇÃO CRÍTICA (2026-08-25):** o grupo já tem em mãos uma amostra real de
+> **uma distribuidora parceira** (`data/distribuidora_campo/`, gitignored): 4 lotes diários
 > (`PSP_EXTRATLEITIMPL_030726_0121`, `_200526_0352`, `_210526_0335`, `_220526_0408`) somando
 > **12.340 imagens de campo** (13.669 linhas de CSV) + 4 CSVs `BaseExtracao_<data>_Dia.csv` + a planilha
 > `DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx` com o **catálogo completo de 61
@@ -17,9 +17,9 @@
 
 ---
 
-## Achados a partir da amostra real (`data/neoenergia_pe/`, analisado 2026-08-25)
+## Achados a partir da amostra real (`data/distribuidora_campo/`, analisado 2026-08-25)
 
-**Reproduzível:** `scripts/neoenergia_stats.py` — agrega os 4 lotes diários (13.669 linhas de CSV,
+**Reproduzível:** `scripts/distribuidora_stats.py` — agrega os 4 lotes diários (13.669 linhas de CSV,
 12.340 imagens em disco) e recalcula tudo abaixo automaticamente.
 
 | Pergunta original | Resposta encontrada nos dados (agregado dos 4 lotes) |
@@ -30,14 +30,14 @@
 | Mais arquivos de imagem na pasta do que linhas no CSV, ou vice-versa (Q9 dos colegas) | **Confirmado nos 4 lotes.** Em cada lote há entre 197 e 242 imagens em disco sem nenhuma linha do CSV que as referencie (866 no total das 4). Todas as referências do CSV existem em disco (0 ausentes, nos 4 lotes). Pergunta que sobra: são descartes do app (foto refeita) ou uma etapa de exportação que perde a referência? |
 | Nota exige foto (SIM) mas coluna Foto = NA | **Cruzamento feito nos 4 lotes.** Das 3.943 linhas com nota que exige foto (SIM), **296 (7,5%) não têm foto** — concentradas em `T181` (189 casos), `P111` (58) e `L101` (41). É uma minoria concentrada em 3 códigos, não um problema sistêmico da planilha. Pergunta que sobra: por que essas linhas especificamente não geraram foto apesar da nota exigir. |
 | Nomenclatura de pasta/arquivo (Q10 dos colegas) | **Parcialmente decodificada.** Nome de pasta `PSP_EXTRATLEITIMPL_<data>_<seq>` — `<data>` é plausivelmente a data de extração. O ID de 20 dígitos no nome do arquivo tem duas famílias distintas de formato, nenhuma batendo com "Número do medidor" nem com a leitura do CSV. **Pergunta genuína pro Kickoff, dado não resolve sozinho:** o que esse ID representa e por que existem dois formatos. |
-| **Sinais de coerência do pipeline `leiturista` batem com a semântica da nota, sem rótulo?** | **Testado empiricamente** com `scripts/neoenergia_pipeline_eval.py` — rodamos o MeterOCR já existente em amostras reais de `NA` (leitura normal), `T111` (caixa/tampa danificada — obstrução relatada) e `L101` (leitura informada pelo cliente, presumivelmente ilegível em campo). Resultado no `docs/sbti_artigo/artigo_sbti2026.docx` §4.3 e em `docs/sbti_artigo/neoenergia_pipeline_eval.json`. |
+| **Sinais de coerência do pipeline `leiturista` batem com a semântica da nota, sem rótulo?** | **Testado empiricamente** com `scripts/distribuidora_pipeline_eval.py` — rodamos o MeterOCR já existente em amostras reais de `NA` (leitura normal), `T111` (caixa/tampa danificada — obstrução relatada) e `L101` (leitura informada pelo cliente, presumivelmente ilegível em campo). Resultado no `docs/sbti_artigo/artigo_sbti2026.docx` §4.3 e no detalhe em `data/distribuidora_campo/pipeline_eval.json` (gitignored — contém número de medidor e nome de arquivo reais, não commitar). |
 
 ## O que o grupo precisa validar (2 camadas) — atualizado
 
 | Camada | Objetivo | Dados atuais |
 |---|---|---|
 | 1. OCR do display | Ler o número do medidor na foto | ✅ MAPEN/leiturista tem ~3.840 imgs públicas (UFPR-AMR BR) — baseline já rodado (`relatorio_benchmark.md`) |
-| 2. Foto ↔ nota | Validar se a foto corresponde ao medidor/cliente e é coerente com a ocorrência | ✅ **RESOLVIDO** — ~12,3k fotos reais + CSV de ocorrência + catálogo de 61 notas com flag de exigência de foto (`data/neoenergia_pe/`) |
+| 2. Foto ↔ nota | Validar se a foto corresponde ao medidor/cliente e é coerente com a ocorrência | ✅ **RESOLVIDO** — ~12,3k fotos reais + CSV de ocorrência + catálogo de 61 notas com flag de exigência de foto (`data/distribuidora_campo/`) |
 
 **Pendência real agora é rótulo de qualidade/aceitação, não volume de dados**: o CSV traz a nota
 aplicada pelo leiturista, mas não traz uma coluna "foto aceita/rejeitada pelo analista" — esse é
