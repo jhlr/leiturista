@@ -26,10 +26,10 @@ respondeu diretamente várias perguntas que estavam em aberto:
 |---|---|
 | Catálogo de códigos de ocorrência e padrão esperado de foto (Q3 do grupo; Q8 dos colegas) | **Resolvida.** `DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx` lista as 61 notas com descrição e flag SIM/NÃO de exigência de foto. Ex. de SIM: I100/I110/I120 (local fechado ocupado/desocupado/veraneio), D100/D101/D110/D111 (demolido), P111 (medidor substituído), T181 (função não existe no sistema — a nota mais frequente no lote, 591 ocorrências). |
 | Por que "Nota de Leitura Atual" = NA aparece com foto associada (Q6 dos colegas) | **Padrão confirmado, motivo ainda não explicado pelos dados.** 1.758 das 2.393 linhas com nota NA (73%) têm foto associada — leitura normal também gera foto em boa parte dos casos, não é exclusivo de ocorrência. Perguntar ao cliente **por que** (auditoria por amostragem? toda leitura fotografa?). |
-| "Número do medidor" com mais de um código (Q5 dos colegas) | **Padrão confirmado com formato `A/B`** (não é erro de digitação): 320 de 3.479 linhas (9,2%) têm dois números separados por `/`, ex. `3245096207/3190410624`. **Testado e refutado:** o número embutido no nome do arquivo de imagem (ex. `..._20000000002952998707_000.jpg`) **não corresponde a nenhum dos dois números do medidor** nem ao valor da leitura — é provavelmente um ID de ordem de serviço/sequência interna, não o serial do medidor. Pergunta ainda aberta: o que representa cada um dos dois números (medidor antigo/novo? titular/UC?) e qual decide a leitura correta. |
-| Mais arquivos de imagem na pasta do que linhas no CSV, ou vice-versa (Q9 dos colegas) | **Confirmado, nas duas direções.** 2.992 imagens em disco vs. 2.795 referenciadas por linhas não-NA do CSV → **197 imagens no disco não referenciadas por nenhuma linha**. Todas as 2.795 referências do CSV existem em disco (0 ausentes). Ainda não sabemos a origem das 197 órfãs — perguntar ao cliente. |
-| Nota exige foto (SIM) mas coluna Foto = NA | Ainda não cruzado por nota individual — fica como próximo passo de análise (script simples: join do CSV com a planilha de notas, filtrar SIM + Foto=NA). |
-| Nomenclatura de pasta/arquivo (Q10 dos colegas) | **Ainda não decodificada.** Pasta `PSP_EXTRATLEITIMPL_030726_0121` — hipótese: `030726` = data (03/07/2026), mas `0121` no fim e o número de 20 dígitos no nome do arquivo (`00000000000211765824` / `20000000002952998707`) não batem com nenhum campo do CSV (nem medidor, nem leitura). **Pergunta genuína pro Kickoff, dado não resolve sozinho.**
+| "Número do medidor" com mais de um código (Q5 dos colegas) | **Padrão confirmado com formato `A/B`** (não é erro de digitação): 320 de 3.479 linhas (9,2%) têm dois números separados por `/`, ex. `3245096207/3190410624`. **Testado e refutada a hipótese óbvia:** só 14 dos 320 casos (4,4%) têm nota `P111` (medidor substituído) — a maioria (190, 59%) está em linhas com nota `NA` (leitura normal), então o padrão **não é primariamente troca de medidor**. O número embutido no nome do arquivo de imagem (ex. `..._20000000002952998707_000.jpg`) **não corresponde a nenhum dos dois números** nem ao valor da leitura. Pergunta que sobra pro Kickoff: o que cada número representa (duas unidades consumidoras no mesmo ponto? medidor + caixa de proteção?) e qual decide a leitura correta. |
+| Mais arquivos de imagem na pasta do que linhas no CSV, ou vice-versa (Q9 dos colegas) | **Confirmado, nas duas direções.** 2.992 imagens em disco vs. 2.795 referenciadas por linhas não-NA do CSV → **197 imagens no disco não referenciadas por nenhuma linha**. Todas as 2.795 referências do CSV existem em disco (0 ausentes). As 197 órfãs seguem o **mesmo formato de nome e o mesmo prefixo `2...` de ID** que as referenciadas (não são um lote corrompido nem de outra origem) — o mecanismo de geração é o mesmo, só falta o vínculo com uma linha do CSV. Pergunta que sobra: são descartes do app (foto refeita) ou uma etapa de exportação que perde a referência? |
+| Nota exige foto (SIM) mas coluna Foto = NA | **Cruzamento feito.** Das 927 linhas com nota que exige foto (SIM), **40 (4,3%) não têm foto** — concentradas em `T181` "Função Não Existe no Sistema" (27 casos), `P111` "Medidor Substituído" (8), `L101` "Leitura Informada Pelo Cliente" (4) e `M101` (1). É uma minoria, não um problema sistêmico da planilha. Pergunta que sobra: por que essas 40 especificamente não geraram foto apesar da nota exigir. |
+| Nomenclatura de pasta/arquivo (Q10 dos colegas) | **Parcialmente decodificada.** Nome de pasta `PSP_EXTRATLEITIMPL_030726_0121`: `030726` é plausivelmente a data (03/07/2026). O ID de 20 dígitos no nome do arquivo tem **duas famílias distintas**: 99,8% dos arquivos (2.985 de 2.992) começam com `2` seguido de zeros e um número interno; os outros 7 começam com `0` seguido de um número de 9 dígitos "limpo" (ex. `211770854`) — mesmo formato do número de medidor. Nenhuma das duas famílias bate com "Número do medidor" nem com a leitura do CSV correspondente. **Pergunta genuína pro Kickoff, dado não resolve sozinho:** o que esse ID representa (matrícula do PDA? ordem de serviço? sequência de captura?) e por que existem dois formatos.
 
 ## O que o grupo precisa validar (2 camadas) — atualizado
 
@@ -42,30 +42,31 @@ respondeu diretamente várias perguntas que estavam em aberto:
 aplicada pelo leiturista, mas não traz uma coluna "foto aceita/rejeitada pelo analista" — esse é
 o rótulo-ouro que falta para treino supervisionado direto (ver Q2 abaixo).
 
-## Questões a levar ao Kickoff (revisadas — sem repetir o que os dados já respondem)
+## Questões a levar ao Kickoff (só o que os dados NÃO resolveram sozinhos)
 
 1. **Rótulo de decisão da fiscalização:** existe (ou pode ser gerado) um campo "foto
    aceita/rejeitada pelo analista" por linha do `BaseExtracao`? Sem isso, o treino supervisionado
-   da Tarefa 2 não tem alvo direto.
+   da Tarefa 2 não tem alvo direto — é a única lacuna de dado real que sobra.
 2. Os quatro lotes que temos (03/07, 20/05, 21/05, 22/05) são representativos do volume mensal
    (50–70 mil) ou são uma amostra reduzida/específica? Dá pra ter acesso a mais lotes/período?
 3. **Anonimização/LGPD:** as fotos têm fachada/portão/pessoas visíveis. Qual o fluxo de uso
    autorizado para este material em trabalho acadêmico (e potencial publicação em artigo)?
-4. Por que ~73% das linhas com nota NA (leitura normal) também têm foto associada — é
-   fotografia de toda visita, ou auditoria por amostragem?
-5. O que significam os dois números separados por `/` em "Número do medidor" (320 casos)? Qual
-   dos dois é o correto para a leitura?
-6. O que representam os segmentos do nome de pasta (`PSP_EXTRATLEITIMPL_<data>_<seq>`) e do
-   arquivo de imagem (número de ~20 dígitos) — não correspondem a medidor nem leitura no CSV.
-7. As 197 imagens sem referência no CSV (do lote analisado) — são descartes, fotos duplicadas,
-   ou erro de extração?
+4. O que significam os dois números separados por `/` em "Número do medidor" (320 casos, 9,2% do
+   lote) — não é majoritariamente troca de medidor (só 4,4% tem nota P111). Qual dos dois decide
+   a leitura?
+5. O que representa o ID de 20 dígitos no nome do arquivo de imagem (duas famílias de formato,
+   nenhuma bate com medidor/leitura do CSV) e o sufixo `_0121` no nome da pasta?
+6. As 197 imagens sem referência no CSV (do lote analisado) — descarte do app, foto refeita, ou
+   perda de vínculo na exportação?
+7. Por que os 40 casos (de 927) com nota que exige foto acabam sem foto registrada?
 8. Dá para cruzar as fotos com a região (bairro/CEP) para priorizar fiscalização onde a perda de
    energia é alta (integração com a camada de dados do projeto-irmão `mapen`)?
 
 ## Questões operacionais/técnicas remanescentes (dos colegas — `perguntas_cliente_colegas.docx`)
 
-Já respondidas pelos dados (ver tabela acima): fluxo de nota NA com foto, medidor com dois
-códigos, contagem de imagens vs. CSV, catálogo de notas que exigem foto. **Ainda em aberto:**
+Já respondidas pelos dados (ver tabela acima): nota NA com foto, medidor com dois códigos,
+contagem de imagens vs. CSV, catálogo de notas que exigem foto, cruzamento SIM×Foto=NA.
+**Genuinamente sem resposta nos dados que temos — só o cliente sabe:**
 
 1. Como as imagens são baixadas para a máquina local? Com que frequência? Em lotes — de que tamanho?
 2. O que faz uma foto ser rejeitada (ilegível, fora de contexto) e o que acontece na planilha de
