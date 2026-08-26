@@ -1,4 +1,4 @@
-"""Estatísticas agregadas da base real distribuidora PE (data/distribuidora_pe/).
+"""Estatísticas agregadas da base real de uma distribuidora de energia parceira (data/distribuidora_campo/).
 
 Junta os 4 lotes diários (`BaseExtracao_<data>_Dia.csv`) com o catálogo de ocorrências
 (`DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx`) e reporta, para o conjunto
@@ -21,7 +21,7 @@ import zipfile
 from collections import Counter
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "distribuidora_pe"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "distribuidora_campo"
 CATALOG_XLSX = DATA_DIR / "DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx"
 
 
