@@ -123,11 +123,23 @@ O app já emite sinais usáveis na validação: legibilidade do crop (var. do La
 
 ## 6. Tarefa 2 — Validação de cena/coerência (status)
 
+**ATUALIZADO 2026-08-25 — gap resolvido:** o grupo obteve uma amostra real da **Neoenergia PE**
+(`data/neoenergia_pe/`, gitignored): ~12.343 imagens de campo em 4 lotes diários, os CSVs
+`BaseExtracao_<data>_Dia.csv` com a nota/ocorrência aplicada pelo leiturista por foto, e o
+catálogo completo de 61 códigos de ocorrência (`DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE
+FOTO.xlsx`, 32 exigem foto / 29 não exigem). Falta apenas o rótulo de decisão da fiscalização
+(foto aceita/rejeitada) — ver `docs/pedido_kickoff.md` para o detalhamento e as perguntas ainda
+em aberto para o Kickoff (12/09).
+
+<details><summary>Texto original (2026-08-16, histórico)</summary>
+
 **GAP confirmado** (`docs/analise_suficiencia.md`): **não existe dataset público com as notas do
 leiturista** (códigos tipo I100 são proprietários de cada distribuidora). Candidatos mapeados sem
 download (pendência de licença): Copel-AMR (12,5k fotos de campo BR), UFPR-ADMR-v2 (5k dials),
 IEEE DataPort (570). A estratégia é um **piloto** com esses dados e, sobretudo, o **lote real da
 distribuidora no Kickoff (12/09)**.
+
+</details>
 
 ## 7. Limitações honestas (o que o relatório NÃO esconde)
 

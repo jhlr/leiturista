@@ -1,117 +1,85 @@
-# Pedido de dados e questões para o Kickoff 12/09 — distribuidora
+# Pedido de dados e questões para o Kickoff 12/09 — Neoenergia PE
 
-**Data:** 2026-08-08 (rev. 2026-08-25) | **Status:** rascunho pré-kickoff (validar com o professor/grupo)
-**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap),
-`sbti_artigo/entendimento_problema.docx` (documento formal do Grupo 2/Luminus, 2026-08-25)
-**Meta:** sair do Kickoff com acesso a um lote real de fotos de campo da distribuidora.
+**Data:** 2026-08-08 (rev. 2026-08-25) | **Status:** GAP DA TAREFA 2 RESOLVIDO — dados reais em mãos
+**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap, **desatualizado**),
+`sbti_artigo/entendimento_problema.docx`, `data/neoenergia_pe/` (amostra real)
+**Meta:** confirmar no Kickoff os pontos que a amostra real não responde sozinha.
 
-> **Nota (2026-08-25):** o doc `Imersão, Entendimento e Objetivos do Problema` já formalizou
-> volume (50–70 mil imagens), equipe (6 analistas), tipos de ocorrência que impedem leitura
-> convencional (imóvel fechado/desocupado/demolido, acesso impedido) e a existência de geração
-> própria (fotovoltaico). As questões abaixo foram revisadas para não repetir o que já está
-> respondido e focar no que ainda falta.
->
-> **Achado importante (2026-08-25):** `perguntas_cliente_colegas.docx` (perguntas listadas por
-> colegas do grupo) mostra que já houve contato com uma amostra real de artefatos operacionais —
-> nome de arquivo `BaseExtracao_"data"_Dia.csv` com colunas (Número do medidor, Posição do medidor
-> lida, Nota de Leitura Atual, Foto do medidor), planilha `DESCRIÇÃO NOTAS LEITURISTAS X
-> SOLICITAÇÃO DE FOTO`, e convenção de nomes de pasta/arquivo de imagem (`PSP_EXTRATLEITIMPL_
-> <data>_<seq>` e `..._<matrícula/serial>_000`). Isso é mais concreto do que o "gap total de
-> dataset" assumido em `analise_suficiencia.md` — **confirmar no Kickoff se isso é uma amostra já
-> recebida (e então localizá-la no projeto) ou apenas material de referência mostrado em aula**,
-> antes de reafirmar o gap como bloqueante.
+> **ATUALIZAÇÃO CRÍTICA (2026-08-25):** o grupo já tem em mãos uma amostra real da
+> **Neoenergia PE** (`data/neoenergia_pe/`, gitignored): 4 lotes diários
+> (`PSP_EXTRATLEITIMPL_030726_0121`, `_200526_0352`, `_210526_0335`, `_220526_0408`) somando
+> **~12.343 imagens de campo** + 4 CSVs `BaseExtracao_<data>_Dia.csv` + a planilha
+> `DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx` com o **catálogo completo de 61
+> códigos de ocorrência** e a coluna "NOTA EXIGE FOTO?" (32 SIM / 29 NÃO). Isso **invalida o "GAP
+> CRÍTICO: nenhum dataset" registrado em `analise_suficiencia.md` e `relatorio_benchmark.md` §6**
+> — ambos precisam de revisão. Mantive o histórico deste doc abaixo, mas a seção "Achados a
+> partir da amostra real" substitui boa parte do que antes eram perguntas em aberto.
 
 ---
 
-## O que o grupo precisa validar (2 camadas)
+## Achados a partir da amostra real (`data/neoenergia_pe/`, analisado 2026-08-25)
+
+Inspeção do lote `PSP_EXTRATLEITIMPL_030726_0121` (3.479 linhas de CSV, 2.992 imagens em disco)
+respondeu diretamente várias perguntas que estavam em aberto:
+
+| Pergunta original | Resposta encontrada nos dados |
+|---|---|
+| Catálogo de códigos de ocorrência e padrão esperado de foto (Q3 do grupo; Q8 dos colegas) | **Resolvida.** `DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx` lista as 61 notas com descrição e flag SIM/NÃO de exigência de foto. Ex. de SIM: I100/I110/I120 (local fechado ocupado/desocupado/veraneio), D100/D101/D110/D111 (demolido), P111 (medidor substituído), T181 (função não existe no sistema — a nota mais frequente no lote, 591 ocorrências). |
+| Por que "Nota de Leitura Atual" = NA aparece com foto associada (Q6 dos colegas) | **Padrão confirmado, motivo ainda não explicado pelos dados.** 1.758 das 2.393 linhas com nota NA (73%) têm foto associada — leitura normal também gera foto em boa parte dos casos, não é exclusivo de ocorrência. Perguntar ao cliente **por que** (auditoria por amostragem? toda leitura fotografa?). |
+| "Número do medidor" com mais de um código (Q5 dos colegas) | **Padrão confirmado com formato `A/B`** (não é erro de digitação): 320 de 3.479 linhas (9,2%) têm dois números separados por `/`, ex. `3245096207/3190410624`. **Testado e refutado:** o número embutido no nome do arquivo de imagem (ex. `..._20000000002952998707_000.jpg`) **não corresponde a nenhum dos dois números do medidor** nem ao valor da leitura — é provavelmente um ID de ordem de serviço/sequência interna, não o serial do medidor. Pergunta ainda aberta: o que representa cada um dos dois números (medidor antigo/novo? titular/UC?) e qual decide a leitura correta. |
+| Mais arquivos de imagem na pasta do que linhas no CSV, ou vice-versa (Q9 dos colegas) | **Confirmado, nas duas direções.** 2.992 imagens em disco vs. 2.795 referenciadas por linhas não-NA do CSV → **197 imagens no disco não referenciadas por nenhuma linha**. Todas as 2.795 referências do CSV existem em disco (0 ausentes). Ainda não sabemos a origem das 197 órfãs — perguntar ao cliente. |
+| Nota exige foto (SIM) mas coluna Foto = NA | Ainda não cruzado por nota individual — fica como próximo passo de análise (script simples: join do CSV com a planilha de notas, filtrar SIM + Foto=NA). |
+| Nomenclatura de pasta/arquivo (Q10 dos colegas) | **Ainda não decodificada.** Pasta `PSP_EXTRATLEITIMPL_030726_0121` — hipótese: `030726` = data (03/07/2026), mas `0121` no fim e o número de 20 dígitos no nome do arquivo (`00000000000211765824` / `20000000002952998707`) não batem com nenhum campo do CSV (nem medidor, nem leitura). **Pergunta genuína pro Kickoff, dado não resolve sozinho.**
+
+## O que o grupo precisa validar (2 camadas) — atualizado
 
 | Camada | Objetivo | Dados atuais |
 |---|---|---|
-| 1. OCR do display | Ler o número do medidor na foto | ✅ MAPEN tem ~3.840 imgs públicas (UFPR-AMR BR, goodcoffee, utility_meters…) — suficiente p/ baseline |
-| 2. Foto ↔ nota | Validar se a foto corresponde ao medidor/cliente e é **coerente com a ocorrência** registrada pelo leiturista (ex.: **I100 Casa fechada** → foto deve mostrar portão/fachada fechada) | ❌ **nenhum** dataset público com rótulo de ocorrência |
+| 1. OCR do display | Ler o número do medidor na foto | ✅ MAPEN/leiturista tem ~3.840 imgs públicas (UFPR-AMR BR) — baseline já rodado (`relatorio_benchmark.md`) |
+| 2. Foto ↔ nota | Validar se a foto corresponde ao medidor/cliente e é coerente com a ocorrência | ✅ **RESOLVIDO** — ~12,3k fotos reais + CSV de ocorrência + catálogo de 61 notas com flag de exigência de foto (`data/neoenergia_pe/`) |
 
-**A Camada 2 é o coração do desafio e não temos dados.** Por isso o pedido abaixo.
+**Pendência real agora é rótulo de qualidade/aceitação, não volume de dados**: o CSV traz a nota
+aplicada pelo leiturista, mas não traz uma coluna "foto aceita/rejeitada pelo analista" — esse é
+o rótulo-ouro que falta para treino supervisionado direto (ver Q2 abaixo).
 
-## Pedido de dados (lote real de campo)
+## Questões a levar ao Kickoff (revisadas — sem repetir o que os dados já respondem)
 
-### 1. Fotografias de campo com nota/ocorrência (CRÍTICO — Camada 2)
+1. **Rótulo de decisão da fiscalização:** existe (ou pode ser gerado) um campo "foto
+   aceita/rejeitada pelo analista" por linha do `BaseExtracao`? Sem isso, o treino supervisionado
+   da Tarefa 2 não tem alvo direto.
+2. Os quatro lotes que temos (03/07, 20/05, 21/05, 22/05) são representativos do volume mensal
+   (50–70 mil) ou são uma amostra reduzida/específica? Dá pra ter acesso a mais lotes/período?
+3. **Anonimização/LGPD:** as fotos têm fachada/portão/pessoas visíveis. Qual o fluxo de uso
+   autorizado para este material em trabalho acadêmico (e potencial publicação em artigo)?
+4. Por que ~73% das linhas com nota NA (leitura normal) também têm foto associada — é
+   fotografia de toda visita, ou auditoria por amostragem?
+5. O que significam os dois números separados por `/` em "Número do medidor" (320 casos)? Qual
+   dos dois é o correto para a leitura?
+6. O que representam os segmentos do nome de pasta (`PSP_EXTRATLEITIMPL_<data>_<seq>`) e do
+   arquivo de imagem (número de ~20 dígitos) — não correspondem a medidor nem leitura no CSV.
+7. As 197 imagens sem referência no CSV (do lote analisado) — são descartes, fotos duplicadas,
+   ou erro de extração?
+8. Dá para cruzar as fotos com a região (bairro/CEP) para priorizar fiscalização onde a perda de
+   energia é alta (integração com a camada de dados do projeto-irmão `mapen`)?
 
-Lote de fotos tiradas por leituristas, **com a ocorrência aplicada**, idealmente:
+## Questões operacionais/técnicas remanescentes (dos colegas — `perguntas_cliente_colegas.docx`)
 
-- **Volume:** qualquer lote ajuda; ideal ≥ 5.000 fotos (aceitamos o que o cliente liberar).
-- **Conteúdo:** o medidor **no contexto** (fachada, portão, caixa de padrão, instalação
-  externa) — não só close do display — para treinar classificação de cena.
-- **Rótulo mínimo por foto:**
-  - código da ocorrência/nota aplicada pelo leiturista (I100, I300, …);
-  - leitura registrada (valor do display, quando houver);
-  - (se existir) decisão da fiscalização: **foto aceita/rejeitada** — isso é o rótulo
-    ouro para treino supervisionado de detecção de fraude/erro.
-- **Metadados valiosos (se disponíveis):** bairro/CEP ou região (para cruzar com a
-  camada de perdas e priorizar fiscalização), tipo de medidor, data.
-- **Formato:** imagens (jpg/png) + tabela CSV com os metadados.
+Já respondidas pelos dados (ver tabela acima): fluxo de nota NA com foto, medidor com dois
+códigos, contagem de imagens vs. CSV, catálogo de notas que exigem foto. **Ainda em aberto:**
 
-### 2. Catálogo de ocorrências (leve)
-
-Lista dos códigos de nota/ocorrência que a distribuidora usa (I100, I300, …) com o
-**padrão esperado de foto** para cada um — vira a taxonomia de classes do modelo.
-
-### 3. (Opcional, Camada 1) Benchmark real BR
-
-Amostra de fotos de medidores **brasileiros da base da distribuidora** com a leitura
-correta, para validar o OCR do MAPEN em condições reais de campo (o UFPR-AMR é a base
-mais próxima, mas é antigo).
-
-## Questões a levar
-
-1. É possível disponibilizar esse lote de fotos de campo com as ocorrências? Qual o
-   volume aproximado e o prazo?
-2. A distribuidora tem **histórico auditado** (fotos que já passaram por revisão com
-   decisão aceita/rejeitada)? Isso habilitaria treino supervisionado direto.
-3. Quais tipos de ocorrência existem e existe um documento de padrões esperados de foto?
-4. Como fica a **anonimização/LGPD**: fotos podem conter dados pessoais (fachada,
-   placa, pessoas). Qual o fluxo de anonimização/termos de uso para pesquisa acadêmica?
-5. A área tem métricas atuais de erro de leitura (ex.: % de fotos rejeitadas, taxas de
-   ocorrência por tipo)? Servem de baseline de avaliação.
-6. Dá para cruzar as fotos com a região (bairro/CEP) para priorizar fiscalização onde a
-   perda é alta?
-
-## Questões operacionais/técnicas (dos colegas — `perguntas_cliente_colegas.docx`)
-
-Complementam as questões acima com detalhe operacional fino, presumindo acesso a artefatos reais
-(`BaseExtracao_"data"_Dia.csv`, pastas de imagem, planilha de descrição de notas):
-
-**Fluxo de conferência**
 1. Como as imagens são baixadas para a máquina local? Com que frequência? Em lotes — de que tamanho?
-2. O `BaseExtracao_"data"_Dia.csv` é a lista/planilha de controle que guia o trabalho do analista?
-   Das 4 colunas (Número do medidor, Posição do medidor lida, Nota de Leitura Atual, Foto do
-   medidor), quais vêm pré-preenchidas, em branco, ou precisam de conferência via foto?
-3. O que faz uma foto ser rejeitada (ilegível, fora de contexto)? O que acontece na planilha de
-   controle quando isso ocorre?
-4. Após conferência, como a informação é consolidada no SAP? Sobe um CSV — é o mesmo
-   `BaseExtracao_"data"_Dia.csv` ou outro template?
+2. O que faz uma foto ser rejeitada (ilegível, fora de contexto) e o que acontece na planilha de
+   controle quando isso ocorre? (a coluna de decisão não está no CSV que temos — ver Q1 acima)
+3. Após conferência, como a informação é consolidada no SAP? Sobe um CSV — é o mesmo
+   `BaseExtracao_<data>_Dia.csv` ou outro template?
+4. Nome correto do departamento/cargo envolvido na conferência de imagens?
+5. Qual o modelo do leitor PDA usado em campo?
 
-**Conteúdo e consistência dos dados**
-5. Por que algumas linhas de "Número do medidor" têm mais de um código? Foi trocado o medidor?
-   O número que aparece na foto sempre corresponde ao valor mais à esquerda na célula?
-6. Por que existem fotos com "Nota de Leitura Atual" = NA? O que o analista deve conferir nesse caso?
-7. Quando a nota exige foto mas "Foto do medidor" está NA, por que não há foto e o que acontece?
-8. Na planilha "DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO", para quais códigos (NOTA) é
-   necessário verificar o consumo ("Posição do medidor lida") a partir da imagem?
-9. Por que há mais arquivos de imagem na pasta do que linhas listadas no CSV correspondente?
+## Plano B — não se aplica mais para volume/catálogo
 
-**Metadados e nomenclatura**
-10. Qual a regra de nomenclatura das pastas locais (ex.: `PSP_EXTRATLEITIMPL_030726_0121`) e dos
-    arquivos de imagem (ex.: `..._00000000000211765824_000`) — o que cada segmento significa?
+Mantido apenas para o rótulo de decisão (aceita/rejeitada), caso o cliente não consiga fornecer:
 
-**Outras**
-11. Nome correto do departamento/cargo envolvido na conferência de imagens?
-12. Qual o modelo do leitor PDA usado em campo?
-
-## Plano B (se não houver lote real)
-
-1. **Sintético:** gerar variações de foto de medidor + fachada (aumentação com dados
-   abertos do MAPEN) com rótulos sintéticos de ocorrência.
-2. **Piloto manual:** montar um mini-lote com poucas dezenas de fotos rotuladas à mão
-   para provar o conceito e calibrar o pipeline.
-3. Apresentar no Kickoff como "o que dá para fazer já" e o que fica bloqueado sem dados
-   reais.
+1. **Piloto manual:** rotular à mão uma amostra dos ~12,3k já disponíveis (aceita/rejeitada por
+   coerência com a nota) para treinar/validar um classificador inicial.
+2. Priorizar as notas que **exigem foto** (32 códigos, lista acima) — maior densidade de sinal
+   de coerência foto↔ocorrência do que notas sem exigência de foto.
