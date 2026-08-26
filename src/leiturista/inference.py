@@ -74,6 +74,7 @@ class Prediction:
     signature_tokens: list[str]
     boxes: list[Box]
     legible: bool
+    sharpness: float | None  # variância do Laplaciano do candidato avaliado; None se nada detectado
     flags: list[str]
     annotated: Image.Image
 
@@ -417,13 +418,25 @@ class MeterOCR:
                 reading = digits_full
                 flags.append("leitura via OCR da imagem inteira (caixa de leitura não segmentada)")
 
+        # Candidato p/ checagem de nitidez: a leitura, se houver; senão a maior caixa
+        # detectada (serial/outro), para que a ausência de leitura não deixe a checagem
+        # de nitidez sem executar — só fica sem candidato se nada foi detectado na foto.
+        def _box_area(b: Box) -> float:
+            return float((b.quad[:, 0].max() - b.quad[:, 0].min()) * (b.quad[:, 1].max() - b.quad[:, 1].min()))
+
+        sharpness_candidate = reading_box
+        if sharpness_candidate is None and boxes:
+            sharpness_candidate = max(boxes, key=_box_area)
+
         legible = True
-        if reading_box is not None:
-            if _laplacian(reading_box) < LAPLACIAN_LEGIBLE:
+        sharpness: float | None = None
+        if sharpness_candidate is not None:
+            sharpness = _laplacian(sharpness_candidate)
+            if sharpness < LAPLACIAN_LEGIBLE:
                 legible = False
                 flags.append("display borrado/desfocado — conferir leitura")
-            if reading_box.source == "inverted":
-                flags.append("leitura via imagem invertida (display claro-em-escuro)")
+        if reading_box is not None and reading_box.source == "inverted":
+            flags.append("leitura via imagem invertida (display claro-em-escuro)")
 
         for b in boxes:
             color = {"leitura": (0, 200, 0), "serial": (0, 150, 255), "outro": (220, 220, 220)}[b.field]
@@ -449,6 +462,7 @@ class MeterOCR:
             signature_tokens=signature_tokens,
             boxes=boxes,
             legible=legible,
+            sharpness=sharpness,
             flags=flags,
             annotated=Image.fromarray(annotated),
         )

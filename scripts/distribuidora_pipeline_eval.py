@@ -74,6 +74,7 @@ def run_eval(n_per_group: int, seed: int) -> dict:
                 "medidor": medidor,
                 "leitura": pred.reading,
                 "legivel": pred.legible,
+                "sharpness": pred.sharpness,
                 "flags": pred.flags,
             })
 
@@ -82,11 +83,22 @@ def run_eval(n_per_group: int, seed: int) -> dict:
         total = len(preds)
         sem_leitura = sum(1 for p in preds if p["leitura"] is None)
         ilegivel = sum(1 for p in preds if not p["legivel"])
+        sharp_vals = sorted(p["sharpness"] for p in preds if p["sharpness"] is not None)
+        sem_candidato = sum(1 for p in preds if p["sharpness"] is None)
+
+        def _pct(vals: list[float], q: float) -> float | None:
+            if not vals:
+                return None
+            idx = min(len(vals) - 1, int(q * len(vals)))
+            return round(vals[idx], 1)
+
         summary[group] = {
             "amostra": total,
             "disponivel_no_lote": len(by_group[group]),
             "pct_sem_leitura_detectada": round(100 * sem_leitura / total, 1) if total else None,
             "pct_ilegivel_laplaciano": round(100 * ilegivel / total, 1) if total else None,
+            "sem_candidato_nitidez": sem_candidato,
+            "sharpness_p10_mediana_p90": [_pct(sharp_vals, 0.1), _pct(sharp_vals, 0.5), _pct(sharp_vals, 0.9)],
             "flags_mais_comuns": Counter(f for p in preds for f in p["flags"]).most_common(5),
         }
 
