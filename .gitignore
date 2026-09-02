@@ -18,3 +18,7 @@ graphify-out/
 
 # OS
 .DS_Store
+
+# Logs e editor (locais, não regeráveis mas irrelevantes ao repo)
+logs/
+.vscode/

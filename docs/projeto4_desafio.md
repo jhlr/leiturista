@@ -2,7 +2,9 @@
 
 **Disciplina:** Projeto 4 - DADOS (Cesar School, BD2026.2)
 **Cliente:** distribuidora de energia elétrica
-**Última atualização:** 2026-08-08
+**Grupo:** Grupo 2 — Luminus (Angelita Dias, Carolline Mariz, Fernando Rangel, Guaraci Rios,
+Ivo Caetano, João Rietra, Mikael Mulatinho)
+**Última atualização:** 2026-08-31
 
 ---
 
@@ -96,6 +98,20 @@ Problemas gerados:
 
 **Tempo de ocorrência:** sempre (contínuo). **Tentativas anteriores de solução:** não.
 
+**Volume e equipe (confirmado pelo grupo, doc. "Imersão, Entendimento e Objetivos do Problema",
+2026-08-31):** entre **50 mil e 70 mil imagens/mês** são encaminhadas para validação (fotografias
+associadas a inconsistências no valor registrado pelo leiturista), analisadas manualmente por
+**6 analistas/validadores**, que verificam se a evidência é suficiente e compatível com o registro.
+O volume gera carga operacional elevada e horas extras para a equipe.
+
+**Recorte do projeto:** análise das evidências fotográficas associadas às visitas de leitura.
+Fora do escopo: cálculo tarifário, manutenção da rede elétrica, investigação de fraude, cobrança
+financeira ou outras atividades não diretamente relacionadas à validação dessas evidências.
+
+**Não se pressupõe automação total:** o objetivo é o maior nível de automatização tecnicamente
+seguro e operacionalmente confiável, preservando a atuação dos analistas nos casos de evidência
+insuficiente ou que exijam julgamento especializado — a decisão final permanece humana.
+
 ### Quem é afetado
 
 - **Clientes** (mais afetados): o erro chega diretamente na fatura.
@@ -122,6 +138,29 @@ leiturista**. Exemplos:
   esperado (ex.: portão ou fachada fechada visível).
 - A IA valida a leitura correta **e** se a evidência fotográfica está de acordo com a
   justificativa registrada.
+
+---
+
+## Objetivos do projeto (grupo, doc. "Imersão, Entendimento e Objetivos do Problema", 2026-08-31)
+
+**Objetivo geral:** desenvolver uma abordagem para tornar a análise das evidências fotográficas
+das visitas de leitura mais eficiente, padronizada e confiável, distinguindo registros
+consistentes daqueles que necessitem de análise humana, com o propósito de reduzir a carga
+operacional e as horas extras dos analistas/validadores.
+
+**Objetivos específicos** (numeração do grupo — "revisar com base no escopo dos dados"):
+
+- **OE2** — Estabelecer critérios de coerência entre a evidência fotográfica e as informações
+  registradas pelo leiturista.
+- **OE4** — Distinguir registros com evidências suficientemente consistentes daqueles que
+  apresentem dúvida, ambiguidade ou potencial inconsistência, direcionando para análise humana os
+  casos que efetivamente necessitem de julgamento especializado.
+- **OE5** — Reduzir a carga de verificações manuais repetitivas e a necessidade de horas extras,
+  permitindo o redirecionamento da capacidade dos analistas/validadores para atividades de maior
+  valor operacional.
+
+*(OE1 e OE3 não aparecem no documento de origem — provavelmente pendentes de definição pelo
+grupo; confirmar antes de citar a lista como completa.)*
 
 ---
 
