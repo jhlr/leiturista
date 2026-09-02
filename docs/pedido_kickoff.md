@@ -1,9 +1,17 @@
 # Pedido de dados e questões para o Kickoff 12/09 — distribuidora parceira
 
-**Data:** 2026-08-08 (rev. 2026-08-25) | **Status:** GAP DA TAREFA 2 RESOLVIDO — dados reais em mãos
-**Referência:** `projeto4_desafio.md` (desafio), `analise_suficiencia.md` (gap, **desatualizado**),
-`sbti_artigo/entendimento_problema.docx`, `data/distribuidora_campo/` (amostra real)
+**Data:** 2026-08-08 (rev. 2026-08-31) | **Status:** GAP DA TAREFA 2 RESOLVIDO — dados reais em mãos
+**Referência:** `projeto4_desafio.md` (desafio, com objetivos do grupo), `analise_suficiencia.md`
+(gap, **desatualizado**), `sbti_artigo/entendimento_problema.docx`, `data/distribuidora_campo/`
+(amostra real), `imersao_entendimento_objetivos_v2.docx` (imersão + objetivos formais do grupo,
+baixado 2026-08-31)
 **Meta:** confirmar no Kickoff os pontos que a amostra real não responde sozinha.
+
+> **Modelo de Project Charter disponível:** `entendimento_negocio_modelo_charter.docx` (baixado
+> 2026-08-31) é um exemplo/organizador fornecido pela disciplina (caso TJPE — prescrição penal),
+> não contém dado do nosso projeto. Serve de estrutura para formalizar, pós-Kickoff, um Project
+> Charter v0 do MAPEN/leiturista (problema, decisão, unidade de análise, target, critérios de
+> sucesso, riscos, gate da fase) no mesmo molde.
 
 > **ATUALIZAÇÃO CRÍTICA (2026-08-25):** o grupo já tem em mãos uma amostra real de
 > **uma distribuidora parceira** (`data/distribuidora_campo/`, gitignored): 4 lotes diários
