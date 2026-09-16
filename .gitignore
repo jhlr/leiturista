@@ -13,6 +13,10 @@ data/
 models/
 .model_cache/
 
+# Fotos do lote real da distribuidora (12k imgs locais, 4 lotes PSP_EXTRATLEITIMPL)
+Fotosdistribuidora/
+montagem_amostras_distribuidora.png
+
 # graphify
 graphify-out/
 
@@ -22,3 +26,10 @@ graphify-out/
 # Logs e editor (locais, não regeráveis mas irrelevantes ao repo)
 logs/
 .vscode/
+
+# Logs locais no root da sessão (downloads/treino/streamlit/import)
+/*.log
+/*.err
+
+# Backup de modelos baixados (154MB, regerável via docs/origem_dos_dados.md)
+leiturista-models.tar.gz

@@ -35,6 +35,20 @@ def _cmd_extract(args: argparse.Namespace) -> None:
     extract_ufpr_amr(out=args.out, per_split=args.per_split)
 
 
+def _cmd_import_distribuidora(args: argparse.Namespace) -> None:
+    from .distribuidora import MIN_SHARPNESS_ACCEPT, distribuidora_DIR, build_dataset
+
+    build_dataset(
+        out_dir=args.out,
+        data_root=args.data_root,
+        notes=tuple(args.notes.split(",")),
+        min_sharpness=args.min_sharpness if args.min_sharpness is not None else MIN_SHARPNESS_ACCEPT,
+        max_samples=args.max_samples,
+        seed=args.seed,
+        qa_n=args.qa_n,
+    )
+
+
 def _cmd_train(args: argparse.Namespace) -> None:
     from .train import train
 
@@ -105,6 +119,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--out", default=str(paths.FINETUNE_DIR))
     p.add_argument("-n", "--per-split", type=int, default=None)
     p.set_defaults(func=_cmd_extract)
+
+    p = sub.add_parser("import-distribuidora", help="importa fotos distribuidora -> crops do display + labels.csv")
+    p.add_argument("--data-root", default=str(paths.ROOT / "Fotosdistribuidora"))
+    p.add_argument("-o", "--out", default=str(paths.DATA_DIR / "distribuidora_amr"))
+    p.add_argument("--notes", default="NA", help="notas de leitura aceitas, separadas por vírgula")
+    p.add_argument("--min-sharpness", type=float, default=None, help="limiar de nitidez do crop (default lib: 10.0)")
+    p.add_argument("-n", "--max-samples", type=int, default=None, help="debug: subconjunto")
+    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--qa-n", type=int, default=40)
+    p.set_defaults(func=_cmd_import_distribuidora)
 
     p = sub.add_parser("train", help="fine-tune TrOCR-small-stage1 em UFPR-AMR (MLflow)")
     p.add_argument("--model", default=str(paths.MODELS_DIR / "trocr-small-stage1"))

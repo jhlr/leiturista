@@ -94,7 +94,7 @@ class MeterOCR:
             return
         self._det = ort.InferenceSession(str(DET_ONNX))
         self._rec = ort.InferenceSession(str(REC_ONNX))
-        self._chars = json.loads(DICT_FILE.read_text())
+        self._chars = json.loads(DICT_FILE.read_text(encoding="utf-8"))
 
     def _load_trocr(self) -> tuple:
         """TrOCR-small-printed materializado do mlflow.db (cache em disco).
