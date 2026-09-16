@@ -64,7 +64,12 @@ adicionais aparecem e são maiores que o erro do leitor em si:
 display específico pra foto de campo (o gargalo real, por achado próprio), (b)
 terminar o fine-tune do TrOCR com dados de campo (autorizado pela disciplina, mas
 "treino só o usuário dispara" — não rodado nesta entrega), (c) mapear `funcao` pro
-catálogo de notas real do cliente em vez da heurística atual.
+catálogo de notas real do cliente em vez da heurística atual, (d) **classificador
+binário no início do pipeline** ("tem medidor nesta foto ou não?", insight do
+professor em aula) — hoje o `/predict` roda det+rec+TrOCR completo mesmo numa foto
+de portão/fachada/rua; um classificador leve antes disso filtraria essas fotos sem
+o custo do pipeline inteiro, e separaria melhor "sem medidor na foto" de "medidor
+presente mas ilegível" (hoje os dois caem em `sem_leitura_detectada`).
 
 ## 3. Como rodar (do clone à primeira predição)
 
