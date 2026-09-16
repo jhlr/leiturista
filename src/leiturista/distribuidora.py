@@ -1,4 +1,4 @@
-"""Dados reais da distribuidora (fotos distribuidora) -> dataset de fine-tune.
+"""Dados reais da distribuidora (piloto da disciplina) -> dataset de fine-tune.
 
 Formato de origem (4 lotes `PSP_EXTRATLEITIMPL_*/BaseExtracao_*.csv`, fotos .jpg
 360x480):
@@ -36,7 +36,7 @@ from PIL import Image, ImageDraw
 from . import paths
 from .inference import MeterOCR
 
-distribuidora_DIR = paths.ROOT / "Fotosdistribuidora"
+FOTOS_DIR = Path(os.environ.get("LEITURISTA_FOTOS_DIR", str(paths.ROOT / "FotosDistribuidora")))
 LAPLACIAN_LEGIBLE = 25.0  # referencia do pipeline de inferência
 MIN_SHARPNESS_ACCEPT = 10.0  # gate de nitidez frouxo: o match vs rótulo é o filtro real
 SPLITS = (("train", 0.8), ("valid", 0.1), ("test", 0.1))
@@ -62,7 +62,7 @@ def _digit_match(pred: str, label: str) -> float:
     return sum(1 for a, b in aligned if a == b) / len(label)
 
 
-def load_rows(data_root: Path | str = distribuidora_DIR) -> pd.DataFrame:
+def load_rows(data_root: Path | str = FOTOS_DIR) -> pd.DataFrame:
     """Lê todos os BaseExtracao_*.csv e devolve linhas com foto existente no disco."""
     data_root = Path(data_root)
     rows: list[pd.DataFrame] = []
@@ -168,7 +168,7 @@ def _make_montage(items: list[tuple[np.ndarray, str]], out: Path, cols: int = 4)
 
 def build_dataset(
     out_dir: Path | str,
-    data_root: Path | str = distribuidora_DIR,
+    data_root: Path | str = FOTOS_DIR,
     notes: tuple[str, ...] = ("NA",),
     min_sharpness: float = MIN_SHARPNESS_ACCEPT,
     max_samples: int | None = None,
@@ -220,7 +220,7 @@ def build_dataset(
                 rejected_.append((cand.crop, f"leitura={r['leitura']} blur={cand.sharpness:.0f}"))
             continue
 
-        name = f"neo_{r['leitura']}_{len(accepted_):05d}.png"
+        name = f"dist_{r['leitura']}_{len(accepted_):05d}.png"
         Image.fromarray(cand.crop[:, :, ::-1]).save(out_dir / name)
         item.update({"status": "aceito", "image": name})
         manifest.append(item)

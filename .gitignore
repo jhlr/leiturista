@@ -14,7 +14,7 @@ models/
 .model_cache/
 
 # Fotos do lote real da distribuidora (12k imgs locais, 4 lotes PSP_EXTRATLEITIMPL)
-Fotosdistribuidora/
+FotosDistribuidora/
 montagem_amostras_distribuidora.png
 
 # graphify

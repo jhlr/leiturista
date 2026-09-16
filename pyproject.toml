@@ -24,6 +24,7 @@ dependencies = [
     "opencv-python-headless",
     "mlflow",
     "streamlit",
+    "bentoml",
 ]
 
 [project.scripts]

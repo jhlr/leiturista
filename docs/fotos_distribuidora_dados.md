@@ -1,11 +1,11 @@
-# Fotos distribuidora — lote real da distribuidora (dataset de fine-tune)
+# Fotos da distribuidora — lote real (piloto da disciplina) (dataset de fine-tune)
 
 **Data:** 2026-09-14 | **Status:** import e QA concluídos | **Origem:** pap. da
 distribuidora (Kickoff). Complementa a descoberta em `origem_dos_dados.md`.
 
 ## O que chegou
 
-Pasta `Fotosdistribuidora/` no repo (não versionada — ver .gitignore):
+Pasta `FotosDistribuidora/` no repo (não versionada — ver .gitignore):
 
 - 4 lotes `PSP_EXTRATLEITIMPL_{data}_{hora}/`, cada um com:
   - `BaseExtracao_{data}_Dia.csv` — 5 colunas:

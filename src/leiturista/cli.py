@@ -36,7 +36,7 @@ def _cmd_extract(args: argparse.Namespace) -> None:
 
 
 def _cmd_import_distribuidora(args: argparse.Namespace) -> None:
-    from .distribuidora import MIN_SHARPNESS_ACCEPT, distribuidora_DIR, build_dataset
+    from .distribuidora import MIN_SHARPNESS_ACCEPT, build_dataset
 
     build_dataset(
         out_dir=args.out,
@@ -120,8 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-n", "--per-split", type=int, default=None)
     p.set_defaults(func=_cmd_extract)
 
-    p = sub.add_parser("import-distribuidora", help="importa fotos distribuidora -> crops do display + labels.csv")
-    p.add_argument("--data-root", default=str(paths.ROOT / "Fotosdistribuidora"))
+    p = sub.add_parser("import-distribuidora", help="importa fotos da distribuidora -> crops do display + labels.csv")
+    p.add_argument("--data-root", default=str(paths.ROOT / "FotosDistribuidora"))
     p.add_argument("-o", "--out", default=str(paths.DATA_DIR / "distribuidora_amr"))
     p.add_argument("--notes", default="NA", help="notas de leitura aceitas, separadas por vírgula")
     p.add_argument("--min-sharpness", type=float, default=None, help="limiar de nitidez do crop (default lib: 10.0)")
