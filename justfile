@@ -31,5 +31,5 @@ serve:
 predict:
     curl -s -F image=@samples/exemplo_01.png http://localhost:3000/predict | python3 -m json.tool
 
-# setup + download de modelos, um comando só
-all: setup models
+# setup + download de modelos + geração dos exemplos, um comando só
+all: setup models samples

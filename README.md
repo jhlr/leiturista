@@ -68,13 +68,16 @@ catálogo de notas real do cliente em vez da heurística atual.
 
 ## 3. Como rodar (do clone à primeira predição)
 
-Testado com **Python 3.14** + `uv`. Tempo aproximado: ~3 min (setup) + ~2 min
-(download de 147 MB de modelos) numa rede razoável.
+Testado com `uv` (resolve o Python sozinho, 3.13). Tempo aproximado: ~2 min (`uv sync`
+baixa/instala ~160 pacotes) + ~2 min (`just models`, 147 MB) + a primeira chamada de
+`bentoml serve` demora ~15-30s pra abrir a porta (import "frio" de torch/transformers)
+numa rede razoável.
 
 ```bash
 git clone https://github.com/jhlr/leiturista.git && cd leiturista
 just setup      # uv sync — instala as dependências (uv.lock)
 just models     # baixa + extrai os pesos (release público modelos-1.0, 147 MB)
+just samples    # gera samples/*.png (sintéticas, seed fixa — não versionadas)
 just serve      # sobe o serviço em http://localhost:3000
 ```
 
@@ -85,6 +88,7 @@ comandos equivalentes sem `just`:
 uv sync
 curl -L https://github.com/jhlr/leiturista/releases/download/modelos-1.0/leiturista-models.tar.gz -o leiturista-models.tar.gz
 tar -xzf leiturista-models.tar.gz
+uv run python scripts/gen_sample_images.py
 uv run bentoml serve leiturista.service:LeituristaService --port 3000
 ```
 
@@ -148,9 +152,10 @@ Nenhuma foto ou linha de planilha real da distribuidora está neste repositório
 `FotosDistribuidora/`, `data/`, `models/`, `.model_cache/` e `mlflow.db` são
 `.gitignore`d, e o histórico do repo foi conferido (`git log --all --diff-filter=A`)
 pra confirmar que nunca entraram. As imagens em `samples/` são **sintéticas**,
-geradas por `scripts/gen_sample_images.py` (seed fixa, reprodutível); o CSV em
-`samples/leituras_exemplo.csv` tem o mesmo schema do CSV real do cliente, com
-valores inventados.
+geradas por `scripts/gen_sample_images.py` (seed fixa, reprodutível) — não são
+versionadas (`samples/*.png` no `.gitignore`), justamente por serem regeráveis em
+segundos com `just samples`; o `samples/leituras_exemplo.csv` (autoral, versionado)
+tem o mesmo schema do CSV real do cliente, com valores inventados.
 
 ## 7. Uso de IA
 

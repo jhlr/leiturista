@@ -33,3 +33,8 @@ logs/
 
 # Backup de modelos baixados (154MB, regerável via docs/origem_dos_dados.md)
 leiturista-models.tar.gz
+
+# Imagens sintéticas de exemplo — regeráveis (seed fixa) via `just samples` /
+# scripts/gen_sample_images.py; não versionadas de propósito. O CSV de exemplo
+# (autoral, não gerado) continua versionado.
+samples/*.png
