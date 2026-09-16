@@ -154,20 +154,51 @@ valores inventados.
 
 ## 7. Uso de IA
 
-Este repositório foi construído com apoio do **Claude Code** (Anthropic), em modo
-conversacional: pedi para (a) auditar o repo em busca de dado/nome do cliente antes
-de qualquer coisa (achou o `docs/CONTEXT_ARCHIVE.txt` e o nome do cliente em 4
-arquivos — removido/renomeado), (b) desenhar e escrever o serviço BentoML em cima do
-`MeterOCR` já existente, (c) escrever este README e o restante do empacotamento
-(`justfile`, `pyproject.toml`, samples sintéticos).
+Ferramenta: **Claude Code** (Anthropic, Sonnet 5), em modo conversacional, com
+acesso a shell, edição de arquivos e GitHub CLI. Detalhado abaixo porque "código
+gerado que ninguém da equipe sabe explicar conta como não entregue" — este é o
+registro do que foi pedido e a avaliação crítica de cada resposta.
 
-**Avaliação crítica:** o código gerado para `service.py` é deliberadamente curto (um
-`predict`, sem abstração extra) e foi lido/testado linha a linha antes de aceitar —
-os três testes descritos na seção 4 foram rodados de verdade contra o serviço no ar,
-não apenas assumidos. O número mais importante do README (que o TrOCR em produção é
-o off-the-shelf, não o fine-tunado) só foi confirmado cruzando 3 documentos
-(`inference.py`, `docs/finetune_trocr_ufpramr.md`, `docs/relatorio_benchmark.md`) —
-a IA não inventou nem arredondou esse dado.
+### O que foi pedido, em ordem
+
+1. Revisão de um PR anterior (import do lote real de fotos de campo) — aceitar tudo
+   exceto um arquivo de snapshot de sessão que não deveria ir pro repo público.
+2. Implementação do SR1 a partir do enunciado do professor, colado inteiro no chat.
+3. Três ajustes pontuais durante a implementação: trocar o import do PIL
+   (`from PIL import Image as pil`); autorização explícita para testar contra fotos
+   reais de campo localmente (sem commitar), em vez de só sintéticas; manter
+   `service.py` legível, sem abstração extra em cima do `MeterOCR`.
+4. Este relatório de uso de IA, dentro do próprio README.
+
+### O que a IA fez por iniciativa própria (não pedido explicitamente)
+
+- Antes de tocar em qualquer arquivo, auditou se o repositório já era público e se
+  continha nome do cliente ou dado real commitado — achou o nome do cliente em 4
+  arquivos rastreados (removidos/renomeados) e confirmou via
+  `git log --all --diff-filter=A` que nenhuma foto/CSV real tinha sido commitada em
+  nenhum momento do histórico.
+- Apurou de qual MLflow run vem o TrOCR carregado em produção hoje, cruzando
+  `inference.py`, `docs/finetune_trocr_ufpramr.md` e `docs/relatorio_benchmark.md` —
+  descobriu que é o checkpoint **off-the-shelf** (`9c14db62`), não o fine-tunado
+  como um doc mais antigo sugeria, e reportou isso sem arredondar pra cima.
+
+### Avaliação crítica
+
+**Onde funcionou bem:** o `service.py` gerado é curto (uma classe, um método
+`predict`) e foi lido linha a linha antes de aceitar. Todo `curl` deste README foi
+de fato executado contra o serviço no ar (imagem pública UFPR-AMR, as 4 sintéticas
+de `samples/`, e uma foto real de campo só pra validar a seção de limites, sem
+commitar o resultado) — nenhum exemplo é hipotético. Os números de exact-match/
+digit-acc citados vieram de doc já existente no repo, não foram inventados.
+
+**Onde precisou de correção humana:** no merge do PR anterior, a IA empurrou a
+remoção de um arquivo pra uma branch nova em `origin` em vez de atualizar a branch
+do fork de origem do PR — o squash merge trouxe o arquivo de volta pro `main`,
+precisando de um segundo commit corretivo depois que o erro foi percebido (registrado
+aqui porque é o tipo de erro que passa batido se ninguém conferir o resultado). O
+plano inicial também só previa imagens sintéticas pros testes de limite — foi pedido
+explicitamente rodar também contra fotos reais de campo antes de escrever a seção 2.
+Estilo de import do PIL foi corrigido por pedido direto, não por iniciativa da IA.
 
 ## Licença
 
