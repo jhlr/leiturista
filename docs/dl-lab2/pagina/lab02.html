@@ -1,0 +1,1510 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arquitetura Profunda Lab 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --fundo: #F2F5F4;
+  --superficie: #FFFFFF;
+  --tinta: #15262E;
+  --tinta-suave: #4B5C63;
+  --linha: #D3DCDA;
+  --faixa: #E8EEEC;
+  --acento: #A95D0A;
+  --topo: #17404F;
+  --topo-tinta: #EAF2F1;
+  --registro: #0E1E24;
+  --registro-digito: #F5F1E6;
+  --codigo-fundo: #EDF1F0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo: #0E161A;
+    --superficie: #142026;
+    --tinta: #E3EBE9;
+    --tinta-suave: #9FB1B3;
+    --linha: #2A3B41;
+    --faixa: #1A2A31;
+    --acento: #E59E45;
+    --topo: #0B2731;
+    --topo-tinta: #E3EBE9;
+    --registro: #050C0F;
+    --registro-digito: #F0EADB;
+    --codigo-fundo: #101B20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fundo: #0E161A;
+  --superficie: #142026;
+  --tinta: #E3EBE9;
+  --tinta-suave: #9FB1B3;
+  --linha: #2A3B41;
+  --faixa: #1A2A31;
+  --acento: #E59E45;
+  --topo: #0B2731;
+  --topo-tinta: #E3EBE9;
+  --registro: #050C0F;
+  --registro-digito: #F0EADB;
+  --codigo-fundo: #101B20;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font: 17px/1.62 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+}
+a { color: var(--acento); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+code, pre { font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
+h1, h2, h3 { font-family: Archivo, "Arial Narrow", Arial, sans-serif; text-wrap: balance; line-height: 1.2; }
+
+.rotulo {
+  margin: 0;
+  font: 600 12px/1.4 "JetBrains Mono", Consolas, monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--acento);
+}
+
+.topo { background: var(--topo); color: var(--topo-tinta); padding: 48px 16px 40px; }
+.topo-inner { max-width: 1040px; margin: 0 auto; display: grid; gap: 20px; }
+.topo .rotulo { color: #E9A955; }
+.topo h1 { margin: 0; font-size: clamp(34px, 6vw, 56px); font-weight: 800; letter-spacing: -.01em; }
+.topo h1 span { font-weight: 500; font-size: .5em; opacity: .9; }
+.registro { display: flex; gap: 4px; align-items: center; }
+.registro span {
+  display: inline-grid; place-items: center;
+  width: 40px; height: 54px;
+  background: var(--registro); color: var(--registro-digito);
+  font: 600 30px/1 "JetBrains Mono", Consolas, monospace;
+  border-radius: 3px;
+  box-shadow: inset 0 -12px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.registro span:last-of-type { background: #7A2E14; }
+.registro em { font-style: normal; margin-left: 10px; font: 600 14px "JetBrains Mono", monospace; opacity: .8; }
+.ficha { display: flex; flex-wrap: wrap; gap: 12px 36px; margin: 4px 0 0; }
+.ficha div { display: grid; gap: 2px; }
+.ficha dt { font: 600 11px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.ficha dd { margin: 0; font-weight: 600; font-size: 18px; }
+.ficha code { background: none; padding: 0; color: inherit; }
+
+.abas {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; flex-wrap: wrap; gap: 4px 24px; justify-content: center;
+  padding: 12px 16px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--linha);
+}
+.abas a { color: var(--tinta); text-decoration: none; font: 700 15px Archivo, Arial, sans-serif; padding: 4px 0; border-bottom: 2px solid transparent; }
+.abas a:hover { border-bottom-color: var(--acento); }
+
+main { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+.doc { padding-block: 56px 24px; border-bottom: 1px solid var(--linha); scroll-margin-top: 56px; }
+.doc > * { max-width: 72ch; }
+.doc > .tabela, .doc > pre { max-width: 100%; }
+.titulo-doc { font-size: clamp(28px, 4.4vw, 40px); margin: 6px 0 20px; font-weight: 800; }
+.doc h2 {
+  font-size: 25px; margin: 48px 0 12px; padding-top: 16px;
+  border-top: 2px solid var(--tinta);
+  scroll-margin-top: 64px;
+}
+.doc h3 { font-size: 19px; margin: 30px 0 8px; scroll-margin-top: 64px; }
+.doc p, .doc li { color: var(--tinta); }
+.doc hr { display: none; }
+.doc blockquote {
+  margin: 20px 0; padding: 12px 18px;
+  background: var(--faixa); border-left: 3px solid var(--acento);
+}
+.doc blockquote p { margin: 0; }
+
+.indice { margin: 0 0 12px; padding: 14px 18px; background: var(--superficie); border: 1px solid var(--linha); border-radius: 4px; }
+.indice summary { cursor: pointer; font: 600 12px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-suave); }
+.sumario { margin: 10px 0 0; padding-left: 22px; columns: 2 260px; column-gap: 32px; font-size: 15px; }
+.sumario li { break-inside: avoid; margin-bottom: 3px; }
+.sumario a { color: var(--tinta); text-decoration: none; }
+.sumario a:hover { color: var(--acento); text-decoration: underline; }
+
+.tabela { overflow-x: auto; margin: 16px 0 22px; border: 1px solid var(--linha); border-radius: 4px; background: var(--superficie); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--linha); }
+th { background: var(--faixa); font: 700 13px/1.3 Archivo, Arial, sans-serif; letter-spacing: .01em; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+
+:not(pre) > code { font-size: .86em; background: var(--codigo-fundo); padding: 1px 5px; border-radius: 3px; }
+pre {
+  overflow-x: auto; margin: 16px 0 22px; padding: 14px 16px;
+  background: var(--codigo-fundo); border: 1px solid var(--linha); border-radius: 4px;
+  font-size: 13.5px; line-height: 1.55;
+}
+pre.fonte { max-height: 80vh; }
+
+.rodape { max-width: 1040px; margin: 0 auto; padding: 28px 16px 48px; color: var(--tinta-suave); font-size: 14px; }
+
+@media (max-width: 520px) {
+  body { font-size: 16px; }
+  .registro span { width: 32px; height: 44px; font-size: 24px; }
+  .doc h2 { font-size: 22px; }
+}
+
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-inner">
+    <p class="rotulo">Deep Learning · BD e IA · CESAR School · Projeto 4 distribuidora</p>
+    <h1>Laboratório 2<br><span>A arquitetura profunda do seu projeto</span></h1>
+    <div class="registro" aria-label="Leitura de exemplo: 04821 quilowatt-hora">
+      <span>0</span><span>4</span><span>8</span><span>2</span><span>1</span><em>kWh</em>
+    </div>
+    <dl class="ficha">
+      <div><dt>Valor</dt><dd>1,0 ponto</dd></div>
+      <div><dt>Entrega</dt><dd>por grupo</dd></div>
+      <div><dt>Prazo</dt><dd>08/10/2026, 23h59</dd></div>
+      <div><dt>Pasta</dt><dd><code>lab-02/</code></dd></div>
+    </dl>
+  </div>
+</header>
+<nav class="abas" aria-label="Seções">
+  <a href="#enunciado">Enunciado</a>
+  <a href="#guia">Guia de arquitetura</a>
+  <a href="#codigo">Código de referência</a>
+</nav>
+<main>
+  <section id="enunciado" class="doc">
+    <p class="rotulo">Parte 1</p>
+    <h1 class="titulo-doc">Enunciado</h1>
+    <details class="indice" open><summary>Nesta parte</summary><ol class="sumario"><li><a href="#e-por-que-este-laboratório">Por que este laboratório</a></li><li><a href="#e-onde-cada-grupo-está-leitura-do-docente-sobre-o-material-de-1209-e-1709">Onde cada grupo está (leitura do docente sobre o material de 12/09 e 17/09)</a></li><li><a href="#e-o-que-entregar">O que entregar</a></li><li><a href="#e-parte-comum-todos-os-grupos-080">Parte comum — todos os grupos (0,80)</a></li><li><a href="#e-parte-específica-por-grupo-020">Parte específica — por grupo (0,20)</a></li><li><a href="#e-como-a-nota-é-composta">Como a nota é composta</a></li><li><a href="#e-dicas">Dicas</a></li><li><a href="#e-modelo-de-uso-de-iamd">Modelo de USO-DE-IA.md</a></li></ol></details>
+    <p><strong>Vale 1,0 ponto</strong> · Entrega <strong>por grupo do Projeto 4</strong> · Prazo: <strong>08/10/2026, 23h59</strong>
+Repositório do grupo, pasta <code>lab-02/</code>, link no Classroom.
+Material de apoio: <a href="#guia"><code>guia-arquitetura-rede-profunda.md</code></a> e
+<a href="#codigo"><code>codigo/esqueleto_arquitetura.py</code></a>.</p>
+<hr />
+<h2 id="e-por-que-este-laboratório">Por que este laboratório</h2>
+<p>Os quatro grupos atendem o mesmo cliente (distribuidora), com os mesmos 12.340 JPGs
+e as mesmas quatro extrações diárias. No kickoff de 12/09 e nas apresentações de 17/09, cada
+grupo mostrou um estágio diferente: há quem tenha plataforma inteira desenhada e nenhum
+modelo, quem tenha OCR rodando e nenhuma calibração, quem tenha o objetivo fechado e nenhuma
+arquitetura, e quem tenha a cascata desenhada e nenhum rótulo.</p>
+<p>Este laboratório não pede o modelo final. Pede que o grupo <strong>transforme o que já tem numa
+arquitetura profunda justificada, verificada e com o primeiro tijolo treinado</strong> — o que é
+exatamente o que o Marco 2 (29/10) vai cobrar funcionando.</p>
+<hr />
+<h2 id="e-onde-cada-grupo-está-leitura-do-docente-sobre-o-material-de-1209-e-1709">Onde cada grupo está (leitura do docente sobre o material de 12/09 e 17/09)</h2>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Grupo</th>
+<th>O que já existe</th>
+<th>O que falta para haver uma rede profunda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Korvian</strong></td>
+<td>Arquitetura de sistema mais completa da turma: fases 0–4 com <em>gate</em> de métrica, máquina de estados, catálogo de métricas, baseline dos 4 lotes medida (296 notas sem foto, 866 órfãs, 1.316 medidores múltiplos). Triagem V0 por heurística (Laplaciano, histograma); V1 = MobileNetV3 multirrótulo com rótulo fraco por degradação sintética</td>
+<td>A parte profunda é a menos especificada do documento e está empurrada para a Fase 2. Nenhum modelo treinado. Risco: chegar ao Marco 2 com a plataforma pronta e sem rede</td>
+</tr>
+<tr>
+<td><strong>Luminus</strong> (Grupo 2)</td>
+<td>Único protótipo rodando em dado real: PP-OCRv5 (detecção) + PP-OCRv6-tiny / TrOCR (reconhecimento). Benchmark no UFPR-AMR: leitura exata 0,357 e acurácia por dígito 0,846. Latência em CPU: média 4,43 s, p90 13,2 s (382 imagens)</td>
+<td>Tudo <em>off-the-shelf</em>. O <em>score</em> de coerência não está calibrado contra decisão real. O benchmark é em dado público, não na distribuidora. O plano de ajuste fino ainda não está especificado</td>
+</tr>
+<tr>
+<td><strong>VoltLens</strong> (Grupo 3)</td>
+<td>Entendimento do negócio e dos dados concluídos. Objetivo em três <em>status</em> (confirmada / divergência / impedimento-inconclusivo) + extração de número do medidor e consumo. Achados próprios: 347 leituras com valor zero, 150–200 fotos por pasta sem registro correspondente</td>
+<td>Nenhuma arquitetura ainda. O cronograma fala em "treinamento com algoritmos de ML" sem dizer quais. A meta "assertividade em 50% das fotos legíveis" não está em forma mensurável</td>
+</tr>
+<tr>
+<td><strong>Nortdata</strong> ("Projeto IV")</td>
+<td>A análise exploratória de imagem mais profunda da turma (metadados, estatísticas de pixel e integridade das 12.340 imagens). Duas arquiteturas em cascata desenhadas: I (pipelines separados por tipo de medidor) e II (multiclasse), com CNN "é medidor?", PDI (histograma, FFT, Laplaciano), homografia, YOLO por campo, OCR e regex. Implantação: Windows local</td>
+<td>A premissa "banco de imagens já rotuladas" não se confirmou. Muitos estágios sem conta de propagação de erro. YOLO exige caixas desenhadas e tem questão de licença. As duas variantes não foram comparadas</td>
+</tr>
+</tbody>
+</table></div>
+<p>Se o grupo discordar desta leitura, a primeira seção do <code>README.md</code> é o lugar para dizer — com
+evidência.</p>
+<hr />
+<h2 id="e-o-que-entregar">O que entregar</h2>
+<pre><code>lab-02/
+├── README.md            respostas, tabelas e a leitura dos resultados
+├── ARQUITETURA.md       a ficha de arquitetura (modelo na seção 14 do guia)
+├── lab02.ipynb          notebook executado, saídas visíveis
+├── rotulos/
+│   ├── esquema.md       definição de cada classe, com 2 exemplos-limite por classe
+│   └── rotulos.csv      nome_arquivo, lote, rotulador, &lt;suas colunas de rótulo&gt;
+└── USO-DE-IA.md         registro obrigatório
+</code></pre>
+<p>Rode do zero antes de entregar: <code>Reiniciar e executar tudo</code>. As fotos <strong>não</strong> vão para o
+repositório (dado do cliente) — o <em>notebook</em> lê de um caminho configurável no topo.</p>
+<hr />
+<h2 id="e-parte-comum-todos-os-grupos-080">Parte comum — todos os grupos (0,80)</h2>
+<h3 id="e-a-ficha-de-arquitetura-020">A. Ficha de arquitetura (0,20)</h3>
+<p>Preencha <code>ARQUITETURA.md</code> seguindo as 14 seções do guia. Três exigências que separam uma
+ficha de um texto:</p>
+<ol>
+<li><strong>Toda escolha tem uma alternativa descartada e um motivo.</strong> "Usamos MobileNetV3" não
+   conta. "MobileNetV3-Small em vez de ResNet-18 porque 0,93 M × 11,7 M parâmetros e a
+   implantação é CPU" conta.</li>
+<li><strong>A seção 2 separa o que é aprendido do que é regra.</strong> Comparar o valor lido com o valor
+   digitado não é tarefa de rede.</li>
+<li><strong>A seção 3 tem a conta do produto das taxas por estágio</strong>, estimada se ainda não
+   medida — e diz de onde veio a estimativa.</li>
+</ol>
+<h3 id="e-b-o-modelo-profundo-em-código-015">B. O modelo profundo em código (0,15)</h3>
+<p>Implemente em PyTorch o <strong>principal bloco profundo</strong> da arquitetura do grupo (a parte
+específica abaixo diz qual). Pode partir do esqueleto.</p>
+<ul>
+<li><strong>B1.</strong> Imprima a <strong>tabela de formas</strong> camada a camada com uma entrada do tamanho real
+  que vocês vão usar.</li>
+<li><strong>B2.</strong> Reporte parâmetros <strong>totais e treináveis</strong>, na configuração de extração e na de
+  ajuste fino.</li>
+<li><strong>B3.</strong> Justifique a <strong>ativação de saída e a perda</strong> de cada cabeça: as classes são
+  exclusivas? Por quê? Dê um exemplo real da base que prova a resposta.</li>
+</ul>
+<h3 id="e-c-rótulos-e-partição-020">C. Rótulos e partição (0,20)</h3>
+<p>Não existe rótulo na base. Sem rótulo não há rede, então este é o item mais pesado.</p>
+<ul>
+<li><strong>C1.</strong> Escreva <code>rotulos/esquema.md</code>: definição operacional de cada classe e <strong>dois
+  exemplos-limite</strong> por classe (a foto que quase é, e a que quase não é).</li>
+<li><strong>C2.</strong> Rotule <strong>no mínimo 300 fotos</strong> no esquema do grupo, estratificadas pelos quatro
+  lotes. Com 5 a 7 integrantes, são 45–60 fotos por pessoa.</li>
+<li><strong>C3.</strong> <strong>50 dessas fotos</strong> devem ser rotuladas por <strong>dois integrantes, às cegas</strong>.
+  Reporte o <strong>kappa de Cohen</strong> por classe. Kappa abaixo de 0,6 numa classe significa que a
+  definição está ambígua: reescreva o esquema e diga o que mudou.</li>
+<li><strong>C4.</strong> Particione <strong>por lote</strong> (guia, seção 11) e demonstre numericamente: nenhum
+  identificador de leitura e nenhum número de medidor aparece em dois conjuntos.</li>
+</ul>
+<h3 id="e-d-sanidade-e-baseline-015">D. Sanidade e baseline (0,15)</h3>
+<ul>
+<li><strong>D1.</strong> Perda inicial com pesos aleatórios comparada a ln(C) (ou ln 2 por sigmoide).</li>
+<li><strong>D2.</strong> Sobreajuste de um lote de 10–20 fotos <strong>reais</strong> até perda próxima de zero. Se não
+  chegar, diagnostique antes de seguir.</li>
+<li><strong>D3.</strong> Treine o bloco profundo em modo <strong>extração de características</strong> nos rótulos de C2
+  e compare com uma <strong>baseline não profunda</strong> no mesmo conjunto de validação e na mesma
+  métrica. Três sementes, média e desvio. Se o modelo profundo perder, diga por que acha que
+  perdeu — isso vale nota cheia.</li>
+</ul>
+<h3 id="e-e-confiança-e-recusa-010">E. Confiança e recusa (0,10)</h3>
+<ul>
+<li><strong>E1.</strong> Diagrama de confiabilidade e ECE na validação, antes e depois de <em>temperature
+  scaling</em>.</li>
+<li><strong>E2.</strong> Curva <strong>cobertura × risco</strong> da saída de decisão do grupo. Marque nela o ponto da
+  meta de negócio que o grupo declarou no kickoff, escrita como "cobertura ≥ X com risco
+  ≤ Y". Se a meta não cabe na curva, digam.</li>
+</ul>
+<hr />
+<h2 id="e-parte-específica-por-grupo-020">Parte específica — por grupo (0,20)</h2>
+<p>Cada grupo responde <strong>apenas o seu bloco</strong>. As quatro tarefas têm o mesmo peso (0,05).</p>
+<h3 id="e-korvian-tirar-a-rede-da-fase-2">Korvian — tirar a rede da Fase 2</h3>
+<p>Bloco profundo da parte B: <strong>a triagem V1</strong> (MobileNetV3 com cabeça multirrótulo de defeitos).</p>
+<ul>
+<li><strong>K1. Resolução de entrada.</strong> O documento fixa 360 × 480 nativo. Meça latência e métrica
+  com entrada nativa e com 224 px. A triagem de <strong>qualidade</strong> precisa da resolução nativa, ou
+  só a leitura precisa? Decida com os números.</li>
+<li><strong>K2. O rótulo fraco se sustenta?</strong> Treine a cabeça de qualidade <strong>só com degradação
+  sintética</strong> das fotos boas e avalie <strong>só em fotos reais</strong> rotuladas em C2. Reporte a queda
+  por defeito. Defina também a regra para uma foto real já borrada que recebe borrão
+  sintético.</li>
+<li><strong>K3. Heurística V0 como baseline.</strong> O Laplaciano e o histograma são a baseline oficial
+  do grupo. Mesma partição, mesma métrica, e a curva cobertura × risco de V0 e V1 no mesmo
+  gráfico.</li>
+<li><strong>K4. Multitarefa ou modelo separado?</strong> O Estágio 1 (tipo de cena) pode compartilhar a
+  espinha dorsal com a triagem de qualidade. Decida com parâmetros, latência e o efeito
+  medido na métrica de cada cabeça.</li>
+</ul>
+<h3 id="e-luminus-de-off-the-shelf-para-modelo-do-domínio">Luminus — de <em>off-the-shelf</em> para modelo do domínio</h3>
+<p>Bloco profundo da parte B: <strong>o reconhecedor de dígitos</strong> do display recortado.</p>
+<ul>
+<li><strong>L1. Desmontar as duas famílias.</strong> CRNN + CTC (família PP-OCR rec) × codificador ViT +
+  decodificador Transformer (TrOCR). Para cada: entrada, formato da saída, perda,
+  parâmetros, e <strong>como erra</strong> — mostre 10 erros reais de cada e classifique em "perdeu
+  dígito", "duplicou dígito", "trocou dígito", "inventou sequência".</li>
+<li><strong>L2. O benchmark do cliente.</strong> Construa ≥ 200 recortes de display da distribuidora com a
+  leitura transcrita (podem fazer parte dos 300 de C2) e reavalie os modelos neles. Compare
+  com o UFPR-AMR e quantifique o <em>gap</em> de domínio.</li>
+<li><strong>L3. Qual métrica otimiza.</strong> Leitura exata (0,357) ou acurácia por dígito (0,846)? Declare
+  <strong>uma</strong> otimizadora e pelo menos duas restrições satisfatórias com número (uma delas de
+  latência p90). Justifique pelo custo de uma fatura errada.</li>
+<li><strong>L4. Plano de ajuste fino e de latência.</strong> O que congelar, quais taxas, que aumento de
+  dados é permitido (e qual é proibido para dígitos). E: onde estão os 13,2 s do p90 —
+  detecção, reconhecimento, ou a correção de rotação? Meça por estágio.</li>
+</ul>
+<h3 id="e-voltlens-do-objetivo-à-primeira-arquitetura">VoltLens — do objetivo à primeira arquitetura</h3>
+<p>Bloco profundo da parte B: <strong>um classificador por transferência</strong> "legível / ilegível / não é
+medidor" — o primeiro tijolo que qualquer uma das arquiteturas possíveis vai precisar.</p>
+<ul>
+<li><strong>V1. Três <em>status</em> viram arquitetura.</strong> Para cada <em>status</em> (confirmada, divergência,
+  impedimento-inconclusivo), quais sub-tarefas aprendidas o produzem e onde entra a regra.
+  Desenhe duas versões — estágios e ponta a ponta — e escolha com os critérios da seção 3 do
+  guia, considerando que não existe rótulo final.</li>
+<li><strong>V2. A meta em forma de número.</strong> "Assertividade em ao menos 50% das fotos legíveis" vira
+  "cobertura ≥ 50% das legíveis com precisão ≥ X% em <em>Leitura confirmada</em>". Declare X e
+  defenda com o custo de confirmar uma leitura errada.</li>
+<li><strong>V3. Pareamento antes do rótulo.</strong> Formalize a regra de pareamento foto ↔ registro (as
+  150–200 fotos a mais por pasta). Quantas ficam órfãs com a regra de vocês? Rótulo em foto
+  mal pareada é rótulo errado.</li>
+<li><strong>V4. Os 347 zeros como teste difícil.</strong> Separe as leituras com valor zero que têm foto e
+  use-as como conjunto de estresse do classificador: o que ele diz delas? Uma foto que mostra
+  ~6.990 e foi registrada como 0 é caso de divergência — o seu <em>pipeline</em> chegaria lá?</li>
+</ul>
+<h3 id="e-nortdata-da-cascata-desenhada-à-cascata-medida">Nortdata — da cascata desenhada à cascata medida</h3>
+<p>Bloco profundo da parte B: <strong>a CNN "é medidor? / é legível?"</strong> do topo da cascata, com
+espinha dorsal pré-treinada.</p>
+<ul>
+<li><strong>N1. Arquitetura I × II.</strong> Compare as duas com argumento quantitativo: quantos modelos
+  treinar, quantos rótulos cada um exige, parâmetros totais, latência estimada em CPU. Inclua
+  o custo de <strong>desenhar caixas</strong> para o YOLO (meça quantos segundos um integrante leva por
+  foto em 20 fotos, e extrapole).</li>
+<li><strong>N2. Orçamento de erro da cascata.</strong> Em 100 fotos rotuladas, meça a taxa de acerto de
+  cada estágio que já existir (os de PDI existem hoje) e estime os demais. Calcule a taxa
+  ponta a ponta. Qual estágio mais perde? Para onde vão as fotos do ramo "pode melhorar?"
+  quando não melhoram?</li>
+<li><strong>N3. Especificação do detector.</strong> Classes (consumo, número de série, função), resolução
+  de entrada (640 × nativa 480), tamanho do modelo, e <strong>licença</strong>: Ultralytics YOLOv8/11 é
+  AGPL-3.0. Para um produto entregue ao cliente, qual é a consequência e qual alternativa
+  permissiva vocês usariam (SSDlite ou Faster R-CNN do <code>torchvision</code>, PP-OCR det)?</li>
+<li><strong>N4. Restrição Windows local.</strong> Sem GPU presumida: exporte o bloco da parte B para ONNX,
+  prove a paridade com o PyTorch (diferença máxima &lt; 1e-4 num lote real) e meça p50 e p95 em
+  CPU. A cascata inteira cabe na janela de trabalho dos analistas?</li>
+</ul>
+<hr />
+<h2 id="e-como-a-nota-é-composta">Como a nota é composta</h2>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Dimensão</th>
+<th style="text-align: center;">Peso</th>
+<th>O que eu procuro</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Execução</td>
+<td style="text-align: center;">20%</td>
+<td><em>notebook</em> roda do zero, saídas visíveis, sanidade de D1–D2 passa</td>
+</tr>
+<tr>
+<td>Correção técnica</td>
+<td style="text-align: center;">30%</td>
+<td>ativação e perda certas para o tipo de classe, partição sem vazamento, kappa medido, calibração feita na validação</td>
+</tr>
+<tr>
+<td>Justificativa</td>
+<td style="text-align: center;">35%</td>
+<td>toda escolha com alternativa e número; a parte específica responde ao estado <strong>real</strong> do grupo</td>
+</tr>
+<tr>
+<td>Comunicação</td>
+<td style="text-align: center;">15%</td>
+<td>ficha legível em 4–6 páginas, diagrama claro, tabelas com unidade</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="e-penalizações">Penalizações</h3>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Situação</th>
+<th>Efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Notebook</em> não executa</td>
+<td>Execução = 0 e −50% nas demais</td>
+</tr>
+<tr>
+<td>Partição aleatória por foto</td>
+<td>−40% em Correção técnica</td>
+</tr>
+<tr>
+<td>Limiar ou temperatura ajustados no teste</td>
+<td>−30% em Correção técnica</td>
+</tr>
+<tr>
+<td>Softmax aplicada antes de <code>CrossEntropyLoss</code>/<code>BCEWithLogitsLoss</code></td>
+<td>−20% em Correção técnica</td>
+</tr>
+<tr>
+<td>Fotos do cliente commitadas no repositório</td>
+<td>−30% no total (dado do cliente, LGPD)</td>
+</tr>
+<tr>
+<td>Sem <code>USO-DE-IA.md</code></td>
+<td>nota zero</td>
+</tr>
+<tr>
+<td>Atraso até 48h</td>
+<td>−20%</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="e-bônus-até-01">Bônus (até 0,1)</h3>
+<ul>
+<li>Medir o volume real com o cliente (mensal × diário, seção 13 do guia) e refazer o
+  orçamento de latência com ele.</li>
+<li>Uma curva de dados (métrica × nº de rótulos: 50, 100, 200, 300) que mostre se vale a pena
+  rotular mais.</li>
+</ul>
+<hr />
+<h2 id="e-dicas">Dicas</h2>
+<ol>
+<li><strong>Comece por C.</strong> Sem rótulo, B, D e E não saem do lugar. Dividam a rotulagem no primeiro
+   dia e combinem o esquema antes.</li>
+<li><strong>Os 50 com dupla rotulagem são às cegas de verdade.</strong> Planilhas separadas, sem conversar
+   até os dois terminarem.</li>
+<li><strong>Leiam o documento do vizinho.</strong> O mesmo problema tem quatro leituras na sala. Citar a
+   solução de outro grupo — e dizer por que vocês não a adotaram — conta a favor na
+   Justificativa.</li>
+<li><strong>Baseline perdendo não é fracasso.</strong> Com 300 rótulos, uma regressão logística sobre
+   <em>features</em> congeladas pode empatar com o ajuste fino. Reportar isso com três sementes vale
+   mais do que um número alto de uma semente só.</li>
+<li><strong>Pergunta que a banca vai fazer:</strong> <em>"por que essa arquitetura, e não uma camada a
+   menos?"</em> A ficha é a resposta escrita.</li>
+</ol>
+<hr />
+<h2 id="e-modelo-de-uso-de-iamd">Modelo de <code>USO-DE-IA.md</code></h2>
+<pre><code class="language-markdown"># Uso de IA generativa neste laboratório
+
+| Integrante | Ferramenta | O que pedi | O que aceitei | O que descartei e por quê |
+|---|---|---|---|---|
+| ... | Claude | revisão do esquema de rótulos | a sugestão de exemplos-limite | a lista de classes: não batia com as notas do cliente |
+
+## Declaração
+Cada integrante é capaz de explicar qualquer linha do código entregue.
+</code></pre>
+  </section>
+  <section id="guia" class="doc">
+    <p class="rotulo">Parte 2 · material de apoio</p>
+    <h1 class="titulo-doc">Como montar a arquitetura de uma rede profunda</h1>
+    <details class="indice" open><summary>Nesta parte</summary><ol class="sumario"><li><a href="#g-para-que-serve-este-guia">Para que serve este guia</a></li><li><a href="#g-1-comece-pela-decisão-não-pela-rede">1. Comece pela decisão, não pela rede</a></li><li><a href="#g-2-decomponha-a-decisão-em-tarefas-de-aprendizado">2. Decomponha a decisão em tarefas de aprendizado</a></li><li><a href="#g-3-pipeline-em-estágios-ou-modelo-ponta-a-ponta">3. Pipeline em estágios ou modelo ponta a ponta?</a></li><li><a href="#g-4-defina-o-contrato-de-entrada">4. Defina o contrato de entrada</a></li><li><a href="#g-5-escolha-a-espinha-dorsal-backbone">5. Escolha a espinha dorsal (backbone)</a></li><li><a href="#g-6-desenhe-as-cabeças-e-escolha-a-ativação-de-saída">6. Desenhe as cabeças e escolha a ativação de saída</a></li><li><a href="#g-7-trate-o-desbalanceamento-na-perda-não-só-na-amostragem">7. Trate o desbalanceamento na perda, não só na amostragem</a></li><li><a href="#g-8-ajuste-a-capacidade-ao-número-de-rótulos">8. Ajuste a capacidade ao número de rótulos</a></li><li><a href="#g-9-projete-a-saída-com-confiança-e-com-direito-a-recusar">9. Projete a saída com confiança e com direito a recusar</a></li><li><a href="#g-10-escolha-o-aumento-de-dados-que-respeita-o-domínio">10. Escolha o aumento de dados que respeita o domínio</a></li><li><a href="#g-11-particione-pelo-que-pode-vazar">11. Particione pelo que pode vazar</a></li><li><a href="#g-12-verifique-a-sanidade-antes-de-treinar-de-verdade">12. Verifique a sanidade antes de treinar de verdade</a></li><li><a href="#g-13-feche-o-orçamento-de-latência-e-de-implantação">13. Feche o orçamento de latência e de implantação</a></li><li><a href="#g-14-a-ficha-de-arquitetura">14. A ficha de arquitetura</a></li><li><a href="#g-15-anti-padrões-que-aparecem-todo-semestre">15. Anti-padrões que aparecem todo semestre</a></li><li><a href="#g-referências">Referências</a></li></ol></details>
+    <p><strong>Guia de apoio ao Laboratório 2</strong> · Deep Learning · BD e IA, 4º período · CESAR School
+Aplicado ao Projeto 4 (distribuidora — verificação de fotos de leitura)</p>
+<hr />
+<h2 id="g-para-que-serve-este-guia">Para que serve este guia</h2>
+<p>Os quatro grupos trabalham sobre o mesmo cliente, os mesmos 12.340 JPGs e as mesmas quatro
+extrações diárias. Mesmo assim, chegaram ao kickoff com quatro arquiteturas diferentes: um
+funil em cascata com YOLO e OCR, um <em>pipeline</em> de OCR pronto com <em>score</em> de coerência, uma
+plataforma faseada em que o modelo entra na Fase 2, e um objetivo de três <em>status</em> ainda sem
+arquitetura. Nenhuma delas está errada. O que falta, em todas, é o mesmo passo: <strong>justificar
+cada bloco da rede com um número ou com uma restrição do problema</strong>.</p>
+<p>Este guia descreve esse passo em doze etapas, na ordem em que as decisões dependem umas das
+outras. Cada etapa termina com o que precisa aparecer na <strong>ficha de arquitetura</strong> (seção 14),
+que é o entregável central do Lab 2.</p>
+<p>O código de referência está em <a href="#codigo"><code>codigo/esqueleto_arquitetura.py</code></a>.
+Roda em CPU, sem baixar nada, e todos os números citados abaixo como "medido" saíram dele.</p>
+<hr />
+<h2 id="g-1-comece-pela-decisão-não-pela-rede">1. Comece pela decisão, não pela rede</h2>
+<p>A pergunta "qual rede usar?" só tem resposta depois de outras cinco. Os documentos de
+entendimento do negócio de vocês já responderam a maior parte delas — o trabalho aqui é
+<strong>copiá-las para a ficha e verificar se a arquitetura obedece a elas</strong>.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Pergunta</th>
+<th>Por que ela restringe a arquitetura</th>
+<th>Exemplo no Projeto 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qual decisão é apoiada?</td>
+<td>Define a saída final do sistema</td>
+<td>ACEITA / REJEITADA / DÚVIDA por foto</td>
+</tr>
+<tr>
+<td>Qual a unidade de análise?</td>
+<td>Define o que é <strong>uma amostra</strong> — e portanto o que não pode vazar</td>
+<td>Uma foto associada a uma leitura (não o medidor, não o cliente)</td>
+</tr>
+<tr>
+<td>Quem age sobre a saída?</td>
+<td>Define se a saída precisa de confiança, motivo ou só rótulo</td>
+<td>O analista confere as DÚVIDAS e uma amostra das ACEITAS</td>
+</tr>
+<tr>
+<td>Qual erro custa mais?</td>
+<td>Define a métrica, o limiar e a perda</td>
+<td>Aceitar foto inválida (fatura errada) × rejeitar foto boa (revisita)</td>
+</tr>
+<tr>
+<td>Onde e como roda?</td>
+<td>Define o orçamento de parâmetros e latência</td>
+<td>Lote pós-coleta, CPU, Windows local ou servidor</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>Regra:</strong> se uma camada da rede não serve a nenhuma linha desta tabela, ela não deveria
+estar lá.</p>
+</blockquote>
+<hr />
+<h2 id="g-2-decomponha-a-decisão-em-tarefas-de-aprendizado">2. Decomponha a decisão em tarefas de aprendizado</h2>
+<p>Uma decisão de negócio quase nunca é <strong>uma</strong> tarefa de aprendizado. "A foto comprova a
+leitura?" se decompõe em perguntas menores, cada uma com seu tipo de problema, sua saída e
+sua perda. A tabela abaixo é o mapa completo do Projeto 4; nenhum grupo precisa de todas as
+linhas.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Sub-tarefa</th>
+<th>Tipo de problema</th>
+<th>Saída da rede</th>
+<th>Ativação de saída</th>
+<th>Perda</th>
+<th>Rótulo necessário</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>É medidor? Qual cena?</td>
+<td>Classificação <strong>exclusiva</strong></td>
+<td>1 classe entre C</td>
+<td>softmax</td>
+<td>entropia cruzada</td>
+<td>1 classe por foto</td>
+</tr>
+<tr>
+<td>Quais defeitos de qualidade?</td>
+<td>Classificação <strong>multirrótulo</strong></td>
+<td>0 a K defeitos simultâneos</td>
+<td>sigmoide por defeito</td>
+<td>BCE</td>
+<td>vetor binário por foto</td>
+</tr>
+<tr>
+<td>Onde está o display / a placa?</td>
+<td><strong>Detecção</strong></td>
+<td>caixas + classe</td>
+<td>por caixa</td>
+<td><em>box</em> + classe (YOLO, SSD)</td>
+<td>caixas desenhadas</td>
+</tr>
+<tr>
+<td>Qual número está no display?</td>
+<td><strong>Sequência</strong></td>
+<td>cadeia de dígitos</td>
+<td>softmax por passo</td>
+<td><strong>CTC</strong> ou entropia cruzada autoregressiva</td>
+<td>transcrição do recorte</td>
+</tr>
+<tr>
+<td>Ponteiro/disco eletromecânico</td>
+<td><strong>Regressão</strong> (ângulo)</td>
+<td>número contínuo</td>
+<td>nenhuma (ou seno/cosseno)</td>
+<td>MSE / L1</td>
+<td>ângulo ou leitura</td>
+</tr>
+<tr>
+<td>Foto coerente com a nota (ex. I100)?</td>
+<td>Classificação condicionada</td>
+<td>sim/não dada a nota</td>
+<td>sigmoide</td>
+<td>BCE</td>
+<td>par (foto, nota) → sim/não</td>
+</tr>
+<tr>
+<td>Valor lido bate com o digitado?</td>
+<td><strong>Não é aprendizado</strong></td>
+<td>comparação</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>A última linha importa. A comparação entre o valor extraído e o valor digitado pelo
+leiturista é uma <strong>regra determinística</strong> — colocar uma rede ali é pagar incerteza sem
+ganhar nada. A arquitetura de consistência (não OCR pleno) que aparece nos documentos de dois
+grupos parte exatamente dessa separação.</p>
+<p><strong>Na ficha:</strong> a lista de sub-tarefas que o grupo vai <strong>aprender</strong>, cada uma com as colunas
+acima preenchidas, e a lista das que serão <strong>regra</strong>.</p>
+<hr />
+<h2 id="g-3-pipeline-em-estágios-ou-modelo-ponta-a-ponta">3. Pipeline em estágios ou modelo ponta a ponta?</h2>
+<p>Existem dois extremos: uma rede única que recebe a foto e devolve ACEITA/REJEITADA/DÚVIDA, ou
+uma cascata de modelos pequenos, cada um especializado. A escolha não é de gosto; é de
+<strong>onde estão os rótulos</strong>.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Critério</th>
+<th>Favorece ponta a ponta</th>
+<th>Favorece estágios</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rótulos disponíveis</td>
+<td>Muitos pares (foto, decisão final)</td>
+<td>Poucos rótulos finais, mas dá para rotular cada etapa</td>
+</tr>
+<tr>
+<td>Depuração</td>
+<td>Difícil: o erro não tem endereço</td>
+<td>Fácil: a análise de erro aponta o estágio</td>
+</tr>
+<tr>
+<td>Dados públicos reaproveitáveis</td>
+<td>Raros para a tarefa inteira</td>
+<td>Existem por etapa (UFPR-AMR para leitura de display)</td>
+</tr>
+<tr>
+<td>Latência</td>
+<td>Uma passada só</td>
+<td>Soma das passadas, mas estágios podem cortar cedo</td>
+</tr>
+<tr>
+<td>Manutenção</td>
+<td>Retreinar tudo</td>
+<td>Trocar um estágio sem mexer nos outros</td>
+</tr>
+</tbody>
+</table></div>
+<p>No Projeto 4 não há rótulo final: nenhuma decisão dos seis analistas foi registrada. Isso
+empurra todos os grupos para estágios — e cobra um preço que precisa estar na ficha.</p>
+<h3 id="g-o-preço-da-cascata-erros-se-multiplicam">O preço da cascata: erros se multiplicam</h3>
+<p>Se uma foto boa precisa passar por quatro estágios para ser ACEITA, a taxa de acerto ponta a
+ponta é o <strong>produto</strong> das taxas de cada estágio:</p>
+<pre><code>0,95 (é medidor) × 0,90 (legível) × 0,85 (achou o display) × 0,80 (leu certo) = 0,58
+</code></pre>
+<p>Quatro estágios "bons" entregam 58%. É por isso que a planilha de análise de erro do
+Marco 2 tem <strong>uma coluna por estágio</strong>: sem ela, a equipe otimiza o estágio errado.</p>
+<p><strong>Na ficha:</strong> o diagrama do <em>pipeline</em>, a taxa estimada (ou medida) de cada estágio e o
+produto ponta a ponta.</p>
+<hr />
+<h2 id="g-4-defina-o-contrato-de-entrada">4. Defina o contrato de entrada</h2>
+<p>As fotos do PDA são <strong>360 × 480 px, RGB, 8 bits por canal, retrato (3:4), sem EXIF</strong>. Todas
+iguais. Isso é uma vantagem rara — e uma armadilha, porque a resolução é baixa para leitura.</p>
+<h3 id="g-quanto-de-resolução-cada-tarefa-precisa">Quanto de resolução cada tarefa precisa</h3>
+<p>A MobileNetV3 reduz a imagem por um fator 32. Medido no esqueleto, com a entrada nativa:</p>
+<pre><code>entrada          (B,   3, 480, 360)
+extrator.0       (B,  16, 240, 180)
+extrator.2       (B,  24,  60,  45)
+extrator.4       (B,  40,  30,  23)
+extrator.9       (B,  96,  15,  12)
+extrator.12      (B, 576,  15,  12)   ← cada célula resume ~32×30 px da foto
+</code></pre>
+<ul>
+<li><strong>Classificar a cena</strong> (medidor digital, ciclométrico, portão fechado) é uma decisão sobre
+  a imagem inteira. Reduzir para 224 px costuma bastar, e corta a latência quase à metade.</li>
+<li><strong>Ler dígitos</strong> é outra história. Se o display ocupa um quinto da largura (~72 px) e tem
+  cinco ou seis dígitos, cada dígito tem ~12 px. Reduzindo a foto para 224 de largura, cai
+  para ~7 px. Por isso toda arquitetura de leitura <strong>recorta primeiro e lê o recorte na
+  resolução original</strong> — nunca lê a foto inteira reduzida.</li>
+</ul>
+<h3 id="g-regras-do-contrato">Regras do contrato</h3>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Decisão a registrar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tamanho</td>
+<td>Nativo ou reduzido, <strong>por tarefa</strong>, com a justificativa acima</td>
+</tr>
+<tr>
+<td>Proporção</td>
+<td>Não distorcer 3:4 em 1:1. Use <em>padding</em> (<em>letterbox</em>) ou redimensione mantendo proporção</td>
+</tr>
+<tr>
+<td>Normalização</td>
+<td>Com backbone pré-treinado no ImageNet: média <code>[0,485; 0,456; 0,406]</code>, desvio <code>[0,229; 0,224; 0,225]</code></td>
+</tr>
+<tr>
+<td>Canais</td>
+<td>RGB para cena e qualidade (reflexo tem cor); tons de cinza costuma bastar para o recorte de dígitos</td>
+</tr>
+<tr>
+<td>Várias fotos por leitura</td>
+<td>4,2% das imagens têm sufixo <code>_001</code> a <code>_008</code>. Decidir: cada foto é uma amostra, ou a leitura é a amostra?</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Na ficha:</strong> uma tabela com o contrato de entrada de <strong>cada</strong> modelo.</p>
+<hr />
+<h2 id="g-5-escolha-a-espinha-dorsal-backbone">5. Escolha a espinha dorsal (<em>backbone</em>)</h2>
+<p>Com poucos rótulos, treinar do zero não é opção: a espinha dorsal vem pré-treinada e o grupo
+decide <strong>qual</strong> e <strong>quanto dela ajustar</strong> (Aula 08). O critério é o orçamento de latência e de
+memória, não o topo do <em>ranking</em> do ImageNet.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Espinha dorsal</th>
+<th style="text-align: right;">Parâmetros</th>
+<th>Quando faz sentido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MobileNetV3-Small</td>
+<td style="text-align: right;">2,5 M (0,93 M sem o classificador)</td>
+<td>CPU, Windows local, lote grande, latência apertada</td>
+</tr>
+<tr>
+<td>MobileNetV3-Large</td>
+<td style="text-align: right;">5,5 M</td>
+<td>Mesmo cenário, com um pouco mais de folga</td>
+</tr>
+<tr>
+<td>EfficientNet-B0</td>
+<td style="text-align: right;">5,3 M</td>
+<td>Melhor acurácia por parâmetro; mais lenta em CPU que a MobileNet</td>
+</tr>
+<tr>
+<td>ResNet-18</td>
+<td style="text-align: right;">11,7 M</td>
+<td>Referência didática; fácil de inspecionar e de ajustar</td>
+</tr>
+<tr>
+<td>ConvNeXt-Tiny</td>
+<td style="text-align: right;">28,6 M</td>
+<td>Só se houver GPU na implantação e rótulos suficientes</td>
+</tr>
+</tbody>
+</table></div>
+<p>O número da MobileNetV3-Small sem classificador foi medido no esqueleto: <strong>932.201</strong>
+parâmetros com as duas cabeças do Projeto 4; com o extrator congelado, sobram <strong>5.193</strong>
+treináveis. Essa diferença de 180× é a razão pela qual a extração de características funciona
+com 200 imagens rotuladas e o ajuste fino completo, não.</p>
+<p><strong>Na ficha:</strong> a espinha dorsal escolhida, a alternativa descartada, e o motivo com número
+(parâmetros, latência medida, ou memória).</p>
+<hr />
+<h2 id="g-6-desenhe-as-cabeças-e-escolha-a-ativação-de-saída">6. Desenhe as cabeças e escolha a ativação de saída</h2>
+<p>A cabeça é a parte da rede que traduz as características em <strong>resposta</strong>. O erro mais comum
+da turma, em anos anteriores, é usar softmax onde as classes não são exclusivas.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>As classes são...</th>
+<th>Ativação</th>
+<th>Perda</th>
+<th>Exemplo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mutuamente exclusivas</td>
+<td>softmax</td>
+<td><code>CrossEntropyLoss</code></td>
+<td>A foto é de medidor digital <strong>ou</strong> ciclométrico <strong>ou</strong> cena de ocorrência</td>
+</tr>
+<tr>
+<td>Independentes, podem coexistir</td>
+<td>sigmoide por classe</td>
+<td><code>BCEWithLogitsLoss</code></td>
+<td>A foto tem reflexo <strong>e</strong> está fora de foco</td>
+</tr>
+<tr>
+<td>Um número contínuo</td>
+<td>nenhuma</td>
+<td><code>L1Loss</code> / <code>MSELoss</code></td>
+<td>Ângulo do ponteiro</td>
+</tr>
+<tr>
+<td>Uma sequência de símbolos</td>
+<td>softmax por passo</td>
+<td><code>CTCLoss</code></td>
+<td>Leitura <code>04821</code> do display</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>Em PyTorch, <code>CrossEntropyLoss</code> e <code>BCEWithLogitsLoss</code> recebem <strong>logits</strong>. Aplicar softmax
+ou sigmoide antes da perda é um erro silencioso: treina, mas pior.</p>
+</blockquote>
+<h3 id="g-multitarefa-uma-espinha-dorsal-duas-cabeças">Multitarefa: uma espinha dorsal, duas cabeças</h3>
+<p>Cena e qualidade olham para a mesma foto e precisam das mesmas características de baixo
+nível (bordas, brilho, textura). Compartilhar a espinha dorsal economiza uma passada inteira
+e funciona como regularização (Caruana, 1997). No esqueleto:</p>
+<pre><code class="language-python">class ModeloTriagem(nn.Module):
+    def __init__(self, pretreinado=False, p_dropout=0.2):
+        super().__init__()
+        base = mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretreinado else None)
+        self.extrator = base.features
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.cabeca_cena = nn.Sequential(nn.Dropout(p_dropout), nn.Linear(576, 4))       # softmax
+        self.cabeca_qualidade = nn.Sequential(nn.Dropout(p_dropout), nn.Linear(576, 5))  # sigmoide
+
+    def forward(self, x):
+        z = self.pool(self.extrator(x)).flatten(1)
+        return self.cabeca_cena(z), self.cabeca_qualidade(z)
+</code></pre>
+<p>A perda total é a soma ponderada: <code>CE(cena) + λ · BCE(qualidade)</code>. O peso <code>λ</code> é
+hiperparâmetro; comece com 1 e só mude se uma das tarefas estagnar enquanto a outra melhora.</p>
+<p><strong>Quando não compartilhar:</strong> se uma tarefa precisa de resolução muito diferente da outra (ler
+dígitos × classificar cena), ou se os dados de treino de uma são dez vezes maiores que os da
+outra.</p>
+<p><strong>Na ficha:</strong> para cada cabeça, número de saídas, ativação, perda e o argumento de exclusividade.</p>
+<hr />
+<h2 id="g-7-trate-o-desbalanceamento-na-perda-não-só-na-amostragem">7. Trate o desbalanceamento na perda, não só na amostragem</h2>
+<p>A base é muito desigual: 66,6% das linhas sem nota, T181 sozinho é 56,9% das notas, 19 dos 61
+códigos aparecem. Nos defeitos de qualidade, a distribuição ainda não é conhecida — e será
+desigual.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Técnica</th>
+<th>Como</th>
+<th>Quando</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Peso por classe</td>
+<td><code>CrossEntropyLoss(weight=...)</code>, peso ∝ 1/frequência</td>
+<td>Classes exclusivas desbalanceadas</td>
+</tr>
+<tr>
+<td><code>pos_weight</code></td>
+<td><code>BCEWithLogitsLoss(pos_weight=neg/pos)</code> por defeito</td>
+<td>Multirrótulo com defeito raro</td>
+</tr>
+<tr>
+<td><em>Focal loss</em></td>
+<td>reduz o peso dos exemplos fáceis (Lin et al., 2017)</td>
+<td>Muitos exemplos fáceis dominando o gradiente</td>
+</tr>
+<tr>
+<td>Reamostragem</td>
+<td><code>WeightedRandomSampler</code></td>
+<td>Quando a classe rara tem tão poucos exemplos que quase não aparece num lote</td>
+</tr>
+</tbody>
+</table></div>
+<p>Qualquer uma delas <strong>descalibra</strong> a probabilidade de saída. Isso não é problema se a etapa 9
+(calibração) for feita depois — é problema se o grupo usar a probabilidade crua como "confiança".</p>
+<p><strong>Na ficha:</strong> a distribuição de rótulos medida na amostra rotulada e a técnica escolhida.</p>
+<hr />
+<h2 id="g-8-ajuste-a-capacidade-ao-número-de-rótulos">8. Ajuste a capacidade ao número de rótulos</h2>
+<p>Não existe rótulo pronto. Todos os grupos vão rotular à mão, então a pergunta útil é: <strong>com
+N rótulos, quanto da rede eu posso ajustar?</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Rótulos por classe</th>
+<th>Estratégia (Aula 08)</th>
+<th style="text-align: right;">Parâmetros treináveis no esqueleto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Até ~50</td>
+<td>Extração de características: extrator congelado, treina só a cabeça</td>
+<td style="text-align: right;">5.193</td>
+</tr>
+<tr>
+<td>~50 a ~500</td>
+<td>Ajuste fino dos últimos blocos, taxa menor no extrator</td>
+<td style="text-align: right;">dezenas a centenas de milhares</td>
+</tr>
+<tr>
+<td>Mais de ~500</td>
+<td>Ajuste fino completo, com taxas diferenciadas por bloco</td>
+<td style="text-align: right;">932.201</td>
+</tr>
+</tbody>
+</table></div>
+<p>Os limites são ordens de grandeza, não leis. A curva de dados do Lab 4 é o que diz onde está
+o ponto de virada <strong>no domínio de vocês</strong>.</p>
+<p>Taxas diferenciadas, em código:</p>
+<pre><code class="language-python">opt = torch.optim.AdamW([
+    {&quot;params&quot;: modelo.extrator.parameters(), &quot;lr&quot;: 1e-4},
+    {&quot;params&quot;: modelo.cabeca_cena.parameters(), &quot;lr&quot;: 1e-3},
+    {&quot;params&quot;: modelo.cabeca_qualidade.parameters(), &quot;lr&quot;: 1e-3},
+], weight_decay=1e-4)
+</code></pre>
+<p><strong>Na ficha:</strong> quantos rótulos o grupo terá, qual estratégia isso permite, e quantos parâmetros
+ficam treináveis.</p>
+<hr />
+<h2 id="g-9-projete-a-saída-com-confiança-e-com-direito-a-recusar">9. Projete a saída com confiança e com direito a recusar</h2>
+<p>Todos os grupos definiram, de algum jeito, uma terceira saída além de sim e não: DÚVIDA,
+"impedimento / inconclusivo", "requer conferência", "fila humana". Essa saída é a parte mais
+importante da arquitetura — é ela que protege a fatura. Ela tem três requisitos técnicos.</p>
+<p><strong>a) Probabilidade calibrada.</strong> Uma rede que diz 0,95 precisa acertar ~95% das vezes em que
+diz 0,95. Redes modernas são sistematicamente confiantes demais (Guo et al., 2017). Meça com
+o <strong>diagrama de confiabilidade</strong> e o <strong>ECE</strong> na validação; corrija com <em>temperature scaling</em>
+(um único parâmetro <code>T</code> ajustado na validação: <code>softmax(z / T)</code>).</p>
+<p><strong>b) Regra de recusa explícita.</strong> No esqueleto:</p>
+<pre><code class="language-python">def decidir(logits_cena, logits_qual, lim_cena=0.90, lim_defeito=0.50, lim_limpo=0.10):
+    # REJEITADA: cena confiável e (não é medidor, ou tem defeito provável)
+    # ACEITA:    cena confiável e nenhum defeito acima do limiar de limpeza
+    # DÚVIDA:    todo o resto
+</code></pre>
+<p>Com pesos aleatórios, as oito fotos de teste saem <strong>todas DÚVIDA</strong> — é o comportamento certo
+de um sistema que ainda não sabe nada.</p>
+<p><strong>c) Curva cobertura × risco.</strong> Varie o limiar e plote, para cada valor, a <strong>cobertura</strong>
+(fração de fotos que o sistema decide sozinho) contra o <strong>risco</strong> (taxa de erro nas que
+decidiu). A meta de negócio vira um ponto nessa curva: "decidir 30–40% do volume" (Korvian),
+"processar com assertividade 50% das legíveis" (VoltLens). Sem a curva, essas metas são
+desejos (Geifman &amp; El-Yaniv, 2017).</p>
+<p><strong>Na ficha:</strong> a regra de decisão, onde os limiares serão escolhidos (validação, nunca teste),
+e a meta traduzida em "cobertura ≥ X com risco ≤ Y".</p>
+<hr />
+<h2 id="g-10-escolha-o-aumento-de-dados-que-respeita-o-domínio">10. Escolha o aumento de dados que respeita o domínio</h2>
+<p>Aumento de dados não é neutro: ele declara o que <strong>não muda o rótulo</strong>. No Projeto 4, várias
+transformações comuns mudam.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Transformação</th>
+<th>Pode usar?</th>
+<th>Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Espelhamento horizontal</td>
+<td><strong>Não</strong>, para leitura</td>
+<td><code>2</code> espelhado não é dígito; <code>04821</code> vira outra sequência</td>
+</tr>
+<tr>
+<td>Rotação pequena (±10°)</td>
+<td>Sim</td>
+<td>O leiturista inclina o aparelho</td>
+</tr>
+<tr>
+<td>Brilho, contraste, cor</td>
+<td>Sim, com moderação</td>
+<td>Varia com sol, sombra, hora</td>
+</tr>
+<tr>
+<td>Desfoque gaussiano</td>
+<td><strong>Depende da tarefa</strong></td>
+<td>Para leitura, é aumento. Para a cabeça de qualidade, <strong>troca o rótulo</strong> para "fora de foco"</td>
+</tr>
+<tr>
+<td>Reflexo sintético</td>
+<td>Mesmo caso do desfoque</td>
+<td>É aumento para cena, é rótulo para qualidade</td>
+</tr>
+<tr>
+<td>Recorte aleatório</td>
+<td>Com cuidado</td>
+<td>Pode cortar o display e tornar a foto "enquadramento incorreto"</td>
+</tr>
+</tbody>
+</table></div>
+<p>A linha do desfoque é o centro da estratégia de rótulo fraco de um dos grupos: degradar
+fotos boas para fabricar exemplos de defeito. Funciona, <strong>se</strong> o grupo provar que a rede
+aprendeu o defeito e não o artefato da degradação sintética. O teste é simples e obrigatório:
+treinar só com sintético e medir numa amostra <strong>real</strong> rotulada à mão.</p>
+<p><strong>Na ficha:</strong> a lista de transformações por modelo, com a coluna "muda o rótulo?".</p>
+<hr />
+<h2 id="g-11-particione-pelo-que-pode-vazar">11. Particione pelo que pode vazar</h2>
+<p>A unidade de análise é a foto, mas a unidade de <strong>vazamento</strong> é maior: fotos da mesma leitura
+(<code>_000</code>, <code>_001</code>...) são quase idênticas, e o mesmo medidor pode reaparecer em outra extração.</p>
+<p>Medido nas quatro extrações (<code>NE-csv/</code>), contando números de medidor em comum entre lotes:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Par de lotes</th>
+<th style="text-align: right;">Medidores em comum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20/05 × 21/05</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>20/05 × 22/05</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>21/05 × 22/05</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>03/07 × qualquer outro</td>
+<td style="text-align: right;">0 a 2</td>
+</tr>
+</tbody>
+</table></div>
+<p>Cada lote tem de 3.600 a 3.935 medidores distintos. A sobreposição é desprezível: <strong>partir
+por lote é seguro e resolve o vazamento por medidor de graça</strong>. Com quatro lotes, a sugestão
+é:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Conjunto</th>
+<th>Lote</th>
+<th>Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Treino</td>
+<td>20/05 e 21/05</td>
+<td>Dois dias consecutivos, maior volume</td>
+</tr>
+<tr>
+<td>Validação</td>
+<td>22/05</td>
+<td>Mesmo mês, dia seguinte: mede generalização entre dias</td>
+</tr>
+<tr>
+<td>Teste</td>
+<td>03/07</td>
+<td>Seis semanas depois: o mais próximo de "produção" que a base permite</td>
+</tr>
+</tbody>
+</table></div>
+<p>Se o grupo misturar dados públicos (UFPR-AMR) com a base da distribuidora, precisa do conjunto
+<strong>treino-dev</strong> (Capítulo 5 da apostila): uma fatia do treino, da mesma distribuição, que
+separa variância de descasamento de distribuição.</p>
+<p><strong>Na ficha:</strong> a partição, a demonstração numérica de que nenhuma leitura e nenhum medidor
+aparece em dois conjuntos, e a justificativa.</p>
+<hr />
+<h2 id="g-12-verifique-a-sanidade-antes-de-treinar-de-verdade">12. Verifique a sanidade antes de treinar de verdade</h2>
+<p>Antes de gastar uma hora de GPU, quatro verificações que custam segundos (Karpathy, 2019).
+Todas estão no esqueleto, com a saída real:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Verificação</th>
+<th>O que esperar</th>
+<th>Medido no esqueleto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Formas</strong> em cada camada</td>
+<td>Nenhuma surpresa; a tabela da seção 4</td>
+<td>ok</td>
+</tr>
+<tr>
+<td><strong>Perda inicial</strong> com pesos aleatórios</td>
+<td>≈ ln(C) para softmax; ≈ ln 2 para cada sigmoide</td>
+<td>CE = 1,384 (ln 4 = 1,386); BCE = 0,696 (ln 2 = 0,693)</td>
+</tr>
+<tr>
+<td><strong>Sobreajustar um lote</strong> de 4 a 20 exemplos</td>
+<td>Perda vai a ~0. Se não vai, há defeito na rede, na perda ou nos rótulos</td>
+<td>triagem: 2,08 → 0,009 em 60 passos; CRNN: 12,2 → 0,003 em 300 passos</td>
+</tr>
+<tr>
+<td><strong>Baseline não profunda</strong> no mesmo teste</td>
+<td>O modelo profundo precisa ganhar dela, ou o grupo explica por que não</td>
+<td>— (é tarefa do grupo)</td>
+</tr>
+</tbody>
+</table></div>
+<p>A perda inicial longe de ln(C) quase sempre significa inicialização errada da última camada,
+ou uma softmax aplicada antes da <code>CrossEntropyLoss</code>.</p>
+<h3 id="g-o-caso-especial-da-leitura-ctc">O caso especial da leitura: CTC</h3>
+<p>O leitor de dígitos do esqueleto (<code>CRNNDigitos</code>, Shi et al., 2017) reduz a altura do recorte
+a 1 e usa a largura como eixo de tempo: 32 passos para um recorte de 32 × 128 px. A perda CTC
+(Graves et al., 2006) dispensa dizer onde está cada dígito — só a sequência. Ela introduz um
+símbolo "branco", e é esse símbolo que permite ler <code>00029</code> e <code>69900</code>: sem ele, dígitos
+repetidos colapsariam em um só. No sobreajuste do esqueleto, as quatro leituras de teste
+(<code>04821</code>, <code>17413</code>, <code>00029</code>, <code>69900</code>) saem idênticas ao alvo.</p>
+<p>Os grupos que usam TrOCR estão no outro ramo: codificador ViT + decodificador Transformer
+autoregressivo (Li et al., 2023). Ele não precisa de CTC, é mais forte em texto variado — e
+pode <strong>inventar</strong> uma sequência plausível que não está na imagem. Para dígitos de medidor,
+esse modo de falha é mais perigoso que o do CTC, que tende a perder ou duplicar um dígito.</p>
+<p><strong>Na ficha:</strong> a saída das quatro verificações, coladas do <em>notebook</em>.</p>
+<hr />
+<h2 id="g-13-feche-o-orçamento-de-latência-e-de-implantação">13. Feche o orçamento de latência e de implantação</h2>
+<p>A arquitetura só está pronta quando cabe no lugar onde vai rodar. O orçamento é uma conta:</p>
+<pre><code>volume diário × latência por foto ≤ janela de processamento disponível
+</code></pre>
+<p>Os grupos registraram volumes que não batem entre si, e isso muda a conta por um fator 20:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Fonte</th>
+<th>Volume declarado</th>
+<th style="text-align: right;">Por dia (≈22 dias úteis)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Luminus, VoltLens, Nortdata</td>
+<td>50–70 mil fotos por <strong>mês</strong></td>
+<td style="text-align: right;">2.300–3.200</td>
+</tr>
+<tr>
+<td>Korvian (doc. de entendimento)</td>
+<td>30–50 mil fotos por <strong>dia</strong></td>
+<td style="text-align: right;">30.000–50.000</td>
+</tr>
+<tr>
+<td>Os próprios lotes recebidos</td>
+<td>~3.100 imagens por extração</td>
+<td style="text-align: right;">3.100</td>
+</tr>
+</tbody>
+</table></div>
+<p>Com a latência medida pela Luminus (OCR pronto em CPU, <strong>média 4,43 s, p90 13,2 s</strong>, 382
+imagens), 3.200 fotos levam ~4 h de CPU — cabe num lote noturno. 50.000 fotos levariam
+~61 h — não cabe em um dia com uma máquina. <strong>Qual volume é o real é pergunta para o cliente,
+e a resposta decide a espinha dorsal.</strong> Registrem a hipótese adotada.</p>
+<p>Para CPU, o caminho padrão é exportar para ONNX e rodar com ONNX Runtime, verificando a
+<strong>paridade</strong>: a diferença máxima entre as saídas do PyTorch e do ONNX num lote real precisa
+ficar abaixo de 1e-4. Uma exportação sem teste de paridade não é uma exportação.</p>
+<p><strong>Licença também é restrição de implantação.</strong> As versões mais usadas do YOLO (Ultralytics
+v8/11) são AGPL-3.0: embarcá-las num produto entregue a um cliente tem consequência de
+licença. Alternativas permissivas: SSDlite/Faster R-CNN do <code>torchvision</code> (BSD), PP-OCR
+(Apache-2.0), TrOCR (MIT).</p>
+<p><strong>Na ficha:</strong> volume adotado, latência medida por foto (p50 e p95), tempo total do lote,
+onde roda, formato de exportação e licença de cada componente.</p>
+<hr />
+<h2 id="g-14-a-ficha-de-arquitetura">14. A ficha de arquitetura</h2>
+<p>É um arquivo <code>ARQUITETURA.md</code> no repositório do grupo. Cada seção corresponde a uma etapa
+deste guia. Uma ficha boa cabe em quatro a seis páginas; uma ficha de vinte páginas
+geralmente esconde que nenhuma decisão foi tomada.</p>
+<pre><code class="language-markdown"># Ficha de arquitetura — &lt;nome do grupo&gt;
+
+## 1. Decisão apoiada
+Decisão, unidade de análise, quem age, erro mais caro, onde roda.
+
+## 2. Sub-tarefas
+| Sub-tarefa | Aprendida ou regra? | Tipo | Saída | Ativação | Perda | Rótulo |
+
+## 3. Pipeline
+Diagrama. Taxa estimada/medida por estágio. Produto ponta a ponta.
+
+## 4. Contrato de entrada (por modelo)
+| Modelo | Tamanho | Proporção | Normalização | Canais |
+
+## 5. Espinha dorsal
+Escolhida, descartada, motivo com número.
+
+## 6. Cabeças
+| Cabeça | Nº saídas | Ativação | Perda | Classes exclusivas? Por quê |
+
+## 7. Desbalanceamento
+Distribuição medida na amostra rotulada. Técnica.
+
+## 8. Capacidade × rótulos
+Nº de rótulos. Estratégia de transferência. Parâmetros treináveis / totais.
+
+## 9. Confiança e recusa
+Regra de decisão. Calibração. Meta como &quot;cobertura ≥ X com risco ≤ Y&quot;.
+
+## 10. Aumento de dados
+| Transformação | Modelo | Muda o rótulo? |
+
+## 11. Partição
+Conjuntos. Prova numérica de ausência de vazamento.
+
+## 12. Sanidade
+Formas, perda inicial, sobreajuste de um lote, baseline.
+
+## 13. Implantação
+Volume adotado. Latência p50/p95. Onde roda. Exportação. Licenças.
+
+## 14. O que decidimos não fazer
+E por quê.
+</code></pre>
+<hr />
+<h2 id="g-15-anti-padrões-que-aparecem-todo-semestre">15. Anti-padrões que aparecem todo semestre</h2>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Anti-padrão</th>
+<th>Sintoma</th>
+<th>Correção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Escolher a rede pelo <em>ranking</em></td>
+<td>"Usamos a maior porque é a melhor"</td>
+<td>Orçamento de latência e de rótulos primeiro (seções 5 e 13)</td>
+</tr>
+<tr>
+<td>Softmax em classes não exclusivas</td>
+<td>A foto com reflexo <strong>e</strong> desfoque só pode ter um defeito</td>
+<td>Sigmoide + BCE (seção 6)</td>
+</tr>
+<tr>
+<td>Probabilidade crua como confiança</td>
+<td>"0,99 de confiança" que erra 10% das vezes</td>
+<td>Calibração + diagrama de confiabilidade (seção 9)</td>
+</tr>
+<tr>
+<td>Rede onde cabe regra</td>
+<td>Um modelo para comparar dois números</td>
+<td>Regra determinística (seção 2)</td>
+</tr>
+<tr>
+<td>Ler a foto inteira reduzida</td>
+<td>Dígitos com 7 px</td>
+<td>Detectar, recortar, ler na resolução nativa (seção 4)</td>
+</tr>
+<tr>
+<td>Partição aleatória por foto</td>
+<td><code>_000</code> no treino, <code>_001</code> no teste</td>
+<td>Partição por lote (seção 11)</td>
+</tr>
+<tr>
+<td>Métrica por dígito como métrica final</td>
+<td>0,85 de acurácia por dígito, 0,36 de leitura exata</td>
+<td>Leitura exata: um dígito errado é uma fatura errada</td>
+</tr>
+<tr>
+<td>Cascata sem conta de propagação</td>
+<td>Cada estágio "funciona", o sistema não</td>
+<td>Produto das taxas + análise de erro por estágio (seção 3)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="g-referências">Referências</h2>
+<ul>
+<li>CARUANA, R. Multitask Learning. <em>Machine Learning</em>, v. 28, p. 41–75, 1997.</li>
+<li>GEIFMAN, Y.; EL-YANIV, R. Selective Classification for Deep Neural Networks. In: <em>NeurIPS</em>, 2017.</li>
+<li>GRAVES, A. et al. Connectionist Temporal Classification: labelling unsegmented sequence data with recurrent neural networks. In: <em>ICML</em>, 2006.</li>
+<li>GUO, C. et al. On Calibration of Modern Neural Networks. In: <em>ICML</em>, 2017.</li>
+<li>HOWARD, A. et al. Searching for MobileNetV3. In: <em>ICCV</em>, 2019.</li>
+<li>KARPATHY, A. <em>A Recipe for Training Neural Networks</em>. 2019. Disponível em: karpathy.github.io/2019/04/25/recipe.</li>
+<li>LAROCA, R. et al. Convolutional Neural Networks for Automatic Meter Reading. <em>Journal of Electronic Imaging</em>, v. 28, n. 1, 2019. (conjunto UFPR-AMR)</li>
+<li>LI, M. et al. TrOCR: Transformer-based Optical Character Recognition with Pre-trained Models. In: <em>AAAI</em>, 2023.</li>
+<li>LIN, T.-Y. et al. Focal Loss for Dense Object Detection. In: <em>ICCV</em>, 2017.</li>
+<li>SHI, B.; BAI, X.; YAO, C. An End-to-End Trainable Neural Network for Image-based Sequence Recognition (CRNN). <em>IEEE TPAMI</em>, v. 39, n. 11, 2017.</li>
+<li>Apostila da disciplina: Capítulo 4 (métrica otimizadora e restrições), Capítulo 5 (cadeia de suposições, treino-dev, análise de erro), Capítulos 7 e 8 (CNNs e transferência).</li>
+</ul>
+  </section>
+  <section id="codigo" class="doc">
+    <p class="rotulo">Parte 3</p>
+    <h1 class="titulo-doc">Código de referência</h1>
+    <p><code>esqueleto_arquitetura.py</code> roda em CPU, sem baixar nada:
+    <code>python esqueleto_arquitetura.py</code>. Com <code>--pretreinado</code>, baixa os pesos
+    ImageNet da MobileNetV3. Copie o arquivo abaixo para o repositório do grupo.</p>
+    <pre class="fonte"><code>&quot;&quot;&quot;Esqueleto de referência do Lab 2: dois blocos profundos que aparecem, com nomes
+diferentes, nas arquiteturas dos quatro grupos do Projeto 4 (distribuidora).
+
+1. ModeloTriagem  - backbone CNN pré-treinável + duas cabeças (cena e qualidade).
+2. CRNNDigitos    - leitor de dígitos do display recortado, treinado com CTC.
+
+Roda em CPU, sem baixar nada: `python esqueleto_arquitetura.py`.
+Com `--pretreinado`, baixa os pesos ImageNet da MobileNetV3 (precisa de rede).
+&quot;&quot;&quot;
+import argparse
+import math
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision.models import MobileNet_V3_Small_Weights, mobilenet_v3_small
+
+torch.manual_seed(42)
+torch.set_num_threads(2)
+
+CLASSES_CENA = [&quot;digital&quot;, &quot;ciclometrico&quot;, &quot;cena_ocorrencia&quot;, &quot;nao_medidor&quot;]
+DEFEITOS = [&quot;reflexo&quot;, &quot;fora_de_foco&quot;, &quot;tampa_suja&quot;, &quot;enquadramento&quot;, &quot;display_apagado&quot;]
+ALTURA, LARGURA = 480, 360  # resolução nativa das fotos do PDA (retrato, 3:4)
+
+
+class ModeloTriagem(nn.Module):
+    &quot;&quot;&quot;Cena é exclusiva (uma foto é de um tipo só): softmax + entropia cruzada.
+    Defeitos coexistem (reflexo E fora de foco): uma sigmoide por defeito + BCE.&quot;&quot;&quot;
+
+    def __init__(self, pretreinado: bool = False, p_dropout: float = 0.2):
+        super().__init__()
+        pesos = MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretreinado else None
+        base = mobilenet_v3_small(weights=pesos)
+        self.extrator = base.features
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        dim = base.classifier[0].in_features  # 576
+        self.cabeca_cena = nn.Sequential(nn.Dropout(p_dropout), nn.Linear(dim, len(CLASSES_CENA)))
+        self.cabeca_qualidade = nn.Sequential(nn.Dropout(p_dropout), nn.Linear(dim, len(DEFEITOS)))
+
+    def forward(self, x):
+        z = self.pool(self.extrator(x)).flatten(1)
+        return self.cabeca_cena(z), self.cabeca_qualidade(z)
+
+
+def perda_triagem(logits_cena, logits_qual, y_cena, y_qual, peso_pos=None, lam=1.0):
+    return F.cross_entropy(logits_cena, y_cena) + lam * F.binary_cross_entropy_with_logits(
+        logits_qual, y_qual, pos_weight=peso_pos
+    )
+
+
+def decidir(logits_cena, logits_qual, lim_cena=0.90, lim_defeito=0.50, lim_limpo=0.10):
+    &quot;&quot;&quot;Três saídas. DÚVIDA não é falha do modelo: é a faixa em que ele se recusa a decidir.
+    Os limiares são placeholders; devem sair da validação, nunca do teste.&quot;&quot;&quot;
+    p_cena = logits_cena.softmax(-1)
+    p_def = logits_qual.sigmoid()
+    conf_cena, cena = p_cena.max(-1)
+    decisoes = []
+    for c, pc, pd in zip(cena.tolist(), conf_cena.tolist(), p_def):
+        if CLASSES_CENA[c] == &quot;nao_medidor&quot; and pc &gt;= lim_cena:
+            decisoes.append(&quot;REJEITADA&quot;)
+        elif pd.max().item() &gt;= lim_defeito and pc &gt;= lim_cena:
+            decisoes.append(&quot;REJEITADA&quot;)
+        elif pd.max().item() &lt;= lim_limpo and pc &gt;= lim_cena:
+            decisoes.append(&quot;ACEITA&quot;)
+        else:
+            decisoes.append(&quot;DUVIDA&quot;)
+    return decisoes
+
+
+class CRNNDigitos(nn.Module):
+    &quot;&quot;&quot;CNN reduz a altura a 1 e mantém a largura como eixo de tempo; a GRU lê da esquerda
+    para a direita; a CTC dispensa saber onde cada dígito está no recorte.&quot;&quot;&quot;
+
+    def __init__(self, n_simbolos: int = 10, oculto: int = 128):
+        super().__init__()
+
+        def bloco(cin, cout, pool):
+            return nn.Sequential(nn.Conv2d(cin, cout, 3, padding=1), nn.BatchNorm2d(cout),
+                                 nn.ReLU(inplace=True), nn.MaxPool2d(pool))
+
+        self.cnn = nn.Sequential(
+            bloco(1, 32, (2, 2)),    # 32x128 -&gt; 16x64
+            bloco(32, 64, (2, 2)),   # -&gt; 8x32
+            bloco(64, 128, (2, 1)),  # -&gt; 4x32  (pool só na altura: preserva passos de tempo)
+            bloco(128, 128, (4, 1)), # -&gt; 1x32
+        )
+        self.rnn = nn.GRU(128, oculto, bidirectional=True, batch_first=True)
+        self.saida = nn.Linear(2 * oculto, n_simbolos + 1)  # +1: o &quot;branco&quot; da CTC, índice 0
+
+    def forward(self, x):
+        f = self.cnn(x).squeeze(2).permute(0, 2, 1)  # (B, T=32, C=128)
+        h, _ = self.rnn(f)
+        return self.saida(h)                         # (B, T, n_simbolos+1)
+
+
+def decodificar_ctc(logits):
+    &quot;&quot;&quot;Guloso: argmax por passo, colapsa repetições, remove brancos. Dígito d -&gt; índice d+1.&quot;&quot;&quot;
+    seqs = []
+    for linha in logits.argmax(-1).tolist():
+        s, anterior = [], 0
+        for k in linha:
+            if k != anterior and k != 0:
+                s.append(str(k - 1))
+            anterior = k
+        seqs.append(&quot;&quot;.join(s))
+    return seqs
+
+
+def tabela_de_formas(modelo, x):
+    linhas = []
+
+    def gancho(nome):
+        def f(_m, _i, o):
+            o = o[0] if isinstance(o, tuple) else o
+            linhas.append((nome, tuple(o.shape)))
+        return f
+
+    alvos = [(n, m) for n, m in modelo.named_children()]
+    if hasattr(modelo, &quot;extrator&quot;):
+        alvos = [(f&quot;extrator.{n}&quot;, m) for n, m in modelo.extrator.named_children()] + alvos[1:]
+    ganchos = [m.register_forward_hook(gancho(n)) for n, m in alvos]
+    with torch.no_grad():
+        modelo.eval()(x)
+    for g in ganchos:
+        g.remove()
+    print(f&quot;  {&#x27;camada&#x27;:&lt;22}{&#x27;saída&#x27;:&gt;22}&quot;)
+    for nome, forma in linhas:
+        print(f&quot;  {nome:&lt;22}{str(forma):&gt;22}&quot;)
+
+
+def contar(modelo):
+    total = sum(p.numel() for p in modelo.parameters())
+    treino = sum(p.numel() for p in modelo.parameters() if p.requires_grad)
+    return total, treino
+
+
+def sobreajustar_um_lote(modelo, passos, passo_fn):
+    &quot;&quot;&quot;Teste de sanidade: sem regularização, um lote pequeno TEM que ir a perda ~0.&quot;&quot;&quot;
+    opt = torch.optim.Adam(modelo.parameters(), lr=1e-3)
+    modelo.train()
+    for i in range(passos):
+        opt.zero_grad()
+        perda = passo_fn()
+        perda.backward()
+        opt.step()
+        if i in (0, passos - 1):
+            print(f&quot;  passo {i:&gt;3}: perda = {perda.item():.4f}&quot;)
+    return perda.item()
+
+
+def main(pretreinado: bool):
+    print(&quot;=&quot; * 64, &quot;\n1) ModeloTriagem (MobileNetV3-Small, duas cabeças)\n&quot; + &quot;=&quot; * 64)
+    m = ModeloTriagem(pretreinado=pretreinado)
+    x = torch.randn(8, 3, ALTURA, LARGURA)
+    tabela_de_formas(m, x)
+    total, treino = contar(m)
+    print(f&quot;  parâmetros: {total:,} total, {treino:,} treináveis&quot;)
+
+    for p in m.extrator.parameters():
+        p.requires_grad = False
+    total, treino = contar(m)
+    print(f&quot;  extrator congelado: {treino:,} treináveis de {total:,}&quot;)
+    for p in m.extrator.parameters():
+        p.requires_grad = True
+
+    y_cena = torch.randint(0, len(CLASSES_CENA), (8,))
+    y_qual = torch.randint(0, 2, (8, len(DEFEITOS))).float()
+    m.eval()
+    with torch.no_grad():
+        lc, lq = m(x)
+        ce = F.cross_entropy(lc, y_cena).item()
+        bce = F.binary_cross_entropy_with_logits(lq, y_qual).item()
+    print(f&quot;  perda inicial CE  = {ce:.3f}  (esperado ~ ln({len(CLASSES_CENA)}) = {math.log(len(CLASSES_CENA)):.3f})&quot;)
+    print(f&quot;  perda inicial BCE = {bce:.3f}  (esperado ~ ln(2) = {math.log(2):.3f})&quot;)
+    print(&quot;  decisões com pesos aleatórios:&quot;, decidir(lc, lq))
+
+    m.cabeca_cena[0].p = m.cabeca_qualidade[0].p = 0.0
+    x_peq, yc_peq, yq_peq = x[:4], y_cena[:4], y_qual[:4]
+    print(&quot;  sobreajuste de um lote (4 imagens):&quot;)
+    final = sobreajustar_um_lote(m, 60, lambda: perda_triagem(*m(x_peq), yc_peq, yq_peq))
+    assert final &lt; 0.1, &quot;não decorou 4 imagens: há defeito no modelo, na perda ou nos rótulos&quot;
+
+    print(&quot;\n&quot; + &quot;=&quot; * 64, &quot;\n2) CRNNDigitos (CNN + GRU bidirecional + CTC)\n&quot; + &quot;=&quot; * 64)
+    r = CRNNDigitos()
+    xr = torch.randn(4, 1, 32, 128)
+    tabela_de_formas(r, xr)
+    total, _ = contar(r)
+    print(f&quot;  parâmetros: {total:,}&quot;)
+
+    leituras = [&quot;04821&quot;, &quot;17413&quot;, &quot;00029&quot;, &quot;69900&quot;]
+    alvos = torch.tensor([int(c) + 1 for s in leituras for c in s])
+    comp_alvo = torch.tensor([len(s) for s in leituras])
+    ctc = nn.CTCLoss(blank=0, zero_infinity=True)
+
+    def passo_ctc():
+        lp = r(xr).log_softmax(-1).permute(1, 0, 2)  # CTC quer (T, B, C)
+        comp_ent = torch.full((xr.size(0),), lp.size(0), dtype=torch.long)
+        return ctc(lp, alvos, comp_ent, comp_alvo)
+
+    print(&quot;  sobreajuste de um lote (4 recortes):&quot;)
+    sobreajustar_um_lote(r, 300, passo_ctc)
+    r.eval()
+    with torch.no_grad():
+        lidos = decodificar_ctc(r(xr))
+    print(&quot;  alvo :&quot;, leituras)
+    print(&quot;  lido :&quot;, lidos)
+    acerto = sum(a == b for a, b in zip(leituras, lidos)) / len(leituras)
+    print(f&quot;  acerto exato (sequência inteira): {acerto:.0%}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--pretreinado&quot;, action=&quot;store_true&quot;)
+    main(ap.parse_args().pretreinado)
+</code></pre>
+  </section>
+</main>
+<footer class="rodape">Deep Learning · Tecnológico em Banco de Dados e IA · 4º período · 2026.2</footer>
+</body>
+</html>

@@ -35,3 +35,12 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "jupytext>=1.19.5",
+    "kagglehub>=1.0.2",
+    "matplotlib>=3.11.2",
+]

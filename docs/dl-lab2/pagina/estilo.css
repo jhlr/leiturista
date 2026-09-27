@@ -1,0 +1,149 @@
+:root {
+  --fundo: #F2F5F4;
+  --superficie: #FFFFFF;
+  --tinta: #15262E;
+  --tinta-suave: #4B5C63;
+  --linha: #D3DCDA;
+  --faixa: #E8EEEC;
+  --acento: #A95D0A;
+  --topo: #17404F;
+  --topo-tinta: #EAF2F1;
+  --registro: #0E1E24;
+  --registro-digito: #F5F1E6;
+  --codigo-fundo: #EDF1F0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo: #0E161A;
+    --superficie: #142026;
+    --tinta: #E3EBE9;
+    --tinta-suave: #9FB1B3;
+    --linha: #2A3B41;
+    --faixa: #1A2A31;
+    --acento: #E59E45;
+    --topo: #0B2731;
+    --topo-tinta: #E3EBE9;
+    --registro: #050C0F;
+    --registro-digito: #F0EADB;
+    --codigo-fundo: #101B20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fundo: #0E161A;
+  --superficie: #142026;
+  --tinta: #E3EBE9;
+  --tinta-suave: #9FB1B3;
+  --linha: #2A3B41;
+  --faixa: #1A2A31;
+  --acento: #E59E45;
+  --topo: #0B2731;
+  --topo-tinta: #E3EBE9;
+  --registro: #050C0F;
+  --registro-digito: #F0EADB;
+  --codigo-fundo: #101B20;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font: 17px/1.62 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+}
+a { color: var(--acento); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+code, pre { font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
+h1, h2, h3 { font-family: Archivo, "Arial Narrow", Arial, sans-serif; text-wrap: balance; line-height: 1.2; }
+
+.rotulo {
+  margin: 0;
+  font: 600 12px/1.4 "JetBrains Mono", Consolas, monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--acento);
+}
+
+.topo { background: var(--topo); color: var(--topo-tinta); padding: 48px 16px 40px; }
+.topo-inner { max-width: 1040px; margin: 0 auto; display: grid; gap: 20px; }
+.topo .rotulo { color: #E9A955; }
+.topo h1 { margin: 0; font-size: clamp(34px, 6vw, 56px); font-weight: 800; letter-spacing: -.01em; }
+.topo h1 span { font-weight: 500; font-size: .5em; opacity: .9; }
+.registro { display: flex; gap: 4px; align-items: center; }
+.registro span {
+  display: inline-grid; place-items: center;
+  width: 40px; height: 54px;
+  background: var(--registro); color: var(--registro-digito);
+  font: 600 30px/1 "JetBrains Mono", Consolas, monospace;
+  border-radius: 3px;
+  box-shadow: inset 0 -12px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.registro span:last-of-type { background: #7A2E14; }
+.registro em { font-style: normal; margin-left: 10px; font: 600 14px "JetBrains Mono", monospace; opacity: .8; }
+.ficha { display: flex; flex-wrap: wrap; gap: 12px 36px; margin: 4px 0 0; }
+.ficha div { display: grid; gap: 2px; }
+.ficha dt { font: 600 11px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.ficha dd { margin: 0; font-weight: 600; font-size: 18px; }
+.ficha code { background: none; padding: 0; color: inherit; }
+
+.abas {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; flex-wrap: wrap; gap: 4px 24px; justify-content: center;
+  padding: 12px 16px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--linha);
+}
+.abas a { color: var(--tinta); text-decoration: none; font: 700 15px Archivo, Arial, sans-serif; padding: 4px 0; border-bottom: 2px solid transparent; }
+.abas a:hover { border-bottom-color: var(--acento); }
+
+main { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+.doc { padding-block: 56px 24px; border-bottom: 1px solid var(--linha); scroll-margin-top: 56px; }
+.doc > * { max-width: 72ch; }
+.doc > .tabela, .doc > pre { max-width: 100%; }
+.titulo-doc { font-size: clamp(28px, 4.4vw, 40px); margin: 6px 0 20px; font-weight: 800; }
+.doc h2 {
+  font-size: 25px; margin: 48px 0 12px; padding-top: 16px;
+  border-top: 2px solid var(--tinta);
+  scroll-margin-top: 64px;
+}
+.doc h3 { font-size: 19px; margin: 30px 0 8px; scroll-margin-top: 64px; }
+.doc p, .doc li { color: var(--tinta); }
+.doc hr { display: none; }
+.doc blockquote {
+  margin: 20px 0; padding: 12px 18px;
+  background: var(--faixa); border-left: 3px solid var(--acento);
+}
+.doc blockquote p { margin: 0; }
+
+.indice { margin: 0 0 12px; padding: 14px 18px; background: var(--superficie); border: 1px solid var(--linha); border-radius: 4px; }
+.indice summary { cursor: pointer; font: 600 12px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-suave); }
+.sumario { margin: 10px 0 0; padding-left: 22px; columns: 2 260px; column-gap: 32px; font-size: 15px; }
+.sumario li { break-inside: avoid; margin-bottom: 3px; }
+.sumario a { color: var(--tinta); text-decoration: none; }
+.sumario a:hover { color: var(--acento); text-decoration: underline; }
+
+.tabela { overflow-x: auto; margin: 16px 0 22px; border: 1px solid var(--linha); border-radius: 4px; background: var(--superficie); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--linha); }
+th { background: var(--faixa); font: 700 13px/1.3 Archivo, Arial, sans-serif; letter-spacing: .01em; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+
+:not(pre) > code { font-size: .86em; background: var(--codigo-fundo); padding: 1px 5px; border-radius: 3px; }
+pre {
+  overflow-x: auto; margin: 16px 0 22px; padding: 14px 16px;
+  background: var(--codigo-fundo); border: 1px solid var(--linha); border-radius: 4px;
+  font-size: 13.5px; line-height: 1.55;
+}
+pre.fonte { max-height: 80vh; }
+
+.rodape { max-width: 1040px; margin: 0 auto; padding: 28px 16px 48px; color: var(--tinta-suave); font-size: 14px; }
+
+@media (max-width: 520px) {
+  body { font-size: 16px; }
+  .registro span { width: 32px; height: 44px; font-size: 24px; }
+  .doc h2 { font-size: 22px; }
+}
