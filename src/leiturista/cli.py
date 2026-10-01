@@ -53,8 +53,9 @@ def _cmd_import_distribuidora(args: argparse.Namespace) -> None:
 def _cmd_train_crnn(args: argparse.Namespace) -> None:
     from .crnn import train_crnn
 
-    train_crnn(data_dir=args.data, out=args.out, epochs=args.epochs, batch=args.batch, lr=args.lr,
-               seed=args.seed, tracking_uri=args.tracking_uri, experiment=args.experiment)
+    train_crnn(data_dirs=args.data or [paths.FINETUNE_DIR], out=args.out, epochs=args.epochs, batch=args.batch,
+               lr=args.lr, seed=args.seed, init=args.init, invert_prob=args.invert_prob,
+               tracking_uri=args.tracking_uri, experiment=args.experiment)
 
 
 def _cmd_train(args: argparse.Namespace) -> None:
@@ -152,8 +153,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=_cmd_train)
 
     p = sub.add_parser("train-crnn", help="treina o CRNNDigitos (esqueleto do professor, Lab 2) em UFPR-AMR")
-    p.add_argument("--data", default=str(paths.FINETUNE_DIR))
+    p.add_argument("--data", action="append", help="dataset com labels.csv; repetir p/ vários (default: UFPR-AMR)")
     p.add_argument("--out", default=str(paths.MODELS_DIR / "crnn_digitos.pt"))
+    p.add_argument("--init", default=None, help="pesos de partida (fine-tune)")
+    p.add_argument("--invert-prob", type=float, default=0.0, help="prob. de inverter polaridade no treino")
     p.add_argument("--epochs", type=int, default=15)
     p.add_argument("--batch", type=int, default=32)
     p.add_argument("--lr", type=float, default=1e-3)

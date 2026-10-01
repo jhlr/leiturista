@@ -13,6 +13,7 @@ Uso:
 from __future__ import annotations
 
 import csv
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -73,8 +74,25 @@ def preprocess(img: Image.Image) -> np.ndarray:
     return np.asarray(img.convert("L").resize((LARGURA, ALTURA)), dtype=np.float32) / 255.0
 
 
-def _batch(items: list[tuple[Path, str]]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    x = torch.tensor(np.stack([preprocess(Image.open(p)) for p, _ in items]))[:, None]
+def augment(a: np.ndarray, rng: np.random.Generator, invert_prob: float) -> np.ndarray:
+    """Augmentation "núcleo" do plano (docs/dl-lab2/plano-treino-crnn.md): inversão de polaridade
+    (41,7% dos recortes reais da distribuidora vêm da fase invertida) + brilho/contraste de campo.
+    Sem espelhamento nem rotação grande (descartados no plano)."""
+    if rng.random() < invert_prob:
+        a = 1.0 - a
+    a = a * rng.uniform(0.7, 1.3) + rng.uniform(-30, 30) / 255.0
+    return np.clip(a, 0.0, 1.0).astype(np.float32)
+
+
+def _batch(
+    items: list[tuple[Path, str]],
+    rng: np.random.Generator | None = None,
+    invert_prob: float = 0.0,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    arrs = [preprocess(Image.open(p)) for p, _ in items]
+    if rng is not None:
+        arrs = [augment(a, rng, invert_prob) for a in arrs]
+    x = torch.tensor(np.stack(arrs))[:, None]
     alvos = torch.tensor([int(c) + 1 for _, r in items for c in r])
     comp = torch.tensor([len(r) for _, r in items])
     return x, alvos, comp
@@ -105,29 +123,41 @@ def evaluate(model: CRNNDigitos, items: list[tuple[Path, str]], batch: int = 32)
 
 
 def train_crnn(
-    data_dir: Path | str = paths.FINETUNE_DIR,
+    data_dirs: Sequence[Path | str] = (paths.FINETUNE_DIR,),
     out: Path | str = WEIGHTS,
     epochs: int = 15,
     batch: int = 32,
     lr: float = 1e-3,
     seed: int = 0,
+    init: Path | str | None = None,
+    invert_prob: float = 0.0,
     tracking_uri: str = paths.DEFAULT_TRACKING_URI,
     experiment: str = "crnn-digitos",
 ) -> dict[str, float]:
     """Receita do notebook (Adam, CTC, lotes de 32, 15 épocas, seed fixa). Seleciona nada pelo
-    teste: salva o estado da ÚLTIMA época e só então reporta valid/test."""
+    teste: salva o estado da ÚLTIMA época e só então reporta valid/test.
+
+    `data_dirs`: um ou mais datasets (`labels.csv` com split,image,label); o treino concatena os
+    `train`, e valid/test são reportados POR dataset (ex.: UFPR-AMR e distribuidora separados).
+    `init`: pesos de partida (fine-tune, sem congelar nada). `invert_prob`/brilho: augmentation
+    só no treino."""
     import mlflow
 
-    data_dir = Path(data_dir)
-    split: dict[str, list[tuple[Path, str]]] = {"train": [], "valid": [], "test": []}
-    with open(data_dir / "labels.csv") as f:
-        for r in csv.DictReader(f):
-            split[r["split"]].append((data_dir / r["image"], r["label"]))
+    per_ds: dict[str, dict[str, list[tuple[Path, str]]]] = {}
+    for d in map(Path, data_dirs):
+        sp: dict[str, list[tuple[Path, str]]] = {"train": [], "valid": [], "test": []}
+        with open(d / "labels.csv") as f:
+            for r in csv.DictReader(f):
+                sp[r["split"]].append((d / r["image"], r["label"]))
+        per_ds[d.name] = sp
+    split = {k: [it for sp in per_ds.values() for it in sp[k]] for k in ("train", "valid", "test")}
 
     torch.manual_seed(42)
     torch.set_num_threads(2)
     rng = np.random.default_rng(seed)
     model = CRNNDigitos()
+    if init is not None:
+        model.load_state_dict(torch.load(init, map_location="cpu"))
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
 
@@ -135,14 +165,15 @@ def train_crnn(
     mlflow.set_experiment(experiment)
     with mlflow.start_run(run_name=f"crnn-{epochs}ep"):
         mlflow.log_params({"epochs": epochs, "batch": batch, "lr": lr, "seed": seed,
-                           "n_train": len(split["train"]), "altura": ALTURA, "largura": LARGURA})
+                           "n_train": len(split["train"]), "altura": ALTURA, "largura": LARGURA,
+                           "datasets": ",".join(per_ds), "init": str(init), "invert_prob": invert_prob})
         train = split["train"]
         for ep in range(epochs):
             model.train()
             ordem = rng.permutation(len(train))
             soma, n = 0.0, 0
             for i in range(0, len(ordem), batch):
-                x, alvos, comp = _batch([train[j] for j in ordem[i:i + batch]])
+                x, alvos, comp = _batch([train[j] for j in ordem[i:i + batch]], rng, invert_prob)
                 lp = model(x).log_softmax(-1).permute(1, 0, 2)
                 comp_ent = torch.full((x.size(0),), lp.size(0), dtype=torch.long)
                 opt.zero_grad()
@@ -158,10 +189,13 @@ def train_crnn(
         out.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), out)
         res: dict[str, float] = {}
-        for nome in ("valid", "test"):
-            exato, dig = evaluate(model, split[nome], batch)
-            res[f"{nome}_exact"], res[f"{nome}_digit_acc"] = exato, dig
-            print(f"{nome:>5}: leitura exata = {exato:.3f}  acurácia por dígito = {dig:.3f}", flush=True)
+        for ds, sp in per_ds.items():
+            for nome in ("valid", "test"):
+                if not sp[nome]:
+                    continue
+                exato, dig = evaluate(model, sp[nome], batch)
+                res[f"{ds}_{nome}_exact"], res[f"{ds}_{nome}_digit_acc"] = exato, dig
+                print(f"{ds:>20} {nome:>5}: leitura exata = {exato:.3f}  por dígito = {dig:.3f}", flush=True)
         mlflow.log_metrics(res)
     return res
 
