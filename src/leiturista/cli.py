@@ -3,6 +3,7 @@
 Subcomandos:
   extract    — extrai imagens UFPR-AMR + labels.csv para data/finetune_ufpramr
   train      — fine-tune TrOCR-small-stage1 com tracking em MLflow
+  train-crnn — treina o CRNNDigitos (esqueleto do professor) em UFPR-AMR
   eval       — avalia checkpoint no split test e registra no MLflow
   artifacts  — lista/dump blobs de artefato de um run (mlflow.db)
   restore    — extrai o checkpoint.zip de um run de volta para disco
@@ -47,6 +48,13 @@ def _cmd_import_distribuidora(args: argparse.Namespace) -> None:
         seed=args.seed,
         qa_n=args.qa_n,
     )
+
+
+def _cmd_train_crnn(args: argparse.Namespace) -> None:
+    from .crnn import train_crnn
+
+    train_crnn(data_dir=args.data, out=args.out, epochs=args.epochs, batch=args.batch, lr=args.lr,
+               seed=args.seed, tracking_uri=args.tracking_uri, experiment=args.experiment)
 
 
 def _cmd_train(args: argparse.Namespace) -> None:
@@ -142,6 +150,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-samples", type=int, default=None, help="debug: subset por split")
     _add_mlflow_args(p)
     p.set_defaults(func=_cmd_train)
+
+    p = sub.add_parser("train-crnn", help="treina o CRNNDigitos (esqueleto do professor, Lab 2) em UFPR-AMR")
+    p.add_argument("--data", default=str(paths.FINETUNE_DIR))
+    p.add_argument("--out", default=str(paths.MODELS_DIR / "crnn_digitos.pt"))
+    p.add_argument("--epochs", type=int, default=15)
+    p.add_argument("--batch", type=int, default=32)
+    p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
+    p.add_argument("--experiment", default="crnn-digitos")
+    p.set_defaults(func=_cmd_train_crnn)
 
     p = sub.add_parser("eval", help="avalia checkpoint no split test (MLflow)")
     p.add_argument("--data", default=str(paths.FINETUNE_DIR))
