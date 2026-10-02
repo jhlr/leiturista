@@ -1,0 +1,17 @@
+flowchart LR
+    A["📦<br/><b>1. Fotos do mês</b><br/>A distribuidora junta as fotos<br/>dos leituristas (50 a 70 mil)"]
+    B["▶️<br/><b>2. Um clique</b><br/>O cliente roda o programa<br/>uma vez por mês"]
+    C["🤖<br/><b>3. O sistema analisa<br/>cada foto</b><br/>Segue o caminho de 6 passos<br/>do slide anterior"]
+    D["📄<br/><b>4. Tabela final</b><br/>Uma planilha com todas as fotos:<br/>a cor e o motivo de cada uma"]
+    E["👩‍💻<br/><b>5. Analistas decidem</b><br/>Verde: aprovam rápido<br/>Amarelo: olham a foto<br/>Vermelho: rejeitam"]
+
+    A --> B --> C --> D --> E
+
+    classDef step fill:#e8f0fe,stroke:#4a6fa5,stroke-width:2px,color:#1a1a1a
+    classDef ai fill:#fff3cd,stroke:#d4a017,stroke-width:3px,color:#1a1a1a
+    classDef out fill:#e0e0ff,stroke:#5a4fcf,stroke-width:3px,color:#1a1a1a
+    classDef human fill:#d4f5d4,stroke:#2e9e2e,stroke-width:2px,color:#1a1a1a
+    class A,B step
+    class C ai
+    class D out
+    class E human

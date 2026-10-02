@@ -1,0 +1,31 @@
+flowchart LR
+    A["📷<br/><b>1. Foto</b><br/>O leiturista fotografa<br/>o medidor em campo<br/>(todo mês, em lote)"]
+    P["🧹<br/><b>2. Prepara a foto</b><br/>Confere o arquivo, ajusta<br/>luz e tamanho"]
+    B["🔍<br/><b>3. Tem medidor?</b><br/>O sistema confere se a foto<br/>mostra um medidor legível"]
+    C["🎯<br/><b>4. Acha o visor</b><br/>Localiza a janelinha<br/>com os números"]
+    D["🔢<br/><b>5. Lê os números</b><br/>A rede neural lê<br/>dígito por dígito"]
+    E["✅<br/><b>6. Confere</b><br/>A leitura está nítida e<br/>bate com a anotação do leiturista?"]
+    V["🟢 <b>VERDE</b><br/>Tudo certo<br/>Analista só aprova"]
+    Y["🟡 <b>AMARELO</b><br/>Dúvida<br/>Analista olha a foto"]
+    R["🔴 <b>VERMELHO</b><br/>Problema claro<br/>Analista rejeita"]
+
+    A --> P --> B --> C --> D --> E
+    F["📄 <b>7. Relatório mensal</b><br/>Uma tabela CSV com todas as fotos,<br/>a cor de cada uma e o motivo"]
+    E --> V --> F
+    E --> Y --> F
+    E --> R --> F
+    B -. "sem medidor" .-> R
+    C -. "não achou o visor" .-> Y
+
+    classDef step fill:#e8f0fe,stroke:#4a6fa5,stroke-width:2px,color:#1a1a1a,font-size:18px
+    classDef ai fill:#fff3cd,stroke:#d4a017,stroke-width:3px,color:#1a1a1a,font-size:18px
+    classDef g fill:#d4f5d4,stroke:#2e9e2e,stroke-width:2px,color:#1a1a1a,font-size:18px
+    classDef y fill:#fff6bf,stroke:#d4b800,stroke-width:2px,color:#1a1a1a,font-size:18px
+    classDef r fill:#fcd9d9,stroke:#d32f2f,stroke-width:2px,color:#1a1a1a,font-size:18px
+    class A,P,B,C,E step
+    classDef out fill:#e0e0ff,stroke:#5a4fcf,stroke-width:3px,color:#1a1a1a
+    class F out
+    class D ai
+    class V g
+    class Y y
+    class R r

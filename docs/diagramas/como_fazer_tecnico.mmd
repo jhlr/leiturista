@@ -1,0 +1,38 @@
+flowchart TD
+    D1["📦 <b>Dados reais do cliente</b><br/>12.340 fotos · 13.669 registros<br/>4 lotes · 61 códigos de nota"]
+    D2["🔎 <b>O que aprendemos</b><br/>• rótulo só indireto: leitura digitada + nota<br/>• 'NA' = 66,6% da base<br/>• 7,5% exigem foto e não têm<br/>• visor invertido em 41,7% dos recortes"]
+    D3["🧹 <b>Preparação: achado → decisão</b><br/>• polaridade invertida → detector nas 2 fases + augmentation<br/>• bug da nitidez → corrigido, vira sinal e não decisor<br/>• sem rótulo de decisão → regras + 300 fotos rotuladas (kappa)<br/>• LGPD → fotos fora do repo, partição por lote"]
+    B1["📏 <b>Baseline medido</b> (500 fotos, IC 95%)<br/>Verde 5% · <b>Amarelo 89%</b> · Vermelho 6%<br/>PP-OCR e CRNN do professor"]
+    Q{"De onde vem<br/>o amarelo?"}
+    G1["🎯 <b>Gargalo 1: achar o visor</b><br/>só ~23% das fotos têm o visor localizado<br/>o resto lê serial ou placa"]
+    G2["🔢 <b>Gargalo 2: ler os dígitos</b><br/>CRNN: 0,873 no UFPR-AMR<br/>mas 0 acertos em campo (gap de domínio)"]
+    G3["📋 <b>Alavanca sem modelo</b><br/>13,5 pts são 'NA sem foto'<br/>depende de resposta do cliente"]
+    X1["<b>Experimento 1</b><br/>Recall do detector nas fotos inteiras<br/>→ reranker 'é visor?' ou detector de visor"]
+    X2["<b>Experimento 2</b><br/>Fine-tune do CRNN em recortes da distribuidora<br/>+ inversão de polaridade · McNemar pareado"]
+    X3["<b>Pergunta ao cliente</b><br/>'NA exige foto?'"]
+    X4["<b>Calibração</b><br/>ECE + cobertura × risco<br/>limiar do verde na validação"]
+    META["🏁 <b>Meta: amarelo < 40%</b><br/>remedido com o mesmo script de baseline"]
+
+    D1 --> D2 --> D3 --> B1 --> Q
+    Q --> G1
+    Q --> G2
+    Q --> G3
+    G1 --> X1
+    G2 --> X2
+    G3 --> X3
+    X1 --> X4
+    X2 --> X4
+    X3 --> META
+    X4 --> META
+    META -. "volta ao baseline a cada experimento" .-> B1
+
+    classDef data fill:#e8f0fe,stroke:#4a6fa5,stroke-width:2px,color:#1a1a1a
+    classDef base fill:#fff3cd,stroke:#d4a017,stroke-width:3px,color:#1a1a1a
+    classDef gap fill:#fcd9d9,stroke:#d32f2f,stroke-width:2px,color:#1a1a1a
+    classDef exp fill:#d4f5d4,stroke:#2e9e2e,stroke-width:2px,color:#1a1a1a
+    classDef goal fill:#e0e0ff,stroke:#5a4fcf,stroke-width:3px,color:#1a1a1a
+    class D1,D2,D3 data
+    class B1,Q base
+    class G1,G2,G3 gap
+    class X1,X2,X3,X4 exp
+    class META goal

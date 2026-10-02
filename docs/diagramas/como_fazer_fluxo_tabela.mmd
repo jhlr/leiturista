@@ -1,0 +1,58 @@
+flowchart LR
+    subgraph S1["<b>1 · Conhecemos as fotos</b>"]
+        direction TB
+        M1["📏 <b>Métricas</b><br/>12.340 fotos · 13.669 registros<br/>fotos sem registro e vice-versa"]
+        F1["🧰 <b>Ferramentas</b><br/>Python (pandas)<br/>distribuidora_stats.py"]
+        E1["⚖️ <b>Escolhas</b><br/>Base real do cliente,<br/>não só dataset público"]
+        C1["⚠️ <b>Consequências</b><br/>Dado sensível: anonimização,<br/>fotos fora do repositório"]
+        M1 --> F1 --> E1 --> C1
+    end
+    subgraph S2["<b>2 · Entendemos os dados</b>"]
+        direction TB
+        M2["📏 <b>Métricas</b><br/>Notas: NA = 66,6%<br/>7,5% exigem foto e não têm<br/>41,7% visores invertidos<br/>kappa ≥ 0,6 nos 300 rótulos"]
+        F2["🧰 <b>Ferramentas</b><br/>Notebooks de EDA<br/>catálogo de 61 notas<br/>pré-rótulo fraco por LLM (a validar)"]
+        E2["⚖️ <b>Escolhas</b><br/>Rótulo indireto (leitura digitada + nota)<br/>Descartado: supervisionado direto"]
+        C2["⚠️ <b>Consequências</b><br/>Avaliação contra a leitura digitada<br/>(premissa) · precisa de 300 rótulos manuais"]
+        M2 --> F2 --> E2 --> C2
+    end
+    subgraph S3["<b>3 · Medimos onde estamos</b>"]
+        direction TB
+        M3["📏 <b>Métricas</b><br/>% amarelo (meta < 40%)<br/>IC 95% Wilson<br/>verde / amarelo / vermelho"]
+        F3["🧰 <b>Ferramentas</b><br/>baseline_triagem.py<br/>PP-OCRv5/v6, TrOCR, CRNN<br/>amostra de 500 fotos"]
+        E3["⚖️ <b>Escolhas</b><br/>Regras antes de modelo<br/>Amostra: ~4,4 s por foto em CPU"]
+        C3["⚠️ <b>Consequências</b><br/>Estimativa (± 2 pontos)<br/>Verde conservador<br/>empurra para amarelo"]
+        M3 --> F3 --> E3 --> C3
+    end
+    subgraph S4["<b>4 · Descobrimos o porquê</b>"]
+        direction TB
+        M4["📏 <b>Métricas</b><br/>46% dos recortes são o visor (n=48)<br/>CRNN: 0,873 no UFPR-AMR, 0 em campo<br/>latência média 4,43 s · p90 13,2 s"]
+        F4["🧰 <b>Ferramentas</b><br/>Mosaico de recortes<br/>CRNNDigitos (CNN + GRU + CTC)<br/>PyTorch"]
+        E4["⚖️ <b>Escolhas</b><br/>Validação cross-dataset de propósito<br/>Uma coluna de erro por estágio"]
+        C4["⚠️ <b>Consequências</b><br/>Gap de domínio justifica o fine-tune<br/>Número do UFPR-AMR não é promessa"]
+        M4 --> F4 --> E4 --> C4
+    end
+    subgraph S5["<b>5 · O que vamos fazer</b>"]
+        direction TB
+        M5["📏 <b>Métricas</b><br/>Recall do detector · leitura exata<br/>McNemar pareado<br/>ECE · cobertura × risco"]
+        F5["🧰 <b>Ferramentas</b><br/>torchvision (SSDLite, MobileNetV3)<br/>PyTorch + MLflow, uv<br/>augmentation de polaridade"]
+        E5["⚖️ <b>Escolhas</b><br/>Reranker ou detector, pelo recall<br/>Fine-tune sem congelar · partição por lote<br/>Descartados: YOLO (AGPL), TrOCR, ponta a ponta"]
+        C5["⚠️ <b>Consequências</b><br/>Erro se multiplica na cascata<br/>Treino só com autorização<br/>Split do import: corrigir p/ lote"]
+        M5 --> F5 --> E5 --> C5
+    end
+    subgraph S6["<b>6 · Meta e entrega</b>"]
+        direction TB
+        M6["📏 <b>Métricas</b><br/>Amarelo < 40%<br/>risco de falso-verde (com o cliente)<br/>p90 no batch de 50 a 70 mil fotos"]
+        F6["🧰 <b>Ferramentas</b><br/>CLI em lote, retomável<br/>CSV mensal: foto, cor, motivo<br/>BentoML opcional"]
+        E6["⚖️ <b>Escolhas</b><br/>Decisão final humana<br/>Motivo vem de regra nomeada"]
+        C6["⚠️ <b>Consequências</b><br/>Falso-verde = fatura errada:<br/>limiar na validação<br/>dias de processamento: checkpoint"]
+        M6 --> F6 --> E6 --> C6
+    end
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    classDef m fill:#e8f0fe,stroke:#4a6fa5,color:#1a1a1a
+    classDef f fill:#fff3cd,stroke:#d4a017,color:#1a1a1a
+    classDef e fill:#d4f5d4,stroke:#2e9e2e,color:#1a1a1a
+    classDef c fill:#fcd9d9,stroke:#d32f2f,color:#1a1a1a
+    class M1,M2,M3,M4,M5,M6 m
+    class F1,F2,F3,F4,F5,F6 f
+    class E1,E2,E3,E4,E5,E6 e
+    class C1,C2,C3,C4,C5,C6 c

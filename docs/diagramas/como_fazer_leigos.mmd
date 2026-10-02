@@ -1,0 +1,21 @@
+flowchart LR
+    A["📦<br/><b>1. Conhecemos as fotos</b><br/>Mais de 12 mil fotos reais<br/>de leituristas em campo"]
+    B["🔎<br/><b>2. Entendemos os dados</b><br/>Cada foto vem com a leitura<br/>que o leiturista digitou<br/>e uma anotação da ocorrência"]
+    C["📏<br/><b>3. Medimos onde estamos</b><br/>Hoje quase 9 em cada 10 fotos<br/>ainda precisam de um analista"]
+    D["❓<br/><b>4. Descobrimos o porquê</b><br/>① Nem sempre acha a janelinha<br/>com os números<br/>② Não lê bem os números<br/>das fotos de campo"]
+    E["🛠️<br/><b>5. O que vamos fazer</b><br/>Ensinar o sistema a achar a janelinha<br/>Treinar com fotos reais do cliente<br/>Tirar dúvidas de regra com o cliente"]
+    F["🏁<br/><b>6. Meta</b><br/>Menos de 4 em cada 10 fotos<br/>precisando de um analista"]
+
+    A --> B --> C --> D --> E --> F
+    F -. "medimos de novo a cada melhoria" .-> C
+
+    classDef step fill:#e8f0fe,stroke:#4a6fa5,stroke-width:2px,color:#1a1a1a
+    classDef now fill:#fff3cd,stroke:#d4a017,stroke-width:3px,color:#1a1a1a
+    classDef why fill:#fcd9d9,stroke:#d32f2f,stroke-width:2px,color:#1a1a1a
+    classDef todo fill:#d4f5d4,stroke:#2e9e2e,stroke-width:2px,color:#1a1a1a
+    classDef goal fill:#e0e0ff,stroke:#5a4fcf,stroke-width:3px,color:#1a1a1a
+    class A,B step
+    class C now
+    class D why
+    class E todo
+    class F goal
