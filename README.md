@@ -160,8 +160,7 @@ Nenhuma foto ou linha de planilha real da distribuidora está neste repositório
 pra confirmar que nunca entraram. As imagens em `samples/` são **sintéticas**,
 geradas por `scripts/gen_sample_images.py` (seed fixa, reprodutível) — não são
 versionadas (`samples/*.png` no `.gitignore`), justamente por serem regeráveis em
-segundos com `just samples`; o `samples/leituras_exemplo.csv` (autoral, versionado)
-tem o mesmo schema do CSV real do cliente, com valores inventados.
+segundos com `just samples`.
 
 ## 7. Uso de IA
 

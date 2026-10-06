@@ -7,7 +7,7 @@ RELEASE_URL := "https://github.com/jhlr/leiturista/releases/download/modelos-1.0
 setup:
     uv sync
 
-# baixa e extrai os pesos dos modelos (det/rec ONNX + TrOCR fine-tunado), se ainda não existirem
+# baixa e extrai os pesos dos modelos (det/rec ONNX + TrOCR off-the-shelf), se ainda não existirem
 models:
     #!/usr/bin/env bash
     set -euo pipefail
