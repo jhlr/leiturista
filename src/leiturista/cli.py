@@ -4,6 +4,7 @@ Subcomandos:
   extract    — extrai imagens UFPR-AMR + labels.csv para data/finetune_ufpramr
   train      — fine-tune TrOCR-small-stage1 com tracking em MLflow
   train-crnn — treina o CRNNDigitos (esqueleto do professor) em UFPR-AMR
+  train-scene — classificador 'tem medidor na foto?' (MobileNetV3-Small, MLflow)
   eval       — avalia checkpoint no split test e registra no MLflow
   artifacts  — lista/dump blobs de artefato de um run (mlflow.db)
   restore    — extrai o checkpoint.zip de um run de volta para disco
@@ -20,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import os
 from pathlib import Path
 
 from . import paths
@@ -56,6 +58,14 @@ def _cmd_train_crnn(args: argparse.Namespace) -> None:
     train_crnn(data_dirs=args.data or [paths.FINETUNE_DIR], out=args.out, epochs=args.epochs, batch=args.batch,
                lr=args.lr, seed=args.seed, init=args.init, invert_prob=args.invert_prob,
                tracking_uri=args.tracking_uri, experiment=args.experiment)
+
+
+def _cmd_train_scene(args: argparse.Namespace) -> None:
+    from .scene import train_scene
+
+    train_scene(out=args.out, labels_csv=args.labels, fotos_dir=args.fotos_dir, epochs=args.epochs,
+                freeze_epochs=args.freeze_epochs, batch=args.batch, lr=args.lr, seed=args.seed,
+                pretrained=not args.no_pretrained, tracking_uri=args.tracking_uri, experiment=args.experiment)
 
 
 def _cmd_train(args: argparse.Namespace) -> None:
@@ -164,6 +174,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
     p.add_argument("--experiment", default="crnn-digitos")
     p.set_defaults(func=_cmd_train_crnn)
+
+    p = sub.add_parser("train-scene", help="treina o classificador 'tem medidor na foto?' (rótulos fracos do LLM)")
+    p.add_argument("--labels", default=str(paths.SCENE_LABELS_CSV))
+    p.add_argument("--fotos-dir", default=os.environ.get("LEITURISTA_FOTOS_DIR", str(paths.CAMPO_DIR)))
+    p.add_argument("--out", default=str(paths.SCENE_WEIGHTS))
+    p.add_argument("--epochs", type=int, default=10)
+    p.add_argument("--freeze-epochs", type=int, default=2, help="épocas iniciais só com a cabeça")
+    p.add_argument("--batch", type=int, default=32)
+    p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--no-pretrained", action="store_true", help="não baixar pesos ImageNet")
+    p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
+    p.add_argument("--experiment", default="scene-medidor")
+    p.set_defaults(func=_cmd_train_scene)
 
     p = sub.add_parser("eval", help="avalia checkpoint no split test (MLflow)")
     p.add_argument("--data", default=str(paths.FINETUNE_DIR))

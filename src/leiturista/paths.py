@@ -9,6 +9,9 @@ DATA_DIR = ROOT / "data"
 UFPR_AMR_DIR = DATA_DIR / "ufpr_amr"
 FINETUNE_DIR = DATA_DIR / "finetune_ufpramr"
 MODELS_DIR = ROOT / "models"
+CAMPO_DIR = DATA_DIR / "distribuidora_campo"  # fotos de campo (local, gitignored)
+SCENE_LABELS_CSV = DATA_DIR / "distribuidora_campo_rotulado.csv"  # rótulos fracos do LLM (local)
+SCENE_WEIGHTS = MODELS_DIR / "scene_medidor.pt"
 
 # MLflow: tracking local em SQLite (o file store caiu em maintenance mode no
 # mlflow 3.15 — sqlite é o backend recomendado). Ver `docs/finetune_trocr_ufpramr.md`.
