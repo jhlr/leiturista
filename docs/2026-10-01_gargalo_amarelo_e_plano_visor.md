@@ -58,3 +58,25 @@ dispara (exceto autorização explícita).
 2. Recall do det (passo 0) decide A × B.
 3. Medida de "visor correto" nos recortes foi visual, n=48; precisa de ~200 rotulados à mão
    (também serve ao item L2).
+
+## Resultado do passo 0 (2026-10-06): recall dos candidatos do det
+
+`scripts/visor_recall_candidatos.py` (50 fotos inteiras de campo, seed 0, todas as caixas do
+PP-OCRv5 desenhadas; contagem visual de "existe caixa sobre o visor").
+
+**Recall ≈ 25/50 = 50%** (n=50, inspeção visual; margem de ~±14 pontos). Decisão do plano: **recall baixo → passo B
+(detector de visor)**, não só reranker. Anatomia dos 25 erros:
+
+| Falha | Fotos | Exemplo |
+|---|---|---|
+| 0 caixas com visor visível (LCD de baixo contraste, névoa, reflexo) | 9 | #45 visor limpo com reflexo, 0 caixas |
+| Caixa gigante espúria (blob + unclip) no lugar do visor | 8 | #10, #15, #35, #49, #50 |
+| Caixas só em placa/serial, nunca no visor | 6 | #4, #5, #9 |
+| Sem medidor ou medidor minúsculo/atrás de grade | 4 | #41, #43, #48 |
+
+Leituras: (1) o det genérico de texto não foi feito para LCD de segmentos, então falha em
+baixo contraste; (2) as caixas gigantes sugerem filtro de área/aspect no `_det_boxes` como
+ganho barato antes de treinar; (3) 4 dos 25 erros não têm visor recuperável, então o teto
+realista fica perto de 90% das fotos.
+Próximo: montar caixas de treino (quads aceitos do import) e treinar detector de 1 classe
+(torchvision SSDLite MobileNet, BSD). Treino só o usuário dispara.
