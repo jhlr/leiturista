@@ -38,3 +38,7 @@ leiturista-models.tar.gz
 # scripts/gen_sample_images.py; não versionadas de propósito. O CSV de exemplo
 # (autoral, não gerado) continua versionado.
 samples/*.png
+
+# Rotulagem real do cliente (o CSV de campo fica em data/, ja ignorado): NUNCA versionar
+docs/2026-09-21_llm_labels_distribuidora.jsonl
+docs/labels_distribiodora.jsonl

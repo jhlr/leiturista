@@ -73,7 +73,8 @@ presente mas ilegível" (hoje os dois caem em `sem_leitura_detectada`).
 
 ## 3. Como rodar (do clone à primeira predição)
 
-Testado com `uv` (resolve o Python sozinho, 3.13). Tempo aproximado: ~2 min (`uv sync`
+**Python 3.13** (fixado em `.python-version`; o `pyproject.toml` aceita `>=3.11`, mas só 3.13 foi testado).
+O `uv` baixa e usa essa versão sozinho, não precisa instalar Python à mão. Tempo aproximado: ~2 min (`uv sync`
 baixa/instala ~160 pacotes) + ~2 min (`just models`, 147 MB) + a primeira chamada de
 `bentoml serve` demora ~15-30s pra abrir a porta (import "frio" de torch/transformers)
 numa rede razoável.
