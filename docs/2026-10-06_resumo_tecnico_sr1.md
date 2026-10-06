@@ -91,7 +91,6 @@ Declarado no README (seção 7): ferramenta, pedidos e avaliação crítica.
 
 ## 7. Pendências conhecidas na data
 
-1. Dados do cliente rastreados no histórico (CSV de campo e JSONLs de rotulagem) e o
-   nome do cliente em docs; exigem reescrita de histórico antes da avaliação.
+1. Dados do cliente removidos do histórico (reescrita com `git filter-repo`, repositório recriado limpo em 2026-10-06); os arquivos locais seguem só no disco, fora do git.
 2. `samples/` não é versionada (as imagens são geradas).
 3. Poucos PRs de revisão entre integrantes.
