@@ -1,7 +1,7 @@
-# Roteiro e perguntas prováveis — apresentação SR1 (07/10)
+# Roteiro da apresentação — SR1 (07/10)
 
 15 min de fala (demo incluída) + 5 min de perguntas. O professor escolhe quem responde,
-então todos precisam saber a seção 3. Slides: `leiturista_sr1.pptx`. Plano B: vídeo de 38 s.
+então todos precisam saber a seção 2. Slides: `leiturista_sr1.pptx`. Plano B: vídeo de 38 s.
 
 ## 1. Roteiro por slide
 
@@ -57,74 +57,27 @@ então todos precisam saber a seção 3. Slides: `leiturista_sr1.pptx`. Plano B:
 1. Repositório: README que roda, `uv.lock`, `justfile`, sem segredos, sem dado do cliente.
 2. LICENSE (MIT) e seção Uso de IA (Claude Code), declarada no README.
 
-## 2. Divisão de falas sugerida (7 integrantes)
+## 2. Possíveis perguntas (as mais prováveis)
 
-1. Slides 1-2: um integrante. 2. Slides 3-4: dois (modelo, fluxo). 3. Slides 5-6: dois (métricas,
-limites). 4. Slide 7: um. 5. Slides 8-9: um faz a demo, outro fecha.
-Todos leem a seção 3 antes: qualquer um pode ser chamado.
+1. *Quem treinou o modelo?* Ninguém do grupo: PaddlePaddle e Microsoft, pré-treinados e públicos.
+   Fizemos um fine-tune do TrOCR no UFPR-AMR, mas o serviço usa o original.
+2. *Por que não usaram o CRNN que treinaram?* Foi treinado só em recortes do UFPR-AMR (0,873 no
+   teste) e não foi validado em foto de campo.
+3. *0,357 é pouco, não?* É leitura exata (todos os dígitos certos); por dígito é 0,846. E é no
+   display já recortado: o problema real é achar o visor.
+4. *O que significa ~50%?* Em 50 fotos de campo, contamos à mão quantas tinham caixa sobre o
+   visor: 25. Amostra pequena, margem de ±14 pontos.
+5. *O serviço faz todas as funções do projeto?* Não. Lê consumo e número do medidor quando acha o
+   visor; não valida foto contra a ocorrência do leiturista.
+6. *Como `funcao` e `confianca` são calculados?* `leitura_normal` se há leitura legível com
+   confiança ≥ 0,5; `sem_leitura_detectada` se nada foi lido; `leitura_incerta` nos demais.
+   `confianca` é a do OCR, não calibrada.
+7. *Onde estão os dados do cliente?* Fora do repositório: `.gitignore` cobre os dados e as imagens
+   de `samples/` são sintéticas.
+8. *Como usaram IA?* Claude Code, declarado no README: o que foi pedido e a avaliação crítica.
 
-## 3. Perguntas prováveis e respostas curtas
-
-**Modelo**
-
-1. *Quem treinou o modelo?* Ninguém do grupo. PaddlePaddle (PP-OCR) e Microsoft (TrOCR),
-   pré-treinados e públicos. Fizemos um fine-tune do TrOCR no UFPR-AMR, mas o serviço usa o original.
-2. *Por que três modelos?* O detector acha onde está o texto, o leitor lê cada caixa, e o TrOCR
-   é o fallback quando o detector não segmenta o display.
-3. *Por que não usaram o CRNN que treinaram?* Foi treinado só em recortes do UFPR-AMR
-   (0,873 no teste) e não foi validado em foto de campo. Não quisemos servir sem essa validação.
-4. *O que é o UFPR-AMR?* Base pública de medidores brasileiros (Laroca, IJCNN 2020), 2.000
-   imagens já recortadas no display. Usamos para medir o modelo.
-5. *Por que PP-OCR e não só TrOCR?* O PP-OCR é bem mais leve (rec com 1,1M parâmetros contra
-   62M) e acerta mais no UFPR-AMR (0,357 contra 0,253 de leitura exata).
-
-**Limites**
-
-6. *0,357 é pouco, não?* É, e é exato por foto: tem que acertar todos os dígitos. Por dígito
-   é 0,846. Além disso o número é no display já recortado; o problema real é localizar o visor.
-7. *O que significa ~50%?* Em 50 fotos inteiras de campo, desenhamos todas as caixas do
-   detector e contamos à mão em quantas havia caixa sobre o visor: 25. Amostra pequena, margem
-   de ±14 pontos.
-8. *Por que o detector falha?* É um detector de texto genérico, não de LCD de segmentos. Falha
-   com baixo contraste, névoa e reflexo, e às vezes devolve uma caixa gigante.
-9. *O serviço faz todas as funções do projeto?* Não. Lê o consumo e o número do medidor quando
-   acha o visor. Não valida se a foto bate com a ocorrência do leiturista (falta rótulo real).
-10. *O que melhoraria primeiro?* O detector de visor treinado com foto de campo, porque limita
-    tudo que vem depois.
-
-**API e contrato**
-
-11. *O que cada campo da resposta significa?* `numero_medidor` (serial, ou null), `funcao`,
-    `consumo` (leitura), `confianca`, `legivel`, `flags` (avisos).
-12. *Como `funcao` é decidida?* `sem_leitura_detectada` se nada foi lido; `leitura_normal` se há
-    leitura legível com confiança ≥ 0,5; `leitura_incerta` nos demais (vai para conferência manual).
-13. *O que é `confianca`?* A maior confiança do OCR entre as caixas de leitura. Vale 0 quando
-    não há leitura ou quando a leitura veio do fallback. Não é probabilidade calibrada.
-14. *Como é decidido que a foto é legível?* Pela variância do Laplaciano (nitidez).
-15. *O que acontece com uma foto sem medidor?* Devolve `sem_leitura_detectada`, confiança 0,0 e
-    flags dizendo que não detectou leitura. Não distingue "sem medidor" de "ilegível".
-
-**Pôr no ar e repositório**
-
-16. *Como sobe do zero?* `git clone`, `just all`, `just serve`. Python 3.13 e uv.
-17. *Por que BentoML?* É o caminho recomendado no enunciado e já gera o Swagger.
-18. *E se não houver internet?* Os pesos ficam em `models/` depois do primeiro `just models`.
-19. *Onde estão os dados do cliente?* Não estão no repositório: `.gitignore` cobre os dados, e
-    o histórico foi limpo antes da entrega. As imagens de `samples/` são sintéticas.
-20. *Como vocês usaram IA?* Claude Code, declarado no README: o que foi pedido e a avaliação
-    crítica. Qualquer integrante deve saber explicar qualquer linha.
-
-**Armadilhas (responder com honestidade)**
-
-21. *O serviço está validado em foto real do cliente?* Não. Validamos o contrato e a execução;
-    a avaliação em campo foi uma amostra pequena à mão.
-22. *Vocês usam o fine-tune do TrOCR?* Não. Existe e está registrado, mas o serviço usa o original.
-23. *O classificador "tem medidor?" funciona?* Está preparado, mas não foi treinado. Não
-    afirmar resultado.
-
-## 4. Antes de entrar
+## 3. Antes de entrar
 
 1. `just serve` rodando e `/readyz` respondendo (cerca de 1 min depois de subir).
-2. `samples/` gerado (`just samples`) e README aberto numa aba.
-3. Vídeo de plano B aberto em outra janela.
-4. Wifi não é necessário: modelos e dependências já baixados.
+2. `samples/` gerado (`just samples`), README aberto numa aba e vídeo de plano B aberto.
+3. Wifi não é necessário: modelos e dependências já baixados.
