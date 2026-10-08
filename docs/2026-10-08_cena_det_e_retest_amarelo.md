@@ -78,3 +78,41 @@ deixa de ser *achar* o visor e passa a ser *escolher* entre candidatos e *ler* o
 passo A do plano (reranker "é visor?") mais fine-tune do leitor em recorte da distribuidora. O
 detector fine-tunado sozinho só troca amarelo por vermelho falso; a união não vale o custo de
 latência (4,6 s/foto contra 0,9 s do det novo sozinho).
+
+## 5. Regra das notas que não exigem foto (planilha do cliente)
+
+`DESCRIÇÃO NOTAS LEITURISTAS X SOLICITAÇÃO DE FOTO.xlsx` lista 61 códigos com "exige foto" SIM/NÃO.
+Os "NÃO" (ex.: T111, L131, T161, M141, R111) já vão direto para **verde (R1, 611 registros, 4,5%)**
+sem olhar a imagem; os "SIM" sem foto vão para vermelho (R2, 296). **A planilha não tem a nota
+`NA`** (9.109 registros: 7.265 com foto, 1.844 sem) nem `V100` (6). Por instrução do usuário
+(2026-10-08: "códigos que não exigem foto não vão para o amarelo"), `NA` sem foto passou a **verde
+(R1b)**, em vez de amarelo (R2b, regra antiga); `V100` sem foto segue amarelo. É suposição fora da
+planilha: `--na-sem-foto amarelo` volta à regra antiga, e as tabelas abaixo trazem as duas. R1b move
+13,5 pontos de amarelo para verde sem modelo nenhum.
+
+## 6. CRNN fine-tunado em recortes da distribuidora
+
+`leiturista train-crnn --data data/distribuidora_amr --data data/finetune_ufpramr --init
+models/crnn_bn128_mix500_cur30.pt` (30 épocas, lr 3e-4, inversão 0,4, jitter 0,07), saída
+`models/crnn_dist_ft.pt`. Rótulos dos recortes = leitura digitada confirmada pelo OCR (viés de
+recortes fáceis).
+
+| Leitura exata | Antes (zero-shot) | Depois |
+|---|---|---|
+| Distribuidora test (n=110) | 0,036 | **0,609** (0,873 por dígito) |
+| UFPR-AMR test (n=300) | 0,873 | 0,890 (não piorou) |
+
+Retest ponta a ponta. A amostra exclui 46 fotos cujo recorte treinou/validou o CRNN (454 fotos), e as
+colunas de política `NA sem foto`: verde (R1b) × amarelo (regra antiga):
+
+| Detector + leitor | Verde | Amarelo (NA=verde) | Amarelo (NA=amarelo) | Vermelho |
+|---|---|---|---|---|
+| Baseline, PP-OCR | 18,9% | 75,2% | 88,7% | 5,8% |
+| União, CRNN fine-tunado | 22,0% | 73,2% (69,5% com cena) | 86,7% | 4,8% |
+| Det visor-ft, CRNN fine-tunado | 24,1% | 58,1% (56,7% com cena) | 71,6% | 17,8% |
+
+Leitura: o ganho real do CRNN fine-tunado é no verde (18,9 -> 22,0% com a união, e +3 pontos sobre o
+mesmo detector com o CRNN antigo), sem trocar erro por vermelho. O amarelo continua alto (~70%)
+porque ~45% das fotos amostradas seguem sem leitura detectada ou diverge da digitada. Ressalvas:
+rótulos dos recortes enviesados para fotos fáceis, amostra de 454 fotos, 28 "sem medidor" da cena
+contados na amostra inteira.

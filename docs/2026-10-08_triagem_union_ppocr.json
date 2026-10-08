@@ -2,9 +2,9 @@
   "leitor": "ppocr",
   "registros": 13669,
   "decididos_sem_imagem": {
-    "verde_R1": 611,
+    "verde_R1_R1b": 2455,
     "vermelho_R2": 296,
-    "amarelo_R2b": 1850
+    "amarelo_R2b": 6
   },
   "precisam_de_imagem": 10912,
   "amostra_n": 500,
@@ -24,17 +24,17 @@
   },
   "populacao": {
     "verde": {
-      "pct_estimado": 5.4,
+      "pct_estimado": 18.9,
       "ic95_pct": [
-        4.9,
-        6.5
+        18.4,
+        20.0
       ]
     },
     "amarelo": {
-      "pct_estimado": 90.0,
+      "pct_estimado": 76.5,
       "ic95_pct": [
-        88.3,
-        91.2
+        74.8,
+        77.7
       ]
     },
     "vermelho": {
@@ -45,10 +45,10 @@
       ]
     }
   },
-  "sensibilidade_amarelo_pct_sem_regra_diverge": 39.1,
+  "sensibilidade_amarelo_pct_sem_regra_diverge": 25.6,
   "com_cena": {
     "fotos_sem_medidor": 28,
-    "amarelo_pct": 86.7,
+    "amarelo_pct": 73.2,
     "amarelo_amostra": 458
   }
 }

@@ -6,7 +6,9 @@ simples possíveis, usando só o que já existe (catálogo de notas + pipeline `
 Regras (ordem de precedência, a primeira que casa decide):
   R1  nota NÃO exige foto                                   -> verde    (sem olhar a imagem)
   R2  nota exige foto e a foto está ausente (NA / sem arquivo) -> vermelho (sem olhar a imagem)
-  R2b nota fora do catálogo (na prática "NA") e sem foto     -> amarelo  (catálogo não diz se exige)
+  R1b nota "NA" (leitura normal, sem ocorrência) e sem foto  -> verde    (não exige foto; confirmado
+                                                                pelo usuário em 2026-10-08, `--na-sem-foto amarelo` reverte)
+  R2b nota fora do catálogo (≠ "NA") e sem foto              -> amarelo  (catálogo não diz se exige)
   R3  nota exige, foto presente, pipeline não detecta NENHUMA caixa de texto -> vermelho
   R4  leitura detectada == leitura digitada pelo leiturista E legível (Laplaciano) -> verde
   O leitor de dígitos é intercambiável (`--reader`): `ppocr` (pipeline atual: PP-OCRv6/TrOCR) ou
@@ -50,6 +52,7 @@ BASE_SAMPLE = SAMPLE_CSV  # amostra da baseline (mesmas 500 fotos), usada pela c
 SAMPLE_CRNN_CSV = ROOT / "data" / "analise" / "baseline_triagem_amostra_crnn.csv"
 CROPS_DIR = ROOT / "data" / "analise" / "crops_baseline"  # recorte da leitura (dado do cliente, gitignored)
 REPORT_JSON = ROOT / "docs" / "2026-10-01_baseline_triagem.json"  # sufixo _<leitor> adicionado ao gravar
+NA_SEM_FOTO = "verde"  # cor de "NA" sem foto (R1b); `--na-sem-foto` muda
 SCENE_CSV = ROOT / "data" / "analise" / "baseline_triagem_cena.csv"  # P(tem medidor) das fotos da amostra
 LAPLACIAN_LEGIBLE = 25.0  # mesmo limiar do pipeline (src/leiturista/inference.py)
 FIELDS = ["lote", "foto", "nota", "leitura_digitada", "leitura_ocr", "n_caixas", "nitidez",
@@ -85,6 +88,8 @@ def load_population() -> list[dict]:
                 row.update(cor=None, regra=None)  # precisa de imagem
             elif tem_foto:  # nota fora do catálogo (na prática "NA", leitura normal): precisa de imagem
                 row.update(cor=None, regra=None)
+            elif nota.upper() == "NA" and NA_SEM_FOTO == "verde":  # sem ocorrência: a nota não exige foto
+                row.update(cor="verde", regra="R1b")
             else:  # fora do catálogo e sem foto: não há regra de "exige foto", então não rejeita sozinho
                 row.update(cor="amarelo", regra="R2b")
             out.append(row)
@@ -198,6 +203,11 @@ def cmd_report(args: argparse.Namespace) -> None:
     n_img = sum(1 for r in pop if r["regra"] is None)
     with open(SAMPLE_CRNN_CSV if args.reader == "crnn" else SAMPLE_CSV, encoding="utf-8") as f:
         amostra = list(csv.DictReader(f))
+    if args.sem_vazamento:  # fotos cujo recorte treinou/validou o CRNN da distribuidora ficam fora da amostra
+        usadas = {(r["lote"], r["foto"]) for r in csv.DictReader(open(ROOT / "data" / "distribuidora_amr" / "manifest.csv", encoding="utf-8"))
+                  if r["status"] == "aceito" and r["split"] in ("train", "valid")}
+        amostra = [r for r in amostra if (r["lote"], r["foto"]) not in usadas]
+        print(f"sem vazamento: {len(amostra)} fotos na amostra", flush=True)
     m = len(amostra)
     ca = Counter(r["cor"] for r in amostra)
     motivos = Counter(r["motivo"] for r in amostra if r["cor"] == "amarelo")
@@ -206,7 +216,7 @@ def cmd_report(args: argparse.Namespace) -> None:
     rep: dict = {
         "leitor": args.reader,
         "registros": n,
-        "decididos_sem_imagem": {"verde_R1": fixos["verde"], "vermelho_R2": fixos["vermelho"], "amarelo_R2b": fixos["amarelo"]},
+        "decididos_sem_imagem": {"verde_R1_R1b": fixos["verde"], "vermelho_R2": fixos["vermelho"], "amarelo_R2b": fixos["amarelo"]},
         "precisam_de_imagem": n_img,
         "amostra_n": m,
         "amostra_cores": dict(ca),
@@ -267,6 +277,8 @@ def cmd_scene(_: argparse.Namespace) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--na-sem-foto", choices=["verde", "amarelo"], default="verde",
+                    help="cor de nota NA sem foto (R1b verde; amarelo = regra R2b antiga)")
     ap.add_argument("--tag", default="", help="sufixo das saídas (uma config por tag)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("census").set_defaults(fn=cmd_census)
@@ -280,8 +292,11 @@ def main() -> None:
     sub.add_parser("scene", help="P(tem medidor) da amostra (classificador de cena)").set_defaults(fn=cmd_scene)
     r = sub.add_parser("report")
     r.add_argument("--reader", choices=["ppocr", "crnn"], default="ppocr")
+    r.add_argument("--sem-vazamento", action="store_true", help="exclui fotos usadas no treino/valid do CRNN da distribuidora")
     r.set_defaults(fn=cmd_report)
     args = ap.parse_args()
+    global NA_SEM_FOTO
+    NA_SEM_FOTO = args.na_sem_foto
     apply_tag(args.tag)
     args.fn(args)
 
