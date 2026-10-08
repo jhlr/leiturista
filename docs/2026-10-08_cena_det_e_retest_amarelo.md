@@ -151,3 +151,23 @@ o melhor leitor. Amarelo restante (385/454 da amostra): 236 "leitura diverge da 
 "leitura não detectada". Latência não medida de forma confiável nesta rodada (o computador
 dormiu durante a amostra). Falta: auditar à mão ~50 casos de "diverge" para separar erro do leitor,
 recorte errado e digitação do leiturista.
+
+## 8. Auditoria visual dos "leitura diverge da digitada" (24 de 259, 2026-10-08)
+
+Olhei 24 recortes (seed 1) da configuração da seção 7, com a leitura do CRNN ao lado da digitada. Contagem
+à mão, n=24 (margem larga, ±~18 pontos por categoria):
+
+| Causa | Casos | Leitura |
+|---|---|---|
+| Recorte sem dígito legível (borrado, apagado, segmentos fantasma, textura) | ~8 | Amarelo correto; o problema é a foto |
+| Erro do leitor com dígitos legíveis (1 dígito trocado, primeiro dígito perdido, tambor mecânico) | ~7 | Corrigível com mais dado/treino |
+| Recorte errado (placa/etiqueta, medidor inteiro) | 3 | Falha do classificador de visor/det |
+| Prefixo "03" do display lido como dígitos (`319332` no lugar de `19332`) | 2 | Corrigível: o item "03" fica à esquerda do valor |
+| Dígitos legíveis mas diferentes da digitada (`025218` × `261909`, `00890` × `15315`) | 2-3 | Rótulo/digitação, não é erro do modelo |
+| Recorte cortado | 1 | Caixa truncada |
+
+Extrapolando com a margem larga: ~35% do "diverge" é erro de foto (amarelo certo), ~40% é corrigível por
+leitor melhor, ~10% é recorte errado, ~10% é rótulo. Ação mais barata: **o prefixo "03"** (display Cronos
+mostra um código de item de 2 dígitos antes do valor; os recortes de treino confirmados pelo OCR quase
+não têm esse caso, então o CRNN nunca aprendeu a descartá-lo): gerar recortes sintéticos com o prefixo
+ou rotular à mão uns 100 casos. Depois, rotular ~100 "diverge" difíceis e treinar o CRNN neles.
