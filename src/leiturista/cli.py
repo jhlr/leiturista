@@ -103,6 +103,12 @@ def _cmd_d3(args: argparse.Namespace) -> None:
     print(json.dumps(run(args.seeds, args.ckpt, epochs=args.epochs)["resumo"], indent=2))
 
 
+def _cmd_l2(_: argparse.Namespace) -> None:
+    from .l2 import run
+
+    run()
+
+
 def _cmd_train_crnn(args: argparse.Namespace) -> None:
     from .crnn import train_crnn
 
@@ -271,6 +277,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--ckpt", default=str(paths.MODELS_DIR / "crnn_bn128_mix500_cur30.pt"), help="CNN pré-treinada (UFPR-AMR)")
     p.add_argument("--epochs", type=int, default=30)
     p.set_defaults(func=_cmd_d3)
+
+    p = sub.add_parser("l2", help="L2: benchmark cliente x UFPR-AMR (gap de domínio) nos 4 leitores")
+    p.set_defaults(func=_cmd_l2)
 
     p = sub.add_parser("train-crnn", help="treina o CRNNDigitos (esqueleto do professor, Lab 2) em UFPR-AMR")
     p.add_argument("--data", action="append", help="dataset com labels.csv; repetir p/ vários (default: UFPR-AMR)")

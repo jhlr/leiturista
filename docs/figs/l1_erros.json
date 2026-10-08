@@ -1,0 +1,219 @@
+{
+  "n": 150,
+  "split": "test",
+  "PP-OCRv6 tiny (CRNN+CTC off-the-shelf)": {
+    "acerto_exato": 0.2533333333333333,
+    "erros": 112,
+    "por_tipo": {
+      "trocou dígito": 35,
+      "inventou sequência": 67,
+      "duplicou dígito": 10
+    },
+    "exemplos": [
+      {
+        "imagem": "dist_1084_00005.png",
+        "verdade": "1084",
+        "leitura": "1089",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_565730_00013.png",
+        "verdade": "565730",
+        "leitura": "555131",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_2019_00025.png",
+        "verdade": "2019",
+        "leitura": "02019",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_9371_00028.png",
+        "verdade": "9371",
+        "leitura": "09371",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_2016_00033.png",
+        "verdade": "2016",
+        "leitura": "02019",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_37154_00038.png",
+        "verdade": "37154",
+        "leitura": "39156",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_36615_00042.png",
+        "verdade": "36615",
+        "leitura": "036615",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_4643_00044.png",
+        "verdade": "4643",
+        "leitura": "04648",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_78335_00045.png",
+        "verdade": "78335",
+        "leitura": "078335",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_17621_00048.png",
+        "verdade": "17621",
+        "leitura": "17627",
+        "tipo": "trocou dígito"
+      }
+    ]
+  },
+  "TrOCR-small (ViT+Transformer)": {
+    "acerto_exato": 0.07999999999999996,
+    "erros": 138,
+    "por_tipo": {
+      "perdeu dígito": 37,
+      "trocou dígito": 13,
+      "inventou sequência": 83,
+      "duplicou dígito": 5
+    },
+    "exemplos": [
+      {
+        "imagem": "dist_1084_00005.png",
+        "verdade": "1084",
+        "leitura": "",
+        "tipo": "perdeu dígito"
+      },
+      {
+        "imagem": "dist_154339_00007.png",
+        "verdade": "154339",
+        "leitura": "154939",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_565730_00013.png",
+        "verdade": "565730",
+        "leitura": "199",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_2795_00017.png",
+        "verdade": "2795",
+        "leitura": "32796",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_66589_00018.png",
+        "verdade": "66589",
+        "leitura": "565589",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_117546_00020.png",
+        "verdade": "117546",
+        "leitura": "",
+        "tipo": "perdeu dígito"
+      },
+      {
+        "imagem": "dist_2019_00025.png",
+        "verdade": "2019",
+        "leitura": "",
+        "tipo": "perdeu dígito"
+      },
+      {
+        "imagem": "dist_9371_00028.png",
+        "verdade": "9371",
+        "leitura": "09371",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_10290_00031.png",
+        "verdade": "10290",
+        "leitura": "10298",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_2016_00033.png",
+        "verdade": "2016",
+        "leitura": "02015",
+        "tipo": "inventou sequência"
+      }
+    ]
+  },
+  "CRNNDigitos fine-tunado (nosso)": {
+    "acerto_exato": 0.5466666666666666,
+    "erros": 68,
+    "por_tipo": {
+      "inventou sequência": 28,
+      "trocou dígito": 24,
+      "perdeu dígito": 15,
+      "duplicou dígito": 1
+    },
+    "exemplos": [
+      {
+        "imagem": "dist_1084_00005.png",
+        "verdade": "1084",
+        "leitura": "89",
+        "tipo": "inventou sequência"
+      },
+      {
+        "imagem": "dist_154339_00007.png",
+        "verdade": "154339",
+        "leitura": "154335",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_565730_00013.png",
+        "verdade": "565730",
+        "leitura": "565130",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_2795_00017.png",
+        "verdade": "2795",
+        "leitura": "2796",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_2016_00033.png",
+        "verdade": "2016",
+        "leitura": "2015",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_37154_00038.png",
+        "verdade": "37154",
+        "leitura": "38158",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_36615_00042.png",
+        "verdade": "36615",
+        "leitura": "3661",
+        "tipo": "perdeu dígito"
+      },
+      {
+        "imagem": "dist_17621_00048.png",
+        "verdade": "17621",
+        "leitura": "1762",
+        "tipo": "perdeu dígito"
+      },
+      {
+        "imagem": "dist_50574_00067.png",
+        "verdade": "50574",
+        "leitura": "50571",
+        "tipo": "trocou dígito"
+      },
+      {
+        "imagem": "dist_242_00079.png",
+        "verdade": "242",
+        "leitura": "",
+        "tipo": "perdeu dígito"
+      }
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "por_semente": {
+    "hog_linear": [
+      {
+        "valid_exact": 0.0,
+        "test_exact": 0.0,
+        "alpha": 1e-05
+      },
+      {
+        "valid_exact": 0.0,
+        "test_exact": 0.0,
+        "alpha": 1e-05
+      },
+      {
+        "valid_exact": 0.0,
+        "test_exact": 0.0,
+        "alpha": 1e-05
+      }
+    ],
+    "crnn_extracao": [
+      {
+        "valid_exact": 0.375,
+        "test_exact": 0.38571428571428573
+      },
+      {
+        "valid_exact": 0.375,
+        "test_exact": 0.3821428571428571
+      },
+      {
+        "valid_exact": 0.3939393939393939,
+        "test_exact": 0.3607142857142857
+      }
+    ]
+  },
+  "resumo": {
+    "hog_linear": {
+      "valid_exact": {
+        "media": 0.0,
+        "desvio": 0.0
+      },
+      "test_exact": {
+        "media": 0.0,
+        "desvio": 0.0
+      },
+      "alpha": {
+        "media": 1e-05,
+        "desvio": 0.0
+      }
+    },
+    "crnn_extracao": {
+      "valid_exact": {
+        "media": 0.3813131313131313,
+        "desvio": 0.008928115924072562
+      },
+      "test_exact": {
+        "media": 0.3761904761904762,
+        "desvio": 0.01104002201844727
+      }
+    }
+  }
+}

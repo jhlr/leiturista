@@ -32,7 +32,7 @@ def classify_error(pred: str, true: str) -> str:
     for i in range(1, n + 1):
         for j in range(1, m + 1):
             dp[i][j] = min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (true[i - 1] != pred[j - 1]))
-    i, j, ops = n, m, []
+    i, j, ops, ins_at = n, m, [], []
     while i > 0 or j > 0:
         if i > 0 and j > 0 and dp[i][j] == dp[i - 1][j - 1] + (true[i - 1] != pred[j - 1]):
             ops.append("sub" if true[i - 1] != pred[j - 1] else "ok")
@@ -42,6 +42,7 @@ def classify_error(pred: str, true: str) -> str:
             i -= 1
         else:
             ops.append("ins")
+            ins_at.append(j - 1)  # índice em `pred` do dígito inserido
             j -= 1
     ed = sum(o != "ok" for o in ops)
     if not pred:
@@ -54,7 +55,8 @@ def classify_error(pred: str, true: str) -> str:
     if kinds == {"sub"}:
         return "trocou dígito"
     if kinds == {"ins"}:
-        dup = any(pred[k] == pred[k - 1] for k in range(1, len(pred))) and len(pred) > len(true)
+        # duplicou: o dígito inserido repete um vizinho imediato na leitura
+        dup = all((k > 0 and pred[k] == pred[k - 1]) or (k + 1 < len(pred) and pred[k] == pred[k + 1]) for k in ins_at)
         return "duplicou dígito" if dup else "inventou sequência"
     return "inventou sequência"
 

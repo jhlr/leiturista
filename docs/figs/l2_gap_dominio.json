@@ -1,0 +1,60 @@
+{
+  "n": {
+    "cliente_test_por_lote": 280,
+    "ufpr_amr_test": 300
+  },
+  "modelos": {
+    "PP-OCRv6 tiny (off-the-shelf)": {
+      "cliente_test_por_lote": {
+        "leitura_exata": 0.26071428571428573,
+        "acuracia_por_digito": 0.7463035019455253
+      },
+      "ufpr_amr_test": {
+        "leitura_exata": 0.4033333333333333,
+        "acuracia_por_digito": 0.8140929535232384
+      },
+      "gap_exata": {
+        "ufpr_menos_cliente": 0.1426190476190476
+      }
+    },
+    "TrOCR-small (off-the-shelf)": {
+      "cliente_test_por_lote": {
+        "leitura_exata": 0.075,
+        "acuracia_por_digito": 0.4
+      },
+      "ufpr_amr_test": {
+        "leitura_exata": 0.37333333333333335,
+        "acuracia_por_digito": 0.7848575712143928
+      },
+      "gap_exata": {
+        "ufpr_menos_cliente": 0.29833333333333334
+      }
+    },
+    "CRNNDigitos só UFPR-AMR (zero-shot no cliente)": {
+      "cliente_test_por_lote": {
+        "leitura_exata": 0.039285714285714285,
+        "acuracia_por_digito": 0.38054474708171204
+      },
+      "ufpr_amr_test": {
+        "leitura_exata": 0.8733333333333333,
+        "acuracia_por_digito": 0.9452773613193404
+      },
+      "gap_exata": {
+        "ufpr_menos_cliente": 0.834047619047619
+      }
+    },
+    "CRNNDigitos fine-tunado no cliente (por lote)": {
+      "cliente_test_por_lote": {
+        "leitura_exata": 0.5214285714285715,
+        "acuracia_por_digito": 0.8233463035019455
+      },
+      "ufpr_amr_test": {
+        "leitura_exata": 0.9066666666666666,
+        "acuracia_por_digito": 0.9602698650674663
+      },
+      "gap_exata": {
+        "ufpr_menos_cliente": 0.38523809523809516
+      }
+    }
+  }
+}

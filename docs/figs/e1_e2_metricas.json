@@ -1,0 +1,21 @@
+{
+  "T": 3.75590154402975,
+  "n_valid": 264,
+  "n_test": 280,
+  "acerto_test": 0.5214285714285715,
+  "ece_test_antes": 0.4323135378105299,
+  "ece_test_depois": 0.19303297666566713,
+  "meta": {
+    "cobertura_min": 0.6,
+    "risco_max": 0.02
+  },
+  "cobertura_no_risco_alvo": 0.0035714285714285713,
+  "limiar_no_risco_alvo": 0.7277106046676636,
+  "cobertura_por_risco": {
+    "risco<=0.02": 0.0035714285714285713,
+    "risco<=0.05": 0.0035714285714285713,
+    "risco<=0.10": 0.04285714285714286,
+    "risco<=0.20": 0.3964285714285714
+  },
+  "risco_na_cobertura_alvo": 0.2678571428571429
+}
