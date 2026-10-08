@@ -37,7 +37,7 @@ contra uma decisão real, e a rotulagem humana (item C) depende do grupo (ver §
 ## D. Sanidade e baseline
 
 - **D1:** perda CTC inicial com pesos aleatórios = 14,3 num lote real de 16 recortes; referência da saída uniforme sobre 11
-  símbolos, T·ln(11)/L = 32·ln(11)/L̄ ≈ 15 (a CTC divide pelo comprimento do alvo). Mesma ordem de grandeza: inicialização sã.
+  símbolos, T·ln(11)/L = 32·ln(11)/L̄ = 17,05 (a CTC divide pelo comprimento do alvo). Mesma ordem de grandeza: inicialização sã.
 - **D2:** 16 recortes **reais**, 300 passos sem regularização: perda 14,33 → 0,004, leitura exata 16/16.
 - **D3 (3 sementes, mesma partição por lote, mesma métrica = leitura exata, mesmos dados de treino):**
 
