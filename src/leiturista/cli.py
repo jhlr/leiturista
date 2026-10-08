@@ -57,6 +57,8 @@ def _cmd_train_crnn(args: argparse.Namespace) -> None:
 
     train_crnn(data_dirs=args.data or [paths.FINETUNE_DIR], out=args.out, epochs=args.epochs, batch=args.batch,
                lr=args.lr, seed=args.seed, init=args.init, invert_prob=args.invert_prob,
+               crop_jitter=args.crop_jitter, norm=args.norm, width=args.width, synth_per_epoch=args.synth_per_epoch, synth_only=args.synth_only, warmup=args.warmup, cosine=args.cosine, augment_on=not args.no_augment, aug_start=args.aug_start, rot_deg=args.rot_deg, blur_p=args.blur_p,
+               clip_calib_iters=args.clip_calib_iters,
                tracking_uri=args.tracking_uri, experiment=args.experiment)
 
 
@@ -167,6 +169,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", default=str(paths.MODELS_DIR / "crnn_digitos.pt"))
     p.add_argument("--init", default=None, help="pesos de partida (fine-tune)")
     p.add_argument("--invert-prob", type=float, default=0.0, help="prob. de inverter polaridade no treino")
+    p.add_argument("--crop-jitter", type=float, default=0.0, help="jitter de recorte por borda (estágio 2: 0.07)")
+    p.add_argument("--synth-per-epoch", type=int, default=0, help="nº de sequências sintéticas somadas ao treino por época")
+    p.add_argument("--synth-only", action="store_true", help="descarta o treino real (estágio 1 puro)")
+    p.add_argument("--norm", choices=["batch", "group"], default="batch", help="normalização da CNN")
+    p.add_argument("--width", type=int, default=128, help="largura do recorte de entrada (altura fixa 32)")
+    p.add_argument("--cosine", action="store_true", help="decaimento cosseno do LR após o warmup")
+    p.add_argument("--aug-start", type=int, default=0, help="currículo: épocas iniciais sem augmentation")
+    p.add_argument("--rot-deg", type=float, default=10.0, help="giro máximo da augmentation (graus)")
+    p.add_argument("--blur-p", type=float, default=0.3, help="prob. de desfoque na augmentation")
+    p.add_argument("--no-augment", action="store_true", help="desliga toda augmentation (diagnóstico)")
+    p.add_argument("--warmup", type=int, default=0, help="passos de warmup do LR (depois decaimento cosseno)")
+    p.add_argument("--clip-calib-iters", type=int, default=0, help="clipping com limiar = p90 da norma nesses passos")
     p.add_argument("--epochs", type=int, default=15)
     p.add_argument("--batch", type=int, default=32)
     p.add_argument("--lr", type=float, default=1e-3)

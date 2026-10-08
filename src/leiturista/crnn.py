@@ -13,29 +13,32 @@ Uso:
 from __future__ import annotations
 
 import csv
+import math
+import time
 from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 from torch import nn
 
 from . import paths
 
 N_SIMBOLOS = 10  # dígitos 0-9; a CTC soma 1 símbolo "branco" (índice 0)
-ALTURA, LARGURA = 32, 128
+ALTURA, LARGURA = 32, 128  # LARGURA = padrão; o modelo guarda a largura com que foi treinado (`model.width`)
 WEIGHTS = paths.MODELS_DIR / "crnn_digitos.pt"
 
 
 class CRNNDigitos(nn.Module):
-    def __init__(self, n_simbolos: int = N_SIMBOLOS, oculto: int = 128) -> None:
+    def __init__(self, n_simbolos: int = N_SIMBOLOS, oculto: int = 128, norm: str = "batch", width: int = LARGURA) -> None:
         super().__init__()
+        self.norm, self.width = norm, width
 
         def bloco(cin: int, cout: int, pool: tuple[int, int]) -> nn.Sequential:
             return nn.Sequential(
                 nn.Conv2d(cin, cout, 3, padding=1),
-                nn.BatchNorm2d(cout),
+                nn.BatchNorm2d(cout) if norm == "batch" else nn.GroupNorm(8, cout),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(pool),
             )
@@ -69,29 +72,48 @@ def decodificar_ctc(logits: torch.Tensor) -> list[str]:
     return seqs
 
 
-def preprocess(img: Image.Image) -> np.ndarray:
-    """Cinza, squash para 32x128, [0,1]. Mesmo pré-processamento do treino."""
-    return np.asarray(img.convert("L").resize((LARGURA, ALTURA)), dtype=np.float32) / 255.0
+def preprocess(img: Image.Image, width: int = LARGURA) -> np.ndarray:
+    """Cinza, squash para 32 x `width`, [0,1]. Mesmo pré-processamento do treino."""
+    return np.asarray(img.convert("L").resize((width, ALTURA)), dtype=np.float32) / 255.0
 
 
-def augment(a: np.ndarray, rng: np.random.Generator, invert_prob: float) -> np.ndarray:
-    """Augmentation "núcleo" do plano (docs/dl-lab2/plano-treino-crnn.md): inversão de polaridade
-    (41,7% dos recortes reais da distribuidora vêm da fase invertida) + brilho/contraste de campo.
-    Sem espelhamento nem rotação grande (descartados no plano)."""
+def augment(
+    a: np.ndarray, rng: np.random.Generator, invert_prob: float, crop_jitter: float = 0.0, width: int = LARGURA,
+    rot_deg: float = 10.0, blur_p: float = 0.3,
+) -> np.ndarray:
+    """Augmentation do plano (docs/dl-lab2/plano-treino-crnn.md). Núcleo: brilho/contraste, giro
+    ±10°, desfoque 5x5 (p=0,3). Inversão de polaridade (41,7% dos recortes reais da distribuidora
+    vêm da fase invertida) e jitter de recorte (`crop_jitter`=fração máx. por borda; o det não
+    entrega caixa pixel-perfeita) são do estágio 2. Sem espelhamento nem rotação grande."""
     if rng.random() < invert_prob:
         a = 1.0 - a
     a = a * rng.uniform(0.7, 1.3) + rng.uniform(-30, 30) / 255.0
-    return np.clip(a, 0.0, 1.0).astype(np.float32)
+    im = Image.fromarray((np.clip(a, 0.0, 1.0) * 255).astype(np.uint8))
+    if rot_deg > 0:
+        im = im.rotate(rng.uniform(-rot_deg, rot_deg), resample=Image.BILINEAR, fillcolor=int(np.median(np.asarray(im))))
+    if crop_jitter > 0:  # borda replicada + janela aleatória: sorteia zoom-in e zoom-out
+        pw, ph = round(crop_jitter * width), round(crop_jitter * ALTURA)
+        big = Image.fromarray(np.pad(np.asarray(im), ((ph, ph), (pw, pw)), mode="edge"))
+        l, r = rng.integers(0, 2 * pw + 1, 2) if pw else (0, 0)
+        t, b = rng.integers(0, 2 * ph + 1, 2) if ph else (0, 0)
+        im = big.resize((width, ALTURA), box=(int(l), int(t), width + 2 * pw - int(r), ALTURA + 2 * ph - int(b)))
+    if rng.random() < blur_p:
+        im = im.filter(ImageFilter.GaussianBlur(1.0))
+    return np.asarray(im, dtype=np.float32) / 255.0
 
 
 def _batch(
-    items: list[tuple[Path, str]],
+    items: list[tuple[Path | Image.Image, str]],
     rng: np.random.Generator | None = None,
     invert_prob: float = 0.0,
+    crop_jitter: float = 0.0,
+    width: int = LARGURA,
+    rot_deg: float = 10.0,
+    blur_p: float = 0.3,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    arrs = [preprocess(Image.open(p)) for p, _ in items]
+    arrs = [preprocess(Image.open(p) if isinstance(p, Path) else p, width) for p, _ in items]
     if rng is not None:
-        arrs = [augment(a, rng, invert_prob) for a in arrs]
+        arrs = [augment(a, rng, invert_prob, crop_jitter, width, rot_deg, blur_p) for a in arrs]
     x = torch.tensor(np.stack(arrs))[:, None]
     alvos = torch.tensor([int(c) + 1 for _, r in items for c in r])
     comp = torch.tensor([len(r) for _, r in items])
@@ -114,7 +136,7 @@ def evaluate(model: CRNNDigitos, items: list[tuple[Path, str]], batch: int = 32)
     with torch.no_grad():
         for i in range(0, len(items), batch):
             lote = items[i:i + batch]
-            x, _, _ = _batch(lote)
+            x, _, _ = _batch(lote, width=model.width)
             for pred, (_, alvo) in zip(decodificar_ctc(model(x)), lote):
                 exatos += int(pred == alvo)
                 erros += _edit_distance(alvo, pred)
@@ -131,11 +153,31 @@ def train_crnn(
     seed: int = 0,
     init: Path | str | None = None,
     invert_prob: float = 0.0,
+    crop_jitter: float = 0.0,
+    norm: str = "batch",
+    width: int = LARGURA,
+    synth_per_epoch: int = 0,
+    synth_only: bool = False,
+    warmup: int = 0,
+    cosine: bool = False,
+    augment_on: bool = True,
+    aug_start: int = 0,
+    rot_deg: float = 10.0,
+    blur_p: float = 0.3,
+    clip_calib_iters: int = 0,
     tracking_uri: str = paths.DEFAULT_TRACKING_URI,
     experiment: str = "crnn-digitos",
 ) -> dict[str, float]:
-    """Receita do notebook (Adam, CTC, lotes de 32, 15 épocas, seed fixa). Seleciona nada pelo
-    teste: salva o estado da ÚLTIMA época e só então reporta valid/test.
+    """CTC + Adam, seed fixa. Seleciona o checkpoint pela leitura exata no `valid` REAL (nunca
+    pelo teste); `test` é reportado uma vez, no fim, com o checkpoint escolhido.
+
+    `synth_per_epoch`>0: soma ao treino real N sequências sintéticas (synth.py), regeneradas a
+    cada época; `synth_only` descarta o treino real (estágio 1 puro). valid/test são sempre reais.
+    `warmup`: passos de aquecimento linear do LR; `cosine`: depois decai em cosseno até 0.
+    `augment_on=False` desliga TODA augmentation (diagnóstico); `aug_start`=N: currículo, as N
+    primeiras épocas sem augmentation (ela alonga o platô inicial da CTC) e depois tudo ligado.
+    `clip_calib_iters`>0: clipping de gradiente com limiar = percentil 90 da norma observada
+    nesses primeiros passos (sem clipping); 0 = sem clipping.
 
     `data_dirs`: um ou mais datasets (`labels.csv` com split,image,label); o treino concatena os
     `train`, e valid/test são reportados POR dataset (ex.: UFPR-AMR e distribuidora separados).
@@ -155,9 +197,15 @@ def train_crnn(
     torch.manual_seed(42)
     torch.set_num_threads(2)
     rng = np.random.default_rng(seed)
-    model = CRNNDigitos()
+    if init is not None:  # fine-tune herda norm/width do checkpoint (a largura não está no state_dict)
+        _, norm, width = _read_ckpt(init)
+    model = CRNNDigitos(norm=norm, width=width)
+    if synth_per_epoch:
+        from .synth import DigitBank, length_distribution, make_sequence
+
+        bank, lens = DigitBank(), length_distribution(Path(next(iter(data_dirs))) / "labels.csv")
     if init is not None:
-        model.load_state_dict(torch.load(init, map_location="cpu"))
+        model.load_state_dict(_read_ckpt(init)[0])
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
 
@@ -165,29 +213,63 @@ def train_crnn(
     mlflow.set_experiment(experiment)
     with mlflow.start_run(run_name=f"crnn-{epochs}ep"):
         mlflow.log_params({"epochs": epochs, "batch": batch, "lr": lr, "seed": seed,
-                           "n_train": len(split["train"]), "altura": ALTURA, "largura": LARGURA,
-                           "datasets": ",".join(per_ds), "init": str(init), "invert_prob": invert_prob})
+                           "n_train": len(split["train"]), "altura": ALTURA, "largura": width, "norm": norm,
+                           "datasets": ",".join(per_ds), "init": str(init), "invert_prob": invert_prob, "synth_per_epoch": synth_per_epoch, "synth_only": synth_only, "cosine": cosine, "augment": augment_on, "aug_start": aug_start, "rot_deg": rot_deg, "blur_p": blur_p})
         train = split["train"]
+        if synth_only:
+            train = []
+        steps_ep = -(-(synth_per_epoch + len(train)) // batch)
+        total = epochs * steps_ep
+
+        def lr_at(step: int) -> float:
+            if step < warmup:
+                return lr * (step + 1) / warmup
+            if not cosine:
+                return lr
+            return lr * 0.5 * (1 + math.cos(math.pi * (step - warmup) / max(1, total - warmup)))
+
+        step, norms, clip = 0, [], float("inf")
+        best, out = (-1.0, -1.0), Path(out)
+        out.parent.mkdir(parents=True, exist_ok=True)
         for ep in range(epochs):
+            t0 = time.time()
             model.train()
-            ordem = rng.permutation(len(train))
+            items: list[tuple[Path | Image.Image, str]] = list(train)
+            if synth_per_epoch:
+                items += [make_sequence(bank, lens, rng, (width, ALTURA)) for _ in range(synth_per_epoch)]
+            items = [items[j] for j in rng.permutation(len(items))]
             soma, n = 0.0, 0
-            for i in range(0, len(ordem), batch):
-                x, alvos, comp = _batch([train[j] for j in ordem[i:i + batch]], rng, invert_prob)
+            for i in range(0, len(items), batch):
+                x, alvos, comp = _batch(items[i:i + batch], rng if augment_on and ep >= aug_start else None, invert_prob, crop_jitter, width, rot_deg, blur_p)
                 lp = model(x).log_softmax(-1).permute(1, 0, 2)
                 comp_ent = torch.full((x.size(0),), lp.size(0), dtype=torch.long)
+                for g in opt.param_groups:
+                    g["lr"] = lr_at(step)
                 opt.zero_grad()
                 loss = ctc(lp, alvos, comp_ent, comp)
                 loss.backward()
+                if clip_calib_iters:
+                    gn = float(nn.utils.clip_grad_norm_(model.parameters(), clip))
+                    if step < clip_calib_iters:
+                        norms.append(gn)
+                        if step == clip_calib_iters - 1:
+                            clip = float(np.percentile(norms, 90))
+                            mlflow.log_param("clip_norm", clip)
+                            print(f"clip calibrado (p90 da norma, {clip_calib_iters} passos): {clip:.3f}", flush=True)
                 opt.step()
                 soma += loss.item()
                 n += 1
-            mlflow.log_metric("train_loss", soma / n, step=ep)
-            print(f"época {ep:>2}: perda treino = {soma / n:.4f}", flush=True)
+                step += 1
+            exato, dig = evaluate(model, split["valid"], batch)
+            mlflow.log_metrics({"train_loss": soma / n, "valid_exact": exato, "valid_digit_acc": dig}, step=ep)
+            marca = ""
+            if (exato, dig) > best:  # desempate por acurácia de dígito (nas primeiras épocas a exata é 0)
+                best, marca = (exato, dig), " *"
+                _save(model, out)
+            print(f"época {ep:>2}: perda {soma / n:.4f}  valid exata {exato:.3f} dígito {dig:.3f}  "
+                  f"{time.time() - t0:.0f}s{marca}", flush=True)
 
-        out = Path(out)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        torch.save(model.state_dict(), out)
+        model = load_crnn(out, cache=False)
         res: dict[str, float] = {}
         for ds, sp in per_ds.items():
             for nome in ("valid", "test"):
@@ -200,14 +282,30 @@ def train_crnn(
     return res
 
 
+def _save(model: CRNNDigitos, path: Path) -> None:
+    torch.save({"state": model.state_dict(), "norm": model.norm, "width": model.width}, path)
+
+
+def _read_ckpt(path: Path | str) -> tuple[dict[str, torch.Tensor], str, int]:
+    """(state_dict, norm, width). Checkpoint antigo (state_dict puro) = BatchNorm, largura 128."""
+    obj = torch.load(path, map_location="cpu")
+    if "state" in obj:
+        return obj["state"], obj.get("norm", "batch"), obj.get("width", LARGURA)
+    return obj, "batch", LARGURA
+
+
 _CACHE: dict[str, CRNNDigitos] = {}
 
 
-def load_crnn(path: Path | str = WEIGHTS) -> CRNNDigitos:
+def load_crnn(path: Path | str = WEIGHTS, cache: bool = True) -> CRNNDigitos:
+    """Carrega pesos; checkpoints antigos (state_dict puro) = BatchNorm, largura 128."""
     key = str(path)
-    if key not in _CACHE:
-        m = CRNNDigitos()
-        m.load_state_dict(torch.load(path, map_location="cpu"))
+    if not cache or key not in _CACHE:
+        state, norm, width = _read_ckpt(path)
+        m = CRNNDigitos(norm=norm, width=width)
+        m.load_state_dict(state)
+        if not cache:
+            return m.eval()
         _CACHE[key] = m.eval()
     return _CACHE[key]
 
@@ -215,6 +313,6 @@ def load_crnn(path: Path | str = WEIGHTS) -> CRNNDigitos:
 def read_digits(img: Image.Image, model: CRNNDigitos | None = None) -> str:
     """Lê o recorte de um display com o CRNN. Devolve só dígitos ('' se nada)."""
     m = model or load_crnn()
-    x = torch.tensor(preprocess(img))[None, None]
+    x = torch.tensor(preprocess(img, m.width))[None, None]
     with torch.no_grad():
         return decodificar_ctc(m(x))[0]

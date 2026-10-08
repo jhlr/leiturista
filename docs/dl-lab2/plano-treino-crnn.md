@@ -440,3 +440,35 @@ Ordem de prioridade sugerida, considerando peso na nota e dependência entre ite
    (métrica declarada, latência por estágio).
 9. Consolidar tudo em `lab-02/ARQUITETURA.md`, `lab-02/README.md`, `lab-02/USO-DE-IA.md` usando
    a tabela de rastreabilidade no topo deste documento como checklist.
+
+## Implementação e achados (2026-10-08)
+
+`src/leiturista/synth.py` (gerador: comprimento da distribuição real, glare/cutout/ruído por
+dígito, crop central do dígito, jitter de largura 85-100%) + `train_crnn` estendido
+(`--synth-per-epoch`, `--synth-only`, `--warmup`, `--cosine`, `--clip-calib-iters`,
+`--crop-jitter`, `--rot-deg`, `--blur-p`, `--aug-start`, `--norm`, `--width`; checkpoint escolhido
+pelo valid real; fine-tune herda norm/width do checkpoint).
+
+Achados (todos medidos em `data/finetune_ufpramr`, test = 300 recortes):
+
+1. **GroupNorm não serve aqui.** Sobreajuste de 1 lote fixo de 32 recortes, 150 passos: BatchNorm
+   128 = 1,00 de leitura exata; GroupNorm 128 ou 160 = 0,00. Padrão voltou a `batch`. Largura 160
+   também atrasa (0,72), padrão continua 128.
+2. **Augmentation alonga o platô inicial da CTC** (modelo só emite brancos, perda ~2,65). Real-only
+   com augment completo, 8 épocas: travado. Só brilho/contraste: escapa. Inversão (p=0,4) sozinha
+   ou jitter de recorte sozinho: ainda travados em 8 épocas. Giro e desfoque não pesaram.
+   Sintéticos não atrapalham (mistura sem augment: 0,583 em 8 épocas).
+3. **Correção na causa: currículo `--aug-start 6`** (6 primeiras épocas sem augmentation, depois
+   tudo ligado). 500 sintéticos + 1.400 reais, augment em tudo, BatchNorm 128:
+   15 épocas = 0,817 / 0,927; **30 épocas = 0,873 / 0,945** (exata / por dígito, test).
+   Baseline do notebook (só real, sem augment, 15 épocas): 0,880 / 0,948. Diferença de 0,007 em
+   300 exemplos = empate dentro do ruído (falta McNemar).
+4. Os crops do LCD digits são sujos (dígito cortado, vizinhança); o crop central ajudou a limpar.
+
+```bash
+# melhor config até aqui (mistura + currículo)
+caffeinate -i .venv/bin/leiturista train-crnn --synth-per-epoch 500 --epochs 30 --warmup 20 --clip-calib-iters 20 --invert-prob 0.4 --crop-jitter 0.07 --aug-start 6 --out models/crnn_bn128_mix500_cur30.pt --experiment crnn-mix --tracking-uri sqlite:///data/mlflow_crnn.db
+```
+O `mlflow.db` principal (1,2G) está com schema defasado para o mlflow 3.16; esses runs foram para
+`data/mlflow_crnn.db`. Falta: McNemar pareado entre as configs; estágio 2 puro (fine-tune a
+partir de estágio 1 só sintético).
