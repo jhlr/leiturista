@@ -62,6 +62,12 @@ def _cmd_train_crnn(args: argparse.Namespace) -> None:
                tracking_uri=args.tracking_uri, experiment=args.experiment)
 
 
+def _cmd_compare_crnn(args: argparse.Namespace) -> None:
+    from .crnn import compare_crnn
+
+    compare_crnn(args.checkpoints, data_dir=args.data, split=args.split)
+
+
 def _cmd_train_scene(args: argparse.Namespace) -> None:
     from .scene import train_scene
 
@@ -188,6 +194,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
     p.add_argument("--experiment", default="crnn-digitos")
     p.set_defaults(func=_cmd_train_crnn)
+
+    p = sub.add_parser("compare-crnn", help="leitura exata + McNemar pareado entre checkpoints do CRNN")
+    p.add_argument("checkpoints", nargs="+")
+    p.add_argument("--data", default=str(paths.FINETUNE_DIR))
+    p.add_argument("--split", default="test")
+    p.set_defaults(func=_cmd_compare_crnn)
 
     p = sub.add_parser("train-scene", help="treina o classificador 'tem medidor na foto?' (rótulos fracos do LLM)")
     p.add_argument("--labels", default=str(paths.SCENE_LABELS_CSV))

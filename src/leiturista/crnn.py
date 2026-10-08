@@ -144,6 +144,46 @@ def evaluate(model: CRNNDigitos, items: list[tuple[Path, str]], batch: int = 32)
     return exatos / len(items), 1 - erros / total
 
 
+def predict(model: CRNNDigitos, items: list[tuple[Path, str]], batch: int = 32) -> list[str]:
+    model.eval()
+    out: list[str] = []
+    with torch.no_grad():
+        for i in range(0, len(items), batch):
+            x, _, _ = _batch(items[i:i + batch], width=model.width)
+            out += decodificar_ctc(model(x))
+    return out
+
+
+def mcnemar_exact(b: int, c: int) -> float:
+    """p-valor bicaudal do McNemar exato (binomial, p=0,5) sobre os pares discordantes b e c."""
+    n = b + c
+    if n == 0:
+        return 1.0
+    tail = sum(math.comb(n, k) for k in range(min(b, c) + 1)) / 2**n
+    return min(1.0, 2 * tail)
+
+
+def compare_crnn(
+    checkpoints: Sequence[Path | str], data_dir: Path | str = paths.FINETUNE_DIR, split: str = "test"
+) -> None:
+    """Leitura exata por checkpoint + McNemar exato pareado em todos os pares (mesmo split)."""
+    d = Path(data_dir)
+    with open(d / "labels.csv") as f:
+        items = [(d / r["image"], r["label"]) for r in csv.DictReader(f) if r["split"] == split]
+    hits = {}
+    for ck in checkpoints:
+        pred = predict(load_crnn(ck, cache=False), items)
+        hits[str(ck)] = [p == y for p, (_, y) in zip(pred, items)]
+        print(f"{ck}: leitura exata {sum(hits[str(ck)]) / len(items):.3f} ({split}, n={len(items)})")
+    names = list(hits)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            only_a = sum(x and not y for x, y in zip(hits[a], hits[b]))
+            only_b = sum(y and not x for x, y in zip(hits[a], hits[b]))
+            print(f"McNemar {Path(a).name} x {Path(b).name}: só A acerta {only_a}, só B acerta {only_b}, "
+                  f"p = {mcnemar_exact(only_a, only_b):.3f}")
+
+
 def train_crnn(
     data_dirs: Sequence[Path | str] = (paths.FINETUNE_DIR,),
     out: Path | str = WEIGHTS,

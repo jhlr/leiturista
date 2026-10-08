@@ -472,3 +472,18 @@ caffeinate -i .venv/bin/leiturista train-crnn --synth-per-epoch 500 --epochs 30 
 O `mlflow.db` principal (1,2G) está com schema defasado para o mlflow 3.16; esses runs foram para
 `data/mlflow_crnn.db`. Falta: McNemar pareado entre as configs; estágio 2 puro (fine-tune a
 partir de estágio 1 só sintético).
+
+### Resultado das configs do plano (2026-10-08, test UFPR-AMR, n=300, McNemar exato pareado)
+
+| Config | Leitura exata | Por dígito |
+|---|---|---|
+| Baseline (só real, sem augment, 15 ep) `crnn_digitos.pt` | 0,873 | 0,948 |
+| Estágio 1 sozinho (só sintético, 15x4000 seqs) | 0,010 | 0,288 |
+| Estágio 1 + estágio 2 (fine-tune real, lr 3e-4, 30 ep) | 0,857 | 0,951 |
+| Mistura 500 sint. + real, currículo `--aug-start 6`, 30 ep | 0,873 | 0,945 |
+
+McNemar: baseline x estágio 2 p=0,500; baseline x mistura p=1,000; estágio 2 x mistura p=0,442.
+Estágio 1 x qualquer outra: p<0,001. **Conclusão honesta: baseline, estágio 1+2 e mistura empatam
+dentro do ruído amostral; o pré-treino sintético não melhorou o UFPR-AMR.** O estágio 1 sozinho não
+generaliza pro dado real (gap de domínio: LCD digits de 7 segmentos vs. displays do UFPR-AMR).
+Comando: `leiturista compare-crnn <ckpts...>`.
