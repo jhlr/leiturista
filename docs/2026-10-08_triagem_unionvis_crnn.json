@@ -1,0 +1,55 @@
+{
+  "leitor": "crnn",
+  "registros": 13669,
+  "decididos_sem_imagem": {
+    "verde_R1_R1b": 2455,
+    "vermelho_R2": 296,
+    "amarelo_R2b": 6
+  },
+  "precisam_de_imagem": 10912,
+  "amostra_n": 454,
+  "amostra_cores": {
+    "amarelo": 385,
+    "verde": 54,
+    "vermelho": 15
+  },
+  "amostra_motivos_amarelo": {
+    "leitura_diverge_da_digitada": 236,
+    "leitura_nao_detectada": 145,
+    "ilegivel_laplaciano": 4
+  },
+  "latencia_s": {
+    "media": 18.1,
+    "p50": 2.36,
+    "p90": 14.26
+  },
+  "populacao": {
+    "verde": {
+      "pct_estimado": 27.5,
+      "ic95_pct": [
+        25.3,
+        30.1
+      ]
+    },
+    "amarelo": {
+      "pct_estimado": 67.7,
+      "ic95_pct": [
+        64.9,
+        70.1
+      ]
+    },
+    "vermelho": {
+      "pct_estimado": 4.8,
+      "ic95_pct": [
+        3.8,
+        6.5
+      ]
+    }
+  },
+  "sensibilidade_amarelo_pct_sem_regra_diverge": 26.2,
+  "com_cena": {
+    "fotos_sem_medidor": 28,
+    "amarelo_pct": 64.0,
+    "amarelo_amostra": 364
+  }
+}

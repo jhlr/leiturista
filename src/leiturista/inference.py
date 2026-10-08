@@ -47,6 +47,9 @@ DET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 DET_THRESH = float(os.environ.get("LEITURISTA_DET_THRESH", 0.3))
 DET_BOX_THRESH = float(os.environ.get("LEITURISTA_DET_BOX_THRESH", 0.6))
 # 2º detector opcional (ex.: det fine-tunado p/ visor): candidatos = união dos dois, cada um com seu limiar
+# classificador de visor (opt-in): escolhe, entre TODAS as caixas, a de maior P(visor) no lugar de "mais dígitos"
+VISOR_CLS = os.environ.get("LEITURISTA_VISOR_CLS")
+VISOR_MIN_P = float(os.environ.get("LEITURISTA_VISOR_MIN_P", 0.5))
 DET2_ONNX = os.environ.get("LEITURISTA_DET2_ONNX")
 DET2_THRESH = float(os.environ.get("LEITURISTA_DET2_THRESH", 0.2))
 DET2_BOX_THRESH = float(os.environ.get("LEITURISTA_DET2_BOX_THRESH", 0.2))
@@ -335,6 +338,13 @@ class MeterOCR:
 
     @staticmethod
     def _best_reading(boxes: list[Box]) -> Box | None:
+        if VISOR_CLS and boxes:
+            from .visor import score_crops
+
+            p = score_crops([b.crop for b in boxes], VISOR_CLS)
+            i = int(p.argmax())
+            if p[i] >= VISOR_MIN_P:
+                return boxes[i]
         readings = [b for b in boxes if b.field == "leitura"]
         if not readings:
             return None

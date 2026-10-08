@@ -116,3 +116,38 @@ mesmo detector com o CRNN antigo), sem trocar erro por vermelho. O amarelo conti
 porque ~45% das fotos amostradas seguem sem leitura detectada ou diverge da digitada. Ressalvas:
 rótulos dos recortes enviesados para fotos fáceis, amostra de 454 fotos, 28 "sem medidor" da cena
 contados na amostra inteira.
+
+## 7. Classificador de visor (passo A) no lugar de "mais dígitos"
+
+`scripts/construir_candidatos_visor.py` gera os candidatos (todas as caixas dos dois detectores, foto
+normal e invertida, rotulados por IoU >= 0,4 com o quad do visor; 27.235 recortes, 2.318 positivos no
+treino). `leiturista train-visor` (MobileNetV3-Small, 64x192, 1 época de ~22 min em CPU; parei aí
+porque o valid já estava em 0,99) grava `models/visor_cls.pt`. Opt-in no pipeline:
+`LEITURISTA_VISOR_CLS=models/visor_cls.pt` (escolhe, entre TODAS as caixas, a de maior P(visor) >=
+0,5; senão cai na regra antiga).
+
+Top-1 por foto (o candidato escolhido é o visor; só fotos com algum candidato positivo):
+
+| Split | Classificador | Regra antiga ("mais dígitos") |
+|---|---|---|
+| valid (109 fotos) | 0,991 | 0,550 |
+| test (110 fotos) | 0,982 | 0,455 |
+
+Ressalva: o conjunto só tem fotos em que o detector já achava o visor (viés do `boxes_visor.csv`),
+então isso mede *escolher*, não *achar*.
+
+Retest ponta a ponta (454 fotos sem vazamento; detectores unidos + classificador de visor + CRNN
+fine-tunado na distribuidora):
+
+| Política NA sem foto | Verde | Amarelo | Amarelo com cena | Vermelho |
+|---|---|---|---|---|
+| NA = verde (R1b) | **27,5%** (25,3-30,1) | **67,7%** (64,9-70,1) | 64,0% | 4,8% |
+| NA = amarelo (regra antiga) | 14,0% | 81,2% | 77,5% | 4,8% |
+
+Contra a união sem o classificador (seção 6: verde 22,0%, amarelo 73,2%), o classificador soma
++5,5 pontos de verde e tira ~5,5 de amarelo, sem criar vermelho falso. O leitor PP-OCR com o mesmo
+classificador fica em 20,2% de verde / 75,0% de amarelo, então o CRNN fine-tunado continua sendo
+o melhor leitor. Amarelo restante (385/454 da amostra): 236 "leitura diverge da digitada" e 145
+"leitura não detectada". Latência não medida de forma confiável nesta rodada (o computador
+dormiu durante a amostra). Falta: auditar à mão ~50 casos de "diverge" para separar erro do leitor,
+recorte errado e digitação do leiturista.

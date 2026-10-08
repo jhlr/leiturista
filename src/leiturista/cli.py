@@ -75,6 +75,13 @@ def _cmd_train_det(args: argparse.Namespace) -> None:
               tracking_uri=args.tracking_uri, experiment=args.experiment)
 
 
+def _cmd_train_visor(args: argparse.Namespace) -> None:
+    from .visor import train_visor
+
+    train_visor(epochs=args.epochs, batch=args.batch, lr=args.lr, seed=args.seed, out=args.out,
+                tracking_uri=args.tracking_uri, experiment=args.experiment)
+
+
 def _cmd_train_scene(args: argparse.Namespace) -> None:
     from .scene import train_scene
 
@@ -217,6 +224,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
     p.add_argument("--experiment", default="det-visor")
     p.set_defaults(func=_cmd_train_det)
+
+    p = sub.add_parser("train-visor", help="classificador 'este candidato é o visor?' (MobileNetV3-Small)")
+    p.add_argument("--epochs", type=int, default=8)
+    p.add_argument("--batch", type=int, default=64)
+    p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--out", default=str(paths.MODELS_DIR / "visor_cls.pt"))
+    p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
+    p.add_argument("--experiment", default="visor-cls")
+    p.set_defaults(func=_cmd_train_visor)
 
     p = sub.add_parser("train-scene", help="treina o classificador 'tem medidor na foto?' (rótulos fracos do LLM)")
     p.add_argument("--labels", default=str(paths.SCENE_LABELS_CSV))
