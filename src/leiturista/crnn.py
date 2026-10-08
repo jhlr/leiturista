@@ -202,6 +202,8 @@ def train_crnn(
     cosine: bool = False,
     augment_on: bool = True,
     aug_start: int = 0,
+    freeze_cnn: bool = False,
+    reinit_head: bool = False,
     rot_deg: float = 10.0,
     blur_p: float = 0.3,
     clip_calib_iters: int = 0,
@@ -214,6 +216,8 @@ def train_crnn(
     `synth_per_epoch`>0: soma ao treino real N sequências sintéticas (synth.py), regeneradas a
     cada época; `synth_only` descarta o treino real (estágio 1 puro). valid/test são sempre reais.
     `warmup`: passos de aquecimento linear do LR; `cosine`: depois decai em cosseno até 0.
+    `freeze_cnn`: modo EXTRAÇÃO de características (CNN congelada, BN em eval; só GRU+Linear treinam);
+    `reinit_head`: reinicia GRU+Linear com a semente (extração com cabeça nova, seeds de verdade).
     `augment_on=False` desliga TODA augmentation (diagnóstico); `aug_start`=N: currículo, as N
     primeiras épocas sem augmentation (ela alonga o platô inicial da CTC) e depois tudo ligado.
     `clip_calib_iters`>0: clipping de gradiente com limiar = percentil 90 da norma observada
@@ -234,7 +238,7 @@ def train_crnn(
         per_ds[d.name] = sp
     split = {k: [it for sp in per_ds.values() for it in sp[k]] for k in ("train", "valid", "test")}
 
-    torch.manual_seed(42)
+    torch.manual_seed(42 + seed)  # seed=0 -> 42 (comportamento anterior)
     torch.set_num_threads(2)
     rng = np.random.default_rng(seed)
     if init is not None:  # fine-tune herda norm/width do checkpoint (a largura não está no state_dict)
@@ -246,7 +250,13 @@ def train_crnn(
         bank, lens = DigitBank(), length_distribution(Path(next(iter(data_dirs))) / "labels.csv")
     if init is not None:
         model.load_state_dict(_read_ckpt(init)[0])
-    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    if reinit_head:
+        model.rnn.reset_parameters()
+        model.saida.reset_parameters()
+    if freeze_cnn:
+        for prm in model.cnn.parameters():
+            prm.requires_grad = False
+    opt = torch.optim.Adam([prm for prm in model.parameters() if prm.requires_grad], lr=lr)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
 
     mlflow.set_tracking_uri(tracking_uri)
@@ -254,7 +264,7 @@ def train_crnn(
     with mlflow.start_run(run_name=f"crnn-{epochs}ep"):
         mlflow.log_params({"epochs": epochs, "batch": batch, "lr": lr, "seed": seed,
                            "n_train": len(split["train"]), "altura": ALTURA, "largura": width, "norm": norm,
-                           "datasets": ",".join(per_ds), "init": str(init), "invert_prob": invert_prob, "synth_per_epoch": synth_per_epoch, "synth_only": synth_only, "cosine": cosine, "augment": augment_on, "aug_start": aug_start, "rot_deg": rot_deg, "blur_p": blur_p})
+                           "datasets": ",".join(per_ds), "init": str(init), "invert_prob": invert_prob, "synth_per_epoch": synth_per_epoch, "synth_only": synth_only, "cosine": cosine, "augment": augment_on, "aug_start": aug_start, "freeze_cnn": freeze_cnn, "reinit_head": reinit_head, "rot_deg": rot_deg, "blur_p": blur_p})
         train = split["train"]
         if synth_only:
             train = []
@@ -274,6 +284,8 @@ def train_crnn(
         for ep in range(epochs):
             t0 = time.time()
             model.train()
+            if freeze_cnn:
+                model.cnn.eval()
             items: list[tuple[Path | Image.Image, str]] = list(train)
             if synth_per_epoch:
                 items += [make_sequence(bank, lens, rng, (width, ALTURA)) for _ in range(synth_per_epoch)]

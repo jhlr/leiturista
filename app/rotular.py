@@ -2,7 +2,7 @@
 
     LEITURISTA_FOTOS_DIR=data/distribuidora_campo streamlit run app/rotular.py
 
-Grava `rotulos/rotulos_<nome>.csv` (nome_arquivo, lote, rotulador, classe, leitura, observacao) a cada foto.
+Grava `lab-02/rotulos/rotulos_<nome>.csv` (nome_arquivo, lote, rotulador, classe, leitura, observacao) a cada foto.
 O recorte sugerido do display (data/rotulos_crops/, gerado por scripts/preparar_rotulagem.py) é só um auxílio:
 o rótulo vale para a FOTO inteira.
 """
@@ -37,9 +37,9 @@ st.sidebar.progress(len(feitos) / max(len(meu), 1), text=f"{len(feitos)}/{len(me
 with st.sidebar.expander("Esquema (resumo)"):
     st.markdown("- **legivel**: dá para ler os dígitos do display (digite-os)\n- **ilegivel**: há medidor, mas o display não "
                 "dá para ler (borrado, reflexo, escuro, longe, coberto)\n- **sem_medidor**: não há medidor na foto\n\n"
-                "Detalhes e exemplos-limite em `rotulos/esquema.md`.")
+                "Detalhes e exemplos-limite em `lab-02/rotulos/esquema.md`.")
 if not pend:
-    st.success("Terminou o seu bloco. Envie `rotulos/rotulos_%s.csv` ao grupo." % nome)
+    st.success("Terminou o seu bloco. Envie `lab-02/rotulos/rotulos_%s.csv` ao grupo." % nome)
     st.stop()
 
 r = pend[0]

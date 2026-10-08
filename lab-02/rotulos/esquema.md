@@ -30,6 +30,6 @@ Regras de desempate (valem para os dois rotuladores):
 ## Como rotular
 
 `LEITURISTA_FOTOS_DIR=<pasta das fotos> streamlit run app/rotular.py` (cada integrante vê só o seu bloco;
-os 50 pares em dupla são sorteados em `rotulos/plano.csv`, com rotuladores diferentes e sem ver o rótulo do outro).
+os 50 pares em dupla são sorteados em `lab-02/rotulos/plano.csv`, com rotuladores diferentes e sem ver o rótulo do outro).
 Depois: `leiturista rotulos-kappa` une as planilhas e calcula o kappa de Cohen por classe. Kappa < 0,6 em alguma
 classe obriga a reescrever a definição e registrar a mudança no `README.md`.

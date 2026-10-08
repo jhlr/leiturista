@@ -1,6 +1,6 @@
 """Rotulagem do Lab 2 (item C): plano de amostragem, atribuição e kappa de Cohen.
 
-Esquema (rotulos/esquema.md): por foto, `classe` ∈ {legivel, ilegivel, sem_medidor} e, quando legível,
+Esquema (lab-02/rotulos/esquema.md): por foto, `classe` ∈ {legivel, ilegivel, sem_medidor} e, quando legível,
 `leitura` = os dígitos que o rotulador lê no display. Amostra: `n` fotos estratificadas pelos 4 lotes,
 `n_dupla` delas rotuladas por DOIS rotuladores, às cegas (cada um salva a própria planilha).
 
@@ -22,7 +22,7 @@ from pathlib import Path
 from . import paths
 from .distribuidora import LOTE_SPLIT
 
-ROTULOS_DIR = paths.ROOT / "rotulos"
+ROTULOS_DIR = paths.ROOT / "lab-02" / "rotulos"
 PLANO = ROTULOS_DIR / "plano.csv"
 CLASSES = ("legivel", "ilegivel", "sem_medidor")
 

@@ -79,12 +79,36 @@ def _cmd_rotulos_kappa(_: argparse.Namespace) -> None:
     print(json.dumps(merge_and_kappa(), ensure_ascii=False, indent=2))
 
 
+def _cmd_calibrate_crnn(args: argparse.Namespace) -> None:
+    import json
+
+    from .calib import run
+
+    print(json.dumps(run(args.ckpt, args.data, target_cov=args.cov, target_risk=args.risk), indent=2))
+
+
+def _cmd_errors_l1(args: argparse.Namespace) -> None:
+    import json
+
+    from .errors import run
+
+    print(json.dumps(run(args.data, args.split, args.n, args.ckpt), indent=2, ensure_ascii=False))
+
+
+def _cmd_d3(args: argparse.Namespace) -> None:
+    import json
+
+    from .d3 import run
+
+    print(json.dumps(run(args.seeds, args.ckpt, epochs=args.epochs)["resumo"], indent=2))
+
+
 def _cmd_train_crnn(args: argparse.Namespace) -> None:
     from .crnn import train_crnn
 
     train_crnn(data_dirs=args.data or [paths.FINETUNE_DIR], out=args.out, epochs=args.epochs, batch=args.batch,
                lr=args.lr, seed=args.seed, init=args.init, invert_prob=args.invert_prob,
-               crop_jitter=args.crop_jitter, norm=args.norm, width=args.width, synth_per_epoch=args.synth_per_epoch, synth_only=args.synth_only, warmup=args.warmup, cosine=args.cosine, augment_on=not args.no_augment, aug_start=args.aug_start, rot_deg=args.rot_deg, blur_p=args.blur_p,
+               crop_jitter=args.crop_jitter, norm=args.norm, width=args.width, synth_per_epoch=args.synth_per_epoch, synth_only=args.synth_only, warmup=args.warmup, cosine=args.cosine, augment_on=not args.no_augment, aug_start=args.aug_start, freeze_cnn=args.freeze_cnn, reinit_head=args.reinit_head, rot_deg=args.rot_deg, blur_p=args.blur_p,
                clip_calib_iters=args.clip_calib_iters,
                tracking_uri=args.tracking_uri, experiment=args.experiment)
 
@@ -228,6 +252,26 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("rotulos-kappa", help="une as planilhas de rotulagem e calcula kappa de Cohen por classe")
     p.set_defaults(func=_cmd_rotulos_kappa)
 
+    p = sub.add_parser("calibrate-crnn", help="E1/E2: temperature scaling (no valid), ECE e cobertura x risco (no teste)")
+    p.add_argument("--ckpt", default=str(paths.MODELS_DIR / "crnn_lote_ft.pt"))
+    p.add_argument("--data", default=str(paths.DATA_DIR / "distribuidora_amr_lote"))
+    p.add_argument("--cov", type=float, default=0.6, help="cobertura mínima da meta")
+    p.add_argument("--risk", type=float, default=0.02, help="risco máximo da meta")
+    p.set_defaults(func=_cmd_calibrate_crnn)
+
+    p = sub.add_parser("errors-l1", help="L1: taxonomia de erros (perdeu/duplicou/trocou/inventou) por família de leitor")
+    p.add_argument("--data", default=str(paths.DATA_DIR / "distribuidora_amr_lote"))
+    p.add_argument("--split", default="test")
+    p.add_argument("-n", type=int, default=150)
+    p.add_argument("--ckpt", default=str(paths.MODELS_DIR / "crnn_lote_ft.pt"))
+    p.set_defaults(func=_cmd_errors_l1)
+
+    p = sub.add_parser("d3", help="D3: CRNN em modo extração x baseline HOG+linear, 3 sementes")
+    p.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
+    p.add_argument("--ckpt", default=str(paths.MODELS_DIR / "crnn_bn128_mix500_cur30.pt"), help="CNN pré-treinada (UFPR-AMR)")
+    p.add_argument("--epochs", type=int, default=30)
+    p.set_defaults(func=_cmd_d3)
+
     p = sub.add_parser("train-crnn", help="treina o CRNNDigitos (esqueleto do professor, Lab 2) em UFPR-AMR")
     p.add_argument("--data", action="append", help="dataset com labels.csv; repetir p/ vários (default: UFPR-AMR)")
     p.add_argument("--out", default=str(paths.MODELS_DIR / "crnn_digitos.pt"))
@@ -239,6 +283,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--norm", choices=["batch", "group"], default="batch", help="normalização da CNN")
     p.add_argument("--width", type=int, default=128, help="largura do recorte de entrada (altura fixa 32)")
     p.add_argument("--cosine", action="store_true", help="decaimento cosseno do LR após o warmup")
+    p.add_argument("--freeze-cnn", action="store_true", help="modo extração: CNN congelada, treina só GRU+Linear")
+    p.add_argument("--reinit-head", action="store_true", help="reinicia GRU+Linear com a semente")
     p.add_argument("--aug-start", type=int, default=0, help="currículo: épocas iniciais sem augmentation")
     p.add_argument("--rot-deg", type=float, default=10.0, help="giro máximo da augmentation (graus)")
     p.add_argument("--blur-p", type=float, default=0.3, help="prob. de desfoque na augmentation")
