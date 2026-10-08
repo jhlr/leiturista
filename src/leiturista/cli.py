@@ -52,6 +52,33 @@ def _cmd_import_distribuidora(args: argparse.Namespace) -> None:
     )
 
 
+def _cmd_split_lote(args: argparse.Namespace) -> None:
+    import json
+
+    from .distribuidora import split_by_lote
+
+    print(json.dumps(split_by_lote(args.src, args.out), ensure_ascii=False, indent=2))
+
+
+def _cmd_rotulos_plano(args: argparse.Namespace) -> None:
+    from pathlib import Path
+
+    from .rotulos import PLANO, make_plan, write_plan
+
+    rows = make_plan([r.strip() for r in args.raters.split(",")], Path(args.fotos_dir), n=args.n, n_dupla=args.n_dupla,
+                     seed=args.seed)
+    write_plan(rows)
+    print(f"{len(rows)} fotos, {sum(r['dupla'] == '1' for r in rows)} em dupla -> {PLANO}")
+
+
+def _cmd_rotulos_kappa(_: argparse.Namespace) -> None:
+    import json
+
+    from .rotulos import merge_and_kappa
+
+    print(json.dumps(merge_and_kappa(), ensure_ascii=False, indent=2))
+
+
 def _cmd_train_crnn(args: argparse.Namespace) -> None:
     from .crnn import train_crnn
 
@@ -184,6 +211,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-samples", type=int, default=None, help="debug: subset por split")
     _add_mlflow_args(p)
     p.set_defaults(func=_cmd_train)
+
+    p = sub.add_parser("split-lote", help="reparticiona o dataset da distribuidora POR LOTE e mede vazamento")
+    p.add_argument("--src", default=str(paths.DATA_DIR / "distribuidora_amr"))
+    p.add_argument("--out", default=str(paths.DATA_DIR / "distribuidora_amr_lote"))
+    p.set_defaults(func=_cmd_split_lote)
+
+    p = sub.add_parser("rotulos-plano", help="plano de rotulagem do Lab 2: 300 fotos por lote, 50 em dupla às cegas")
+    p.add_argument("--raters", default="R1,R2,R3,R4,R5", help="nomes dos rotuladores, separados por vírgula")
+    p.add_argument("--fotos-dir", default=os.environ.get("LEITURISTA_FOTOS_DIR", str(paths.CAMPO_DIR)))
+    p.add_argument("--n", type=int, default=300)
+    p.add_argument("--n-dupla", type=int, default=50)
+    p.add_argument("--seed", type=int, default=42)
+    p.set_defaults(func=_cmd_rotulos_plano)
+
+    p = sub.add_parser("rotulos-kappa", help="une as planilhas de rotulagem e calcula kappa de Cohen por classe")
+    p.set_defaults(func=_cmd_rotulos_kappa)
 
     p = sub.add_parser("train-crnn", help="treina o CRNNDigitos (esqueleto do professor, Lab 2) em UFPR-AMR")
     p.add_argument("--data", action="append", help="dataset com labels.csv; repetir p/ vários (default: UFPR-AMR)")

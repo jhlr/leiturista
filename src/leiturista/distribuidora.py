@@ -166,6 +166,35 @@ def _make_montage(items: list[tuple[np.ndarray, str]], out: Path, cols: int = 4)
     print(f"QA montage: {out.resolve()} ({len(items)} itens)")
 
 
+# Partição por lote (cronológica: lotes de maio treinam, o seguinte valida, o mais recente testa).
+LOTE_SPLIT = {
+    "PSP_EXTRATLEITIMPL_200526_0352": "train",
+    "PSP_EXTRATLEITIMPL_210526_0335": "train",
+    "PSP_EXTRATLEITIMPL_220526_0408": "valid",
+    "PSP_EXTRATLEITIMPL_030726_0121": "test",
+}
+
+
+def split_by_lote(src_dir: Path | str, out_dir: Path | str) -> dict[str, object]:
+    """Reparticiona um dataset já construído (`manifest.csv` com lote/medidor) POR LOTE, sem copiar imagens
+    (o `labels.csv` novo aponta para `../<src>/<imagem>`), e mede o vazamento entre conjuntos:
+    nenhum medidor, foto ou leitura-identificador em dois conjuntos. Devolve o relatório."""
+    src, out = Path(src_dir), Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    m = pd.read_csv(src / "manifest.csv", dtype=str, keep_default_na=False)
+    m = m[m["status"] == "aceito"].copy()
+    m["split"] = m["lote"].map(LOTE_SPLIT)
+    lines = ["split,image,label"] + [f"{r.split},../{src.name}/{r.image},{r.leitura_original}" for r in m.itertuples()]
+    (out / "labels.csv").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    m.to_csv(out / "manifest.csv", index=False)
+    rep: dict[str, object] = {"n": {k: int((m.split == k).sum()) for k in ("train", "valid", "test")},
+                              "lotes": {k: sorted(m[m.split == k].lote.unique()) for k in ("train", "valid", "test")}}
+    for col in ("medidor", "foto", "image"):
+        sets = {k: set(m[m.split == k][col]) for k in ("train", "valid", "test")}
+        rep[f"intersecao_{col}"] = {f"{a}&{b}": len(sets[a] & sets[b]) for a, b in (("train", "valid"), ("train", "test"), ("valid", "test"))}
+    return rep
+
+
 def build_dataset(
     out_dir: Path | str,
     data_root: Path | str = FOTOS_DIR,
@@ -228,16 +257,10 @@ def build_dataset(
         if len(accepted_qa) < qa_n:
             accepted_qa.append((cand.crop, f"leitura={r['leitura']} match={cand.match:.2f} blur={cand.sharpness:.0f}"))
 
-    # split determinístico sobre o pool de aceitos (80/10/10)
-    _rng = random.Random(seed)
-    _rng.shuffle(accepted_)
-    fracs = [int(len(accepted_) * f) for _n, f in SPLITS]
-    for k, (name, leitura) in enumerate(accepted_):
-        split = "train"
-        if k >= sum(fracs[:1]):
-            split = "valid"
-        if k >= sum(fracs[:2]):
-            split = "test"
+    # partição POR LOTE (regra do Lab 2: nunca aleatória por foto; ver `split_by_lote`)
+    lote_of = {rec["image"]: rec["lote"] for rec in manifest if rec["image"]}
+    for name, leitura in accepted_:
+        split = LOTE_SPLIT[lote_of[name]]
         labels.append(f"{split},{name},{leitura}")
         for rec in manifest:
             if rec["image"] == name:
