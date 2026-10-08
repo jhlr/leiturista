@@ -27,7 +27,42 @@ contra uma decisão real, e a rotulagem humana (item C) depende do grupo (ver §
   quando legível, regras de desempate e 2 exemplos-limite por classe.
 - **C2/C3 (estado honesto):** o plano está pronto (300 fotos, 75 por lote; 50 em dupla às cegas, rotuladores diferentes,
   `rotulos/plano.csv`), o app de rotulagem roda (`streamlit run app/rotular.py`, cada integrante vê só o seu bloco) e o
-  kappa é calculado por `leiturista rotulos-kappa`. **Ainda não há rótulo humano**: depende dos integrantes.
+  kappa é calculado por `leiturista rotulos-kappa`. **O plano de 300 fotos por 4 lotes não foi cumprido**, mas há duas fontes
+  de rótulo de classe que o grupo passou a usar:
+  1. **Humano (Mikael):** 3.063 fotos de **um só lote** (`220526_0408`), triadas em pastas e convertidas ao esquema
+     (`medidor`→`legivel` 610, `medidoruim`→`ilegivel` 2.187, `ntem`→`sem_medidor` 266), em
+     [`rotulos/rotulos_mikael.csv`](rotulos/rotulos_mikael.csv). Um rotulador, **sem leitura transcrita e sem dupla**.
+  2. **Modelo de captioning local (rótulo fraco; colunas `llm_*`):** 3.247 fotos de campo com `llm_meter_visible`/`llm_display_readable` em
+     `data/distribuidora_campo_rotulado.csv`, convertidas pela regra: medidor não visível = `sem_medidor`; visível e display
+     legível = `legivel`; visível e ilegível = `ilegivel`.
+  - **C3 (concordância entre rotuladores), feito com humano × modelo de captioning local.** O enunciado pede dois integrantes, às cegas, em 50
+    fotos. O grupo não tinha um segundo humano; usou como segundo rotulador um **modelo de captioning (visão-linguagem) rodando localmente**
+    (Llama-3.2-Vision 11B), cujas descrições das fotos (colunas `llm_*`) foram convertidas em classe antes do rótulo do Mikael existir (não viu a resposta
+    dele, então a independência vale; o Mikael também não viu a do LLM). A amostra é maior que a pedida: **688 fotos** rotuladas
+    pelos dois, todas do lote `220526_0408`. Não é dupla humana e isso muda o que o número prova: mede o quanto o LLM
+    concorda com um humano, não o quanto dois humanos concordam sobre a definição das classes.
+
+    | | Concordância | Kappa de Cohen |
+    |---|---|---|
+    | Geral (3 classes) | 0,562 | 0,324 |
+    | `legivel` (um contra todos) | | 0,285 |
+    | `ilegivel` | | 0,239 |
+    | `sem_medidor` | | 0,778 |
+
+    Como o enunciado manda, kappa < 0,6 em `legivel` e `ilegivel` indica definição ambígua; o esquema foi revisado
+    (seção "O que mudou depois da medição de concordância" em `rotulos/esquema.md`, regras 5 e 6 novas). O desacordo é quase
+    todo de um tipo: em 276 das 688 fotos o modelo disse legível e o humano ilegível (o oposto ocorre em 1); o modelo marca 61%
+    como legíveis, o humano 21%. Auditoria visual de 12 dessas 276 (miniaturas, a olho): 5 são ilegíveis de fato (grade, vidro
+    trincado, display minúsculo, reflexo; o modelo foi leniente), 2 borderline e 5 parecem legíveis (o humano foi mais
+    rígido, ou só em resolução cheia os dígitos exigiriam chute). **Os erros vão nos dois sentidos**, e a amostra pequena não
+    permite dizer qual pesa mais. `sem_medidor` tem concordância boa (0,78). Cálculo: `leiturista.rotulos.cohen_kappa`, mesma
+    função do `leiturista rotulos-kappa`. **Não feito por falta de tempo:** a dupla humano × humano em 50 fotos (o que o
+    enunciado pede em C3 e o que decidiria o desacordo acima); o app de rotulagem e o `plano.csv` estão prontos para isso.
+  - **Arquivo final:** [`rotulos/rotulos.csv`](rotulos/rotulos.csv) (5.622 fotos; colunas e fontes em `rotulos/esquema.md`). A `leitura` é a digitada pelo leiturista em campo (`Posicao do medidor lida`, 559 das 610 fotos `legivel` do Mikael têm uma), **não conferida na foto**: o L2 abaixo é, por isso, rótulo fraco de leitura, com classe de legibilidade humana.
+  - **Regra de união** ([`rotulos/rotulos_uniao.csv`](rotulos/rotulos_uniao.csv), 5.622 fotos): `legivel` se pelo menos uma das
+    fontes disser legível. Nas 688 comuns dá 419 legíveis, 222 ilegíveis, 47 sem medidor. Escolha de recall ("vale tentar ler"),
+    não de certeza: contraria a regra 1 do `esquema.md` (dígito duvidoso torna a foto ilegível) e puxa para o erro caro (falso
+    verde). As colunas humano e LLM ficam separadas no arquivo para trocar a regra sem refazer nada.
   Enquanto isso, os itens D, E e L abaixo usam como proxy os **recortes de display do cliente** (1.091 recortes
   por lote, rótulo = leitura digitada pelo leiturista confirmada pelo OCR: rótulo fraco, enviesado para casos fáceis).
 - **C4 (partição por lote, sem vazamento):** treino = lotes `200526_0352` e `210526_0335` (547 recortes), valid =
@@ -125,7 +160,7 @@ política de foto ilegível (R6, vermelho), não pela recusa isolada.
 
 ## Limitações honestas
 
-1. **Sem rótulo humano ainda** (C2/C3): proxy fraco nos itens D/E/L.
+1. **Rótulo humano parcial** (C2/C3): 3.063 fotos de um lote e um rotulador, sem leitura e sem dupla; sem kappa humano × humano. O kappa humano × modelo (≈ 0,32) mostra desacordo de critério nos dois sentidos, com o modelo mais leniente em média. Itens D/E/L seguem com o proxy fraco de recortes.
 2. **Detector e classificador de visor** (auxiliares ao bloco) foram treinados com split aleatório por foto; não alteram o bloco
    do lab, mas sua avaliação não segue a regra por lote.
 3. **Limiar de detector calibrado em valid+test juntos** (vazamento leve, documentado em `docs/2026-10-08_cena_det_e_retest_amarelo.md`).

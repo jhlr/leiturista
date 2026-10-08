@@ -72,15 +72,20 @@ print(f"{len(rep)} de {len(todos)} leituras reais têm dígito repetido em sequ�
 print(json.dumps(split_by_lote(paths.DATA_DIR / "distribuidora_amr", LOTE), indent=1))
 
 # %% [markdown]
-# ## C3 — kappa de Cohen (50 fotos em dupla, às cegas)
+# ## C3 — kappa de Cohen (humano × modelo local, às cegas; dupla humano × humano não feita)
 
 # %%
+from leiturista.rotulos import CLASSES, cohen_kappa
+
 rotulos = ROOT / "lab-02" / "rotulos" / "rotulos.csv"
-if rotulos.exists():
-    from leiturista.rotulos import merge_and_kappa
-    print(json.dumps(merge_and_kappa(), indent=1, ensure_ascii=False))
-else:
-    print("PENDENTE: rotulagem humana (C2/C3) ainda não concluída; `leiturista rotulos-kappa` calcula quando as planilhas chegarem.")
+todas = list(csv.DictReader(open(rotulos, encoding="utf-8")))
+print("rotuladas:", len(todas), "| por split:", {s: sum(r["split"] == s for r in todas) for s in ("train", "valid", "test")})
+par = [r for r in todas if r["classe_humano"] and r["classe_llm"]]
+a, b = [r["classe_humano"] for r in par], [r["classe_llm"] for r in par]
+print(f"C3 humano (Mikael) x modelo (Llama-3.2-Vision 11B local): {len(par)} fotos em comum, ambos rotularam às cegas")
+print(f"concordância {sum(x == y for x, y in zip(a, b)) / len(par):.3f}; kappa geral {cohen_kappa(a, b):.3f}")
+for c in CLASSES:
+    print(f"  kappa {c:<12} {cohen_kappa([str(x == c) for x in a], [str(y == c) for y in b]):.3f}")
 
 # %% [markdown]
 # ## D1 — perda inicial com pesos aleatórios (lote REAL de 16 recortes)
