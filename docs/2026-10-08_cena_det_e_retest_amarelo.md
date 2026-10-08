@@ -171,3 +171,35 @@ leitor melhor, ~10% é recorte errado, ~10% é rótulo. Ação mais barata: **o 
 mostra um código de item de 2 dígitos antes do valor; os recortes de treino confirmados pelo OCR quase
 não têm esse caso, então o CRNN nunca aprendeu a descartá-lo): gerar recortes sintéticos com o prefixo
 ou rotular à mão uns 100 casos. Depois, rotular ~100 "diverge" difíceis e treinar o CRNN neles.
+
+## 9. Regra R6: "completamente ilegível" vai para vermelho
+
+Instrução do usuário (2026-10-08): foto completamente ilegível não é amarelo, é vermelho. Operacionalização:
+classificador **"o display é legível?"** na foto inteira (`leiturista train-scene --target readable`,
+`models/scene_legivel.pt`, mesmo MobileNetV3-Small do classificador de cena, rótulo fraco
+`llm_display_readable` do LLM: 1.999 legíveis, 1.248 não; "ilegível" inclui foto sem medidor, então
+este modelo cobre também o caso do classificador de cena). Foto amarela com P(legível) abaixo do limiar
+gravado no checkpoint (F1 da classe ilegível no valid) vira vermelho (`baseline_triagem.py`, campo
+`com_ilegivel_vermelho`).
+
+| Classe "ilegível" vs rótulo fraco | Precisão | Recall | F1 | n (negativos) |
+|---|---|---|---|---|
+| valid | 0,880 | 0,831 | 0,855 | 323 (124) |
+| test | 0,821 | 0,762 | 0,790 | 327 (126) |
+
+Checagem à mão nas 24 fotos inteiras sem candidato aceito (seção 8): das que julguei completamente
+ilegíveis (longe, borrada, reflexo, escura, grade, sem medidor), o classificador marcou 14 de 15; das que
+julguei legíveis mas perdidas pelo pipeline, marcou só 1 de 7 (n pequeno).
+
+Retest (454 fotos sem vazamento; detectores unidos + classificador de visor + CRNN fine-tunado):
+
+| Política NA sem foto | Amarelo antes de R6 | **Amarelo com R6** | Vermelho com R6 |
+|---|---|---|---|
+| NA = verde (R1b) | 67,7% | **43,1%** | 29,4% |
+| NA = amarelo (regra antiga) | 81,2% | 56,6% | 29,4% |
+
+157 das 500 fotos da amostra (31%) caem na regra. **O amarelo cai ~25 pontos, mas vira vermelho: o vermelho
+sobe de 4,8% para 29,4%.** Custo: foto marcada ilegível por engano vira vermelho sem chance de leitura
+(no teste, ~18% das marcadas não eram ilegíveis segundo o LLM; rótulo fraco, ressalva). O limiar
+(F1) pode subir para ser mais conservador; é um botão entre amarelo e vermelho falso. Meta de amarelo
+< 40% fica a ~3 pontos com NA = verde.

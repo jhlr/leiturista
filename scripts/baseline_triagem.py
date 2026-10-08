@@ -243,6 +243,16 @@ def cmd_report(args: argparse.Namespace) -> None:
         rep["com_cena"] = {"fotos_sem_medidor": len(sem),
                            "amarelo_pct": round(100 * (fixos["amarelo"] + (k_am / m) * n_img) / n, 1),
                            "amarelo_amostra": k_am}
+    if SCENE_CSV.exists():  # regra "completamente ilegível -> vermelho" (R6): amarelo com P(legível) < limiar vira vermelho
+        rows_c = list(csv.DictReader(open(SCENE_CSV, encoding="utf-8")))
+        if rows_c and "ilegivel" in rows_c[0]:
+            ilg = {(r["lote"], r["foto"]) for r in rows_c if r["ilegivel"] == "True"}
+            k_am6 = sum(1 for r in amostra if r["cor"] == "amarelo" and (r["lote"], r["foto"]) not in ilg)
+            k_ve6 = sum(1 for r in amostra if r["cor"] == "vermelho" or (r["cor"] == "amarelo" and (r["lote"], r["foto"]) in ilg))
+            rep["com_ilegivel_vermelho"] = {
+                "fotos_ilegiveis_na_amostra": len(ilg),
+                "amarelo_pct": round(100 * (fixos["amarelo"] + (k_am6 / m) * n_img) / n, 1),
+                "vermelho_pct": round(100 * (fixos["vermelho"] + (k_ve6 / m) * n_img) / n, 1)}
     out = REPORT_JSON.with_name(REPORT_JSON.stem + f"_{args.reader}.json") if args.tag else REPORT_JSON.with_name(f"2026-10-01_baseline_triagem_{args.reader}.json")
     out.write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(rep, ensure_ascii=False, indent=2))
@@ -261,17 +271,19 @@ def apply_tag(tag: str) -> None:
 
 def cmd_scene(_: argparse.Namespace) -> None:
     """P(tem medidor) (classificador de cena) para as fotos da amostra baseline; reaproveitado por todas as tags."""
-    from leiturista.scene import predict_scene
+    from leiturista.scene import READABLE_WEIGHTS, predict_scene
 
     pop = {(r["lote"], r["foto"]): r["path"] for r in load_population()}
     with open(BASE_SAMPLE, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     with open(SCENE_CSV, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["lote", "foto", "p_medidor", "sem_medidor"])
+        w.writerow(["lote", "foto", "p_medidor", "sem_medidor", "p_legivel", "ilegivel"])
         for r in rows:
-            p, sem = predict_scene(Image.open(pop[(r["lote"], r["foto"])]))
-            w.writerow([r["lote"], r["foto"], round(p, 4), sem])
+            img = Image.open(pop[(r["lote"], r["foto"])])
+            p, sem = predict_scene(img)
+            pl, ilg = predict_scene(img, READABLE_WEIGHTS)  # "display legível?" (ilegível inclui sem medidor)
+            w.writerow([r["lote"], r["foto"], round(p, 4), sem, round(pl, 4), ilg])
     print(f"{len(rows)} fotos -> {SCENE_CSV}")
 
 

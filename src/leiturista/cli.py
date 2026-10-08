@@ -87,7 +87,8 @@ def _cmd_train_scene(args: argparse.Namespace) -> None:
 
     train_scene(out=args.out, labels_csv=args.labels, fotos_dir=args.fotos_dir, epochs=args.epochs,
                 freeze_epochs=args.freeze_epochs, batch=args.batch, lr=args.lr, seed=args.seed,
-                pretrained=not args.no_pretrained, tracking_uri=args.tracking_uri, experiment=args.experiment)
+                pretrained=not args.no_pretrained, tracking_uri=args.tracking_uri, experiment=args.experiment,
+                target=args.target)
 
 
 def _cmd_train(args: argparse.Namespace) -> None:
@@ -246,7 +247,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--no-pretrained", action="store_true", help="não baixar pesos ImageNet")
     p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
-    p.add_argument("--experiment", default="scene-medidor")
+    p.add_argument("--experiment", default=None, help="default: scene-medidor / scene-legivel")
+    p.add_argument("--target", choices=["meter", "readable"], default="meter",
+                   help="meter = tem medidor; readable = display legível (ilegível -> vermelho)")
     p.set_defaults(func=_cmd_train_scene)
 
     p = sub.add_parser("eval", help="avalia checkpoint no split test (MLflow)")

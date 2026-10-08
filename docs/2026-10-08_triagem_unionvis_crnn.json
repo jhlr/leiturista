@@ -2,9 +2,9 @@
   "leitor": "crnn",
   "registros": 13669,
   "decididos_sem_imagem": {
-    "verde_R1_R1b": 2455,
+    "verde_R1_R1b": 611,
     "vermelho_R2": 296,
-    "amarelo_R2b": 6
+    "amarelo_R2b": 1850
   },
   "precisam_de_imagem": 10912,
   "amostra_n": 454,
@@ -25,17 +25,17 @@
   },
   "populacao": {
     "verde": {
-      "pct_estimado": 27.5,
+      "pct_estimado": 14.0,
       "ic95_pct": [
-        25.3,
-        30.1
+        11.8,
+        16.6
       ]
     },
     "amarelo": {
-      "pct_estimado": 67.7,
+      "pct_estimado": 81.2,
       "ic95_pct": [
-        64.9,
-        70.1
+        78.4,
+        83.6
       ]
     },
     "vermelho": {
@@ -46,10 +46,15 @@
       ]
     }
   },
-  "sensibilidade_amarelo_pct_sem_regra_diverge": 26.2,
+  "sensibilidade_amarelo_pct_sem_regra_diverge": 39.7,
   "com_cena": {
     "fotos_sem_medidor": 28,
-    "amarelo_pct": 64.0,
+    "amarelo_pct": 77.5,
     "amarelo_amostra": 364
+  },
+  "com_ilegivel_vermelho": {
+    "fotos_ilegiveis_na_amostra": 157,
+    "amarelo_pct": 56.6,
+    "vermelho_pct": 29.4
   }
 }

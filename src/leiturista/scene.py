@@ -30,6 +30,9 @@ from . import paths
 LABELS_CSV = paths.SCENE_LABELS_CSV
 FOTOS_DIR = Path(os.environ.get("LEITURISTA_FOTOS_DIR", str(paths.CAMPO_DIR)))
 WEIGHTS = paths.SCENE_WEIGHTS
+READABLE_WEIGHTS = paths.MODELS_DIR / "scene_legivel.pt"
+# alvo -> (coluna do rótulo fraco do LLM, nome da classe negativa)
+TARGETS = {"meter": ("llm_meter_visible", "sem medidor"), "readable": ("llm_display_readable", "ilegível")}
 SIZE = (320, 240)  # (altura, largura): fotos 360x480 em pé
 _MEAN, _STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 
@@ -51,16 +54,18 @@ def build_model(pretrained: bool = True) -> nn.Module:
     return m
 
 
-def read_labels(csv_path: Path = LABELS_CSV, fotos_dir: Path = FOTOS_DIR) -> list[tuple[Path, int, str]]:
-    """(foto, tem_medidor 0/1, lote) para as linhas com rótulo do LLM e foto no disco."""
+def read_labels(csv_path: Path = LABELS_CSV, fotos_dir: Path = FOTOS_DIR, target: str = "meter") -> list[tuple[Path, int, str]]:
+    """(foto, positivo 0/1, lote) para as linhas com rótulo do LLM e foto no disco.
+    `target`: "meter" = tem medidor; "readable" = o display é legível (ilegível inclui foto sem medidor)."""
+    col = TARGETS[target][0]
     rows: list[tuple[Path, int, str]] = []
     with open(csv_path, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f, delimiter=";"):
-            if r["llm_meter_visible"] not in ("True", "False"):
+            if r[col] not in ("True", "False"):
                 continue
             p = fotos_dir / r["file"]
             if p.is_file():
-                rows.append((p, int(r["llm_meter_visible"] == "True"), r["lote"]))
+                rows.append((p, int(r[col] == "True"), r["lote"]))
     return rows
 
 
@@ -130,14 +135,17 @@ def train_scene(
     seed: int = 0,
     pretrained: bool = True,
     tracking_uri: str = paths.DEFAULT_TRACKING_URI,
-    experiment: str = "scene-medidor",
+    experiment: str | None = None,
+    target: str = "meter",
 ) -> dict[str, float]:
     """Treina com BCE ponderada pela classe rara; backbone congelado nas primeiras
     `freeze_epochs`. Salva a época de melhor AUROC no `valid` (o `test` não seleciona nada)."""
     import mlflow
 
     torch.manual_seed(seed)
-    split = split_labels(read_labels(Path(labels_csv), Path(fotos_dir)))
+    neg_name = TARGETS[target][1]
+    experiment = experiment or ("scene-medidor" if target == "meter" else "scene-legivel")
+    split = split_labels(read_labels(Path(labels_csv), Path(fotos_dir), target))
     ys = {k: np.array([r[1] for r in v]) for k, v in split.items()}
     n_neg, n_pos = int((ys["train"] == 0).sum()), int((ys["train"] == 1).sum())
     # logit = P(tem medidor): pos_weight < 1 desconta a classe majoritária
@@ -152,7 +160,7 @@ def train_scene(
     with mlflow.start_run(run_name=f"scene-{epochs}ep"):
         mlflow.log_params({"epochs": epochs, "freeze_epochs": freeze_epochs, "batch": batch, "lr": lr, "seed": seed,
                            "pretrained": pretrained, "n_train": len(split["train"]), "n_train_neg": n_neg,
-                           "size": f"{SIZE[0]}x{SIZE[1]}"})
+                           "size": f"{SIZE[0]}x{SIZE[1]}", "target": target})
         opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
         for ep in range(epochs):
             for p in model.features.parameters():
@@ -184,11 +192,10 @@ def train_scene(
         for nome in ("valid", "test"):
             p = _scores(model, split[nome], batch)
             prec, rec, f1 = _f1_neg(p, ys[nome], best_thr)
-            res.update({f"{nome}_sem_medidor_precision": prec, f"{nome}_sem_medidor_recall": rec,
-                        f"{nome}_sem_medidor_f1": f1})
+            res.update({f"{nome}_neg_precision": prec, f"{nome}_neg_recall": rec, f"{nome}_neg_f1": f1})
             if nome == "test":
                 res["test_auroc"] = _auroc(p[ys[nome] == 1], p[ys[nome] == 0])
-            print(f"{nome:>5}: sem medidor  precisão={prec:.3f}  recall={rec:.3f}  F1={f1:.3f}  "
+            print(f"{nome:>5}: {neg_name}  precisão={prec:.3f}  recall={rec:.3f}  F1={f1:.3f}  "
                   f"(n={len(ys[nome])}, negativos={(ys[nome] == 0).sum()})", flush=True)
         mlflow.log_metrics(res)
     return res
