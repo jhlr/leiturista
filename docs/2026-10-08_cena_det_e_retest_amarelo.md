@@ -47,6 +47,8 @@ em valid+test juntos (vazamento leve); (c) o recall oscilou entre épocas (0,53-
 | Det fine-tunado, limiar padrão, PP-OCR | 7,2% | 59,2% | 33,6% | 58,7% |
 | **Det fine-tunado, limiar calibrado, PP-OCR** | 6,9% | **76,6% (73,6-79,3)** | 16,5% (14,0-19,4) | **75,3%** |
 | Det fine-tunado calibrado, CRNN novo (`crnn_bn128_mix500_cur30`) | 4,5% | 79,0% | 16,5% | 77,7% |
+| **União** det original + visor-ft (`LEITURISTA_DET2_ONNX`), PP-OCR | 5,4% | 90,0% (88,3-91,2) | 4,6% | 86,7% |
+| União, CRNN novo | 4,6% | 90,8% | 4,6% | 87,5% |
 
 **Leitura honesta:**
 1. O amarelo cai de 88,7% para 76,6% (75,3% com a cena), mas **quase tudo vira vermelho, não
@@ -64,3 +66,15 @@ em valid+test juntos (vazamento leve); (c) o recall oscilou entre épocas (0,53-
    (alavanca 3 do doc `2026-10-01_gargalo_amarelo_e_plano_visor.md`) e usar o det novo como
    *complemento* do original (união de candidatos), não substituto: o fine-tune hoje troca recall
    por precisão.
+
+## 4. União dos detectores (testada em seguida)
+
+O 2º detector é opt-in (`LEITURISTA_DET2_ONNX`, limiar próprio 0,2/0,2): os candidatos passam a ser a
+união das caixas do det original e do visor-ft. **Resultado: nada ganho.** Vermelho volta a 4,6%
+(sem vermelho falso), mas o amarelo vai para 90,0% e o verde fica em 5,4%, igual à baseline. A
+seleção do candidato (`_best_reading`, "mais dígitos") continua escolhendo serial/placa em vez do
+visor, então ter a caixa do visor entre os candidatos não muda a leitura. Conclusão: o gargalo
+deixa de ser *achar* o visor e passa a ser *escolher* entre candidatos e *ler* o recorte, ou seja, o
+passo A do plano (reranker "é visor?") mais fine-tune do leitor em recorte da distribuidora. O
+detector fine-tunado sozinho só troca amarelo por vermelho falso; a união não vale o custo de
+latência (4,6 s/foto contra 0,9 s do det novo sozinho).

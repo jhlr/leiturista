@@ -46,6 +46,10 @@ DET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 DET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 DET_THRESH = float(os.environ.get("LEITURISTA_DET_THRESH", 0.3))
 DET_BOX_THRESH = float(os.environ.get("LEITURISTA_DET_BOX_THRESH", 0.6))
+# 2º detector opcional (ex.: det fine-tunado p/ visor): candidatos = união dos dois, cada um com seu limiar
+DET2_ONNX = os.environ.get("LEITURISTA_DET2_ONNX")
+DET2_THRESH = float(os.environ.get("LEITURISTA_DET2_THRESH", 0.2))
+DET2_BOX_THRESH = float(os.environ.get("LEITURISTA_DET2_BOX_THRESH", 0.2))
 DET_UNCLIP = 1.5
 DET_MIN_SIZE = 3
 
@@ -85,6 +89,7 @@ class MeterOCR:
 
     def __init__(self) -> None:
         self._det: ort.InferenceSession | None = None
+        self._det2: ort.InferenceSession | None = None
         self._rec: ort.InferenceSession | None = None
         self._chars: list[str] = []
         self._trocr: tuple | None = None
@@ -94,6 +99,8 @@ class MeterOCR:
         if self._det is not None:
             return
         self._det = ort.InferenceSession(str(DET_ONNX))
+        if DET2_ONNX:
+            self._det2 = ort.InferenceSession(DET2_ONNX)
         self._rec = ort.InferenceSession(str(REC_ONNX))
         self._chars = json.loads(DICT_FILE.read_text(encoding="utf-8"))
 
@@ -150,16 +157,24 @@ class MeterOCR:
         self._load()
         x, sx, sy = self._det_prep(img_bgr)
         out = self._det.run(None, {"x": x})[0]
-        return self.score_to_quads(out[0, 0, :, :], sx, sy)
+        quads = self.score_to_quads(out[0, 0, :, :], sx, sy)
+        if self._det2 is not None:
+            out2 = self._det2.run(None, {"x": x})[0]
+            quads += self.score_to_quads(out2[0, 0, :, :], sx, sy, DET2_THRESH, DET2_BOX_THRESH)
+        return quads
 
     @staticmethod
-    def score_to_quads(score_map: np.ndarray, sx: float, sy: float) -> list[tuple[np.ndarray, float]]:
+    def score_to_quads(
+        score_map: np.ndarray, sx: float, sy: float, thresh: float | None = None, box_thresh: float | None = None
+    ) -> list[tuple[np.ndarray, float]]:
         """Pós-processamento DB do mapa de probabilidade: binariza, contorna, filtra e aplica unclip."""
         score = score_map.astype(np.float32)
         if score.max() > 1.0:
             score = 1.0 / (1.0 + np.exp(-score))
 
-        bitmap = (score > DET_THRESH).astype(np.uint8)
+        thresh = DET_THRESH if thresh is None else thresh
+        box_thresh = DET_BOX_THRESH if box_thresh is None else box_thresh
+        bitmap = (score > thresh).astype(np.uint8)
         contours, _ = cv2.findContours(bitmap, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         quads: list[tuple[np.ndarray, float]] = []
         for c in contours:
@@ -168,7 +183,7 @@ class MeterOCR:
             mask = np.zeros(bitmap.shape, np.uint8)
             cv2.drawContours(mask, [c], -1, 1, -1)
             conf = float(score[mask == 1].mean())
-            if conf < DET_BOX_THRESH:
+            if conf < box_thresh:
                 continue
             rect = cv2.minAreaRect(c)
             (cx, cy), (w, h), ang = rect
