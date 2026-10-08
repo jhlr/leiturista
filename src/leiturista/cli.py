@@ -68,6 +68,13 @@ def _cmd_compare_crnn(args: argparse.Namespace) -> None:
     compare_crnn(args.checkpoints, data_dir=args.data, split=args.split)
 
 
+def _cmd_train_det(args: argparse.Namespace) -> None:
+    from .det import train_det
+
+    train_det(epochs=args.epochs, batch=args.batch, lr=args.lr, seed=args.seed, out=args.out,
+              tracking_uri=args.tracking_uri, experiment=args.experiment)
+
+
 def _cmd_train_scene(args: argparse.Namespace) -> None:
     from .scene import train_scene
 
@@ -200,6 +207,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--data", default=str(paths.FINETUNE_DIR))
     p.add_argument("--split", default="test")
     p.set_defaults(func=_cmd_compare_crnn)
+
+    p = sub.add_parser("train-det", help="fine-tune do PP-OCRv5_mobile_det para localizar o visor (ONNX -> torch -> ONNX)")
+    p.add_argument("--epochs", type=int, default=15)
+    p.add_argument("--batch", type=int, default=8)
+    p.add_argument("--lr", type=float, default=3e-4)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--out", default=str(paths.MODELS_DIR / "pp_ocr_v5_mobile_det_visor_onnx" / "inference.onnx"))
+    p.add_argument("--tracking-uri", default=paths.DEFAULT_TRACKING_URI)
+    p.add_argument("--experiment", default="det-visor")
+    p.set_defaults(func=_cmd_train_det)
 
     p = sub.add_parser("train-scene", help="treina o classificador 'tem medidor na foto?' (rótulos fracos do LLM)")
     p.add_argument("--labels", default=str(paths.SCENE_LABELS_CSV))

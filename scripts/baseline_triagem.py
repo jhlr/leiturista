@@ -46,9 +46,11 @@ from distribuidora_stats import CATALOG_XLSX, DATA_DIR, load_batch, load_catalog
 
 ROOT = Path(__file__).resolve().parent.parent
 SAMPLE_CSV = ROOT / "data" / "analise" / "baseline_triagem_amostra.csv"
+BASE_SAMPLE = SAMPLE_CSV  # amostra da baseline (mesmas 500 fotos), usada pela cena
 SAMPLE_CRNN_CSV = ROOT / "data" / "analise" / "baseline_triagem_amostra_crnn.csv"
 CROPS_DIR = ROOT / "data" / "analise" / "crops_baseline"  # recorte da leitura (dado do cliente, gitignored)
 REPORT_JSON = ROOT / "docs" / "2026-10-01_baseline_triagem.json"  # sufixo _<leitor> adicionado ao gravar
+SCENE_CSV = ROOT / "data" / "analise" / "baseline_triagem_cena.csv"  # P(tem medidor) das fotos da amostra
 LAPLACIAN_LEGIBLE = 25.0  # mesmo limiar do pipeline (src/leiturista/inference.py)
 FIELDS = ["lote", "foto", "nota", "leitura_digitada", "leitura_ocr", "n_caixas", "nitidez",
           "legivel", "cor", "regra", "motivo", "seg"]
@@ -170,11 +172,11 @@ def cmd_sample(args: argparse.Namespace) -> None:
                 print(f"{i}/{len(pool)}  {time.time() - t0:.0f}s", flush=True)
 
 
-def cmd_crnn(_: argparse.Namespace) -> None:
+def cmd_crnn(args: argparse.Namespace) -> None:
     """Relê os recortes salvos com o CRNNDigitos e regrava a amostra como baseline do leitor `crnn`."""
     from leiturista.crnn import load_crnn, read_digits
 
-    model = load_crnn()
+    model = load_crnn(args.ckpt) if args.ckpt else load_crnn()
     with open(SAMPLE_CSV, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     with open(SAMPLE_CRNN_CSV, "w", newline="", encoding="utf-8") as f:
@@ -225,24 +227,62 @@ def cmd_report(args: argparse.Namespace) -> None:
     # sensibilidade: amarelo se a coerência com a digitada não fosse exigida
     sem_diverge = sum(1 for r in amostra if r["cor"] == "amarelo" and r["motivo"] != "leitura_diverge_da_digitada")
     rep["sensibilidade_amarelo_pct_sem_regra_diverge"] = round(100 * (fixos["amarelo"] + (sem_diverge / m) * n_img) / n, 1)
-    out = REPORT_JSON.with_name(f"2026-10-01_baseline_triagem_{args.reader}.json")
+    if SCENE_CSV.exists():  # "sem medidor" na foto vira vermelho em vez de amarelo
+        sem = {(r["lote"], r["foto"]) for r in csv.DictReader(open(SCENE_CSV, encoding="utf-8")) if r["sem_medidor"] == "True"}
+        k_am = sum(1 for r in amostra if r["cor"] == "amarelo" and (r["lote"], r["foto"]) not in sem)
+        rep["com_cena"] = {"fotos_sem_medidor": len(sem),
+                           "amarelo_pct": round(100 * (fixos["amarelo"] + (k_am / m) * n_img) / n, 1),
+                           "amarelo_amostra": k_am}
+    out = REPORT_JSON.with_name(REPORT_JSON.stem + f"_{args.reader}.json") if args.tag else REPORT_JSON.with_name(f"2026-10-01_baseline_triagem_{args.reader}.json")
     out.write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(rep, ensure_ascii=False, indent=2))
 
 
+def apply_tag(tag: str) -> None:
+    """`--tag X` isola as saídas de uma configuração (det/leitor diferentes) sem sobrescrever a baseline."""
+    global SAMPLE_CSV, SAMPLE_CRNN_CSV, CROPS_DIR, REPORT_JSON
+    if not tag:
+        return
+    SAMPLE_CSV = SAMPLE_CSV.with_name(f"baseline_triagem_amostra_{tag}.csv")
+    SAMPLE_CRNN_CSV = SAMPLE_CRNN_CSV.with_name(f"baseline_triagem_amostra_crnn_{tag}.csv")
+    CROPS_DIR = CROPS_DIR.with_name(f"crops_{tag}")
+    REPORT_JSON = REPORT_JSON.with_name(f"2026-10-08_triagem_{tag}.json")
+
+
+def cmd_scene(_: argparse.Namespace) -> None:
+    """P(tem medidor) (classificador de cena) para as fotos da amostra baseline; reaproveitado por todas as tags."""
+    from leiturista.scene import predict_scene
+
+    pop = {(r["lote"], r["foto"]): r["path"] for r in load_population()}
+    with open(BASE_SAMPLE, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    with open(SCENE_CSV, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["lote", "foto", "p_medidor", "sem_medidor"])
+        for r in rows:
+            p, sem = predict_scene(Image.open(pop[(r["lote"], r["foto"])]))
+            w.writerow([r["lote"], r["foto"], round(p, 4), sem])
+    print(f"{len(rows)} fotos -> {SCENE_CSV}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--tag", default="", help="sufixo das saídas (uma config por tag)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("census").set_defaults(fn=cmd_census)
     s = sub.add_parser("sample")
     s.add_argument("--n", type=int, default=500)
     s.add_argument("--seed", type=int, default=0)
     s.set_defaults(fn=cmd_sample)
-    sub.add_parser("crnn", help="relê os recortes salvos com o CRNNDigitos").set_defaults(fn=cmd_crnn)
+    c = sub.add_parser("crnn", help="relê os recortes salvos com o CRNNDigitos")
+    c.add_argument("--ckpt", default=None, help="checkpoint do CRNN (default: models/crnn_digitos.pt)")
+    c.set_defaults(fn=cmd_crnn)
+    sub.add_parser("scene", help="P(tem medidor) da amostra (classificador de cena)").set_defaults(fn=cmd_scene)
     r = sub.add_parser("report")
     r.add_argument("--reader", choices=["ppocr", "crnn"], default="ppocr")
     r.set_defaults(fn=cmd_report)
     args = ap.parse_args()
+    apply_tag(args.tag)
     args.fn(args)
 
 

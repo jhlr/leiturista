@@ -18,6 +18,7 @@ import dataclasses
 import hashlib
 import json
 import math
+import os
 import re
 from pathlib import Path
 
@@ -30,7 +31,7 @@ from PIL import Image
 from . import artifacts, paths
 from .models import configure_model, load_processor, load_trocr, resolve_device
 
-DET_ONNX = paths.MODELS_DIR / "pp_ocr_v5_mobile_det_onnx" / "inference.onnx"
+DET_ONNX = Path(os.environ.get("LEITURISTA_DET_ONNX", paths.MODELS_DIR / "pp_ocr_v5_mobile_det_onnx" / "inference.onnx"))
 REC_ONNX = paths.MODELS_DIR / "pp_ocr_v6_tiny_rec_onnx" / "inference.onnx"
 TROCR_DIR = paths.MODELS_DIR / "trocr-small-printed"
 TROCR_MODEL_RUN = "9c14db6248834e7e80f2e4356959d5aa"
@@ -43,8 +44,8 @@ DICT_FILE = paths.ROOT / "scripts" / "ppocr_v6_dict.json"
 DET_LONG_SIDE = 960
 DET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 DET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-DET_THRESH = 0.3
-DET_BOX_THRESH = 0.6
+DET_THRESH = float(os.environ.get("LEITURISTA_DET_THRESH", 0.3))
+DET_BOX_THRESH = float(os.environ.get("LEITURISTA_DET_BOX_THRESH", 0.6))
 DET_UNCLIP = 1.5
 DET_MIN_SIZE = 3
 
@@ -149,7 +150,12 @@ class MeterOCR:
         self._load()
         x, sx, sy = self._det_prep(img_bgr)
         out = self._det.run(None, {"x": x})[0]
-        score = out[0, 0, :, :].astype(np.float32)
+        return self.score_to_quads(out[0, 0, :, :], sx, sy)
+
+    @staticmethod
+    def score_to_quads(score_map: np.ndarray, sx: float, sy: float) -> list[tuple[np.ndarray, float]]:
+        """Pós-processamento DB do mapa de probabilidade: binariza, contorna, filtra e aplica unclip."""
+        score = score_map.astype(np.float32)
         if score.max() > 1.0:
             score = 1.0 / (1.0 + np.exp(-score))
 

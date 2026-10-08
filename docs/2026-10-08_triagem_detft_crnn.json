@@ -1,5 +1,5 @@
 {
-  "leitor": "ppocr",
+  "leitor": "crnn",
   "registros": 13669,
   "decididos_sem_imagem": {
     "verde_R1": 611,
@@ -9,46 +9,46 @@
   "precisam_de_imagem": 10912,
   "amostra_n": 500,
   "amostra_cores": {
-    "amarelo": 471,
-    "verde": 6,
-    "vermelho": 23
+    "amarelo": 302,
+    "vermelho": 197,
+    "verde": 1
   },
   "amostra_motivos_amarelo": {
-    "leitura_diverge_da_digitada": 280,
-    "leitura_nao_detectada": 191
+    "leitura_diverge_da_digitada": 176,
+    "leitura_nao_detectada": 126
   },
   "latencia_s": {
-    "media": 4.76,
-    "p50": 1.85,
-    "p90": 12.64
+    "media": 0.77,
+    "p50": 0.76,
+    "p90": 1.07
   },
   "populacao": {
     "verde": {
-      "pct_estimado": 5.4,
+      "pct_estimado": 4.6,
       "ic95_pct": [
-        4.9,
-        6.5
+        4.5,
+        5.4
       ]
     },
     "amarelo": {
-      "pct_estimado": 88.7,
+      "pct_estimado": 61.8,
       "ic95_pct": [
-        86.8,
-        90.1
+        58.3,
+        65.1
       ]
     },
     "vermelho": {
-      "pct_estimado": 5.8,
+      "pct_estimado": 33.6,
       "ic95_pct": [
-        4.6,
-        7.6
+        30.3,
+        37.1
       ]
     }
   },
-  "sensibilidade_amarelo_pct_sem_regra_diverge": 44.0,
+  "sensibilidade_amarelo_pct_sem_regra_diverge": 33.7,
   "com_cena": {
     "fotos_sem_medidor": 28,
-    "amarelo_pct": 85.4,
-    "amarelo_amostra": 450
+    "amarelo_pct": 61.3,
+    "amarelo_amostra": 299
   }
 }
