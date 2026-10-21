@@ -4,7 +4,8 @@ Cada execução gera um run no experimento `trocr-ufpramr` com:
 - params: hiperparâmetros (modelo base, epochs, batch, grad-accum, lr, max_len, data)
 - metrics: eval loss + exact-match por passo (callback) e best metric
 - blobs (tabela `mapen_artifact_blobs` no mesmo mlflow.db): `checkpoint.zip`
-  (modelo treinado) e `run_summary.txt` (resumo do run)
+  (modelo treinado, sem os `.pt` de estado de treino — ver `artifacts.save_zip`)
+  e `run_summary.txt` (resumo do run)
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import cast
 
 import mlflow
+import numpy as np
 import torch
 from transformers import (
     Seq2SeqTrainer,
@@ -36,11 +38,38 @@ class _MlflowCallback(TrainerCallback):
         mlflow.log_metrics({k: float(v) for k, v in logs.items() if isinstance(v, (int, float))}, step=step)
 
 
-def _exact_match(processor, pred_ids, label_ids) -> float:
-    preds = processor.tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
-    labels = processor.tokenizer.batch_decode(
-        [[t for t in row if t != -100] for row in label_ids], skip_special_tokens=True
+def _to_int64(ids) -> np.ndarray:
+    """Normaliza ids para ndarray int64.
+
+    O `Trainer`/`generate` podem entregar tupla, lista, ndarray `uint` ou tensor.
+    `np.asarray(..., dtype=np.int64)` cobre todos os formatos.
+    """
+    return np.asarray(ids, dtype=np.int64)
+
+
+def _decode_ids(processor, ids) -> list[str]:
+    """Decodifica sequências de ids descartando os negativos.
+
+    Este tokenizer (`XLMRobertaTokenizer` sobre o backend `tokenizers`) **estoura**
+    com `OverflowError: can't convert negative int to unsigned` quando recebe
+    qualquer id negativo — `-100` (padding ignorado) ou `-1` (token de decodificação
+    que o `generate` deixa no fim da sequência). Não é fixável passando lista,
+    ndarray ou tensor: o problema está na ponte com o `rust`. Então filtramos os
+    negativos **antes** de decodificar; eles não representam caractere algum, logo
+    descartá-los não altera a leitura.
+    """
+    arr = _to_int64(ids)
+    if arr.ndim == 1:
+        arr = arr[None, :]
+    return processor.tokenizer.batch_decode(
+        [[int(t) for t in row if int(t) >= 0] for row in arr], skip_special_tokens=True
     )
+
+
+def _exact_match(processor, pred_ids, label_ids) -> float:
+    """Compara predição e rótulo decodificados (exact match)."""
+    preds = _decode_ids(processor, pred_ids)
+    labels = _decode_ids(processor, label_ids)
     return sum(1 for p, l in zip(preds, labels) if p == l) / max(len(preds), 1)
 
 
@@ -55,6 +84,21 @@ def _collate(batch: list[dict], tokenizer: XLMRobertaTokenizer) -> dict:
     assert isinstance(pad_token_id, int)
     labels = labels.masked_fill(labels == pad_token_id, -100)
     return {"pixel_values": pixel_values, "labels": labels}
+
+
+class _Collator:
+    """Collator chamável de nível de módulo.
+
+    Não pode ser lambda/closure: com `dataloader_num_workers > 0` o DataLoader
+    precisa *picklar* o collator para os subprocessos, e no Windows (spawn) um
+    lambda definido dentro de `train()` falha com PicklingError.
+    """
+
+    def __init__(self, tokenizer: XLMRobertaTokenizer) -> None:
+        self.tokenizer = tokenizer
+
+    def __call__(self, batch: list[dict]) -> dict:
+        return _collate(batch, self.tokenizer)
 
 
 def train(
@@ -97,10 +141,11 @@ def train(
         models.configure_model(model, processor.tokenizer)
 
         def compute_metrics(ep):
-            pred_ids = ep.predictions if isinstance(ep.predictions, torch.Tensor) else torch.tensor(ep.predictions)
-            return {"exact_match": _exact_match(processor, pred_ids, ep.label_ids)}
+            # `ep.predictions` vem como tupla (predict_with_generate) ou ndarray.
+            # A normalização e o descarte de ids negativos ficam em `_exact_match`.
+            return {"exact_match": _exact_match(processor, ep.predictions, ep.label_ids)}
 
-        collator = lambda batch: _collate(batch, processor.tokenizer)
+        collator = _Collator(processor.tokenizer)
         targs = Seq2SeqTrainingArguments(
             output_dir=str(out_dir),
             num_train_epochs=epochs,
@@ -124,7 +169,11 @@ def train(
             report_to=[],
             fp16=False,
             bf16=False,
-            dataloader_num_workers=2,
+            # Windows (spawn): os workers têm que picklar o Dataset Arrow inteiro pelo
+            # pipe do multiprocessing e ele estoura ("pickle data was truncated").
+            # 0 = carrega no processo principal; I/O de PNG é rápido e o gargalo aqui
+            # é a GPU/CPU do modelo, não o disco.
+            dataloader_num_workers=0,
         )
 
         trainer = Seq2SeqTrainer(
@@ -153,7 +202,17 @@ def train(
             f"base_model={params['base_model']}\ncheckpoint={out_dir.resolve()}\n"
             f"{best_metric_name}={best}",
         )
-        artifacts.save_zip(run.info.run_id, "checkpoint.zip", out_dir)
+        # O zip vai para a tabela de blobs do sqlite, que tem limite de ~1 GiB por
+        # blob: `optimizer.pt` do TrOCR tem ~492 MB por checkpoint e o
+        # `save_total_limit=2` duplica — sozinho já estoura ("string or blob too
+        # big"). Excluímos os `.pt` de estado de treino; os pesos
+        # (`model.safetensors`) seguem no zip.
+        artifacts.save_zip(
+            run.info.run_id,
+            "checkpoint.zip",
+            out_dir,
+            exclude=("optimizer.pt", "scheduler.pt", "rng_state.pth", "training_args.bin"),
+        )
 
         summary = {"run_id": run.info.run_id, **params, "best_metric": best}
         print(f"MLflow run: {mlflow.get_tracking_uri()} (run_id={run.info.run_id})")

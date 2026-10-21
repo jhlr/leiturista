@@ -13,6 +13,7 @@ blob (`save_zip`, ex.: `model.zip` do TrOCR-small-printed) no mesmo `.db`.
 
 from __future__ import annotations
 
+import fnmatch
 import io
 import json
 import sqlite3
@@ -60,15 +61,37 @@ def save_json(run_id: str, name: str, obj: object) -> None:
     save_blob(run_id, name, json.dumps(obj, ensure_ascii=False, indent=2).encode("utf-8"), "application/json")
 
 
-def save_zip(run_id: str, name: str, src_dir: Path | str) -> None:
-    """Empacota um diretório como blob zip (ex.: checkpoint do modelo)."""
+def save_zip(
+    run_id: str,
+    name: str,
+    src_dir: Path | str,
+    exclude: tuple[str, ...] = (),
+    exclude_glob: tuple[str, ...] = (),
+) -> None:
+    """Empacota um diretório como blob zip (ex.: checkpoint do modelo).
+
+    `exclude` casa pelo **nome do arquivo** (basename); `exclude_glob` casa pelo
+    caminho relativo com `fnmatch`. Serve para o zip caber no limite de blob do
+    SQLite (~1 GiB): `optimizer.pt` do TrOCR tem ~492 MB por checkpoint e o
+    `save_total_limit=2` duplica — dois deles já estouram. O otimizador é estado
+    transitório de treino; para inferência, o que importa é `model.safetensors` +
+    config + tokenizer.
+    """
     src_dir = Path(src_dir)
+    excluídos: list[str] = []
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as zf:
         for p in sorted(src_dir.rglob("*")):
-            if p.is_file():
-                zf.write(p, p.relative_to(src_dir))
+            if not p.is_file():
+                continue
+            rel = p.relative_to(src_dir).as_posix()
+            if p.name in exclude or any(fnmatch.fnmatch(rel, g) for g in exclude_glob):
+                excluídos.append(rel)
+                continue
+            zf.write(p, rel)
     save_blob(run_id, name, buf.getvalue(), "application/zip")
+    if excluídos:
+        print(f"  {name}: {len(excluídos)} arquivo(s) excluído(s) do zip: {', '.join(excluídos)}")
 
 
 def save_model_files(run_id: str, prefix: str, src_dir: Path | str, names: list[str]) -> None:
