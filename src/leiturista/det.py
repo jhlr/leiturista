@@ -52,8 +52,16 @@ def _shrunk(quad: np.ndarray) -> np.ndarray:
     return cv2.boxPoints(((cx, cy), (max(w - 2 * d, 1.0), max(h - 2 * d, 1.0)), ang))
 
 
-def _read(r: pd.Series) -> np.ndarray:
-    return cv2.imread(str(FOTOS_DIR / r.lote / r.foto))
+def _read(r: pd.Series) -> np.ndarray | None:
+    p = FOTOS_DIR / r.lote / r.foto
+    if not p.is_file():
+        # fallback pra data/FotosNeoenergia
+        p2 = Path(__file__).resolve().parents[2] / "data" / "FotosNeoenergia" / r.lote / r.foto
+        if p2.is_file():
+            p = p2
+        else:
+            return None
+    return cv2.imread(str(p))
 
 
 def _tensor(img_bgr: np.ndarray) -> tuple[torch.Tensor, float, float]:
@@ -61,9 +69,12 @@ def _tensor(img_bgr: np.ndarray) -> tuple[torch.Tensor, float, float]:
     return torch.tensor(x), sx, sy
 
 
-def _sample(r: pd.Series, rng: np.random.Generator, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
+def _sample(r: pd.Series, rng: np.random.Generator, train: bool) -> tuple[torch.Tensor, torch.Tensor] | None:
     """(imagem 3xHxW normalizada, alvo 1xHxW) com o alvo no frame da imagem já com padding."""
-    img, quad = _read(r), _quad(r)
+    img = _read(r)
+    if img is None:
+        return None
+    quad = _quad(r)
     if train:
         if rng.random() < 0.4:  # o pipeline também roda o det na foto invertida
             img = 255 - img
@@ -120,6 +131,8 @@ def evaluate_det(model: nn.Module, df: pd.DataFrame, iou: float = 0.5) -> tuple[
     hit, boxes = 0, 0
     for _, r in df.iterrows():
         img, gt = _read(r), _quad(r)
+        if img is None:
+            continue
         found = False
         for frame in (img, 255 - img):
             x, sx, sy = _tensor(frame)
@@ -127,7 +140,7 @@ def evaluate_det(model: nn.Module, df: pd.DataFrame, iou: float = 0.5) -> tuple[
             boxes += len(quads)
             found = found or any(_iou(q, gt) >= iou for q, _ in quads)
         hit += int(found)
-    return hit / len(df), boxes / len(df)
+    return hit / max(len(df), 1), boxes / max(len(df), 1)
 
 
 def export_onnx(model: nn.Module, path: Path | str = OUT_ONNX) -> Path:
@@ -175,7 +188,14 @@ def train_det(
             model.train()
             order = rng.permutation(len(tr))
             for i in range(0, len(order), batch):
-                x, ym = _collate([_sample(tr.iloc[j], rng, True) for j in order[i:i + batch]])
+                items = []
+                for j in order[i:i + batch]:
+                    s = _sample(tr.iloc[j], rng, True)
+                    if s is not None:
+                        items.append(s)
+                if not items:
+                    continue
+                x, ym = _collate(items)
                 loss = db_loss(model(x), ym)
                 opt.zero_grad()
                 loss.backward()
