@@ -5,6 +5,10 @@ Envelopa `MeterOCR.predict_image` (det+rec ONNX + TrOCR, ver `inference.py`) num
 `Prediction` do pipeline já existente para o contrato de resposta pedido pela
 triagem (número do medidor, função, consumo, confiança).
 
+Monitoramento (`leiturista.monitoring`): um middleware ASGI grava no log JSON Lines uma linha
+`request` e uma `response` por chamada de `/predict` (variáveis derivadas da imagem e da
+saída, nunca pixels, serial ou valor da leitura). Um único worker escreve o arquivo.
+
 Rodar:
   bentoml serve leiturista.service:LeituristaService --port 3000
   # ou: just serve
@@ -12,39 +16,62 @@ Rodar:
 
 from __future__ import annotations
 
+import os
+import time
+
 import bentoml
 from PIL import Image as pil
 
-from .inference import MeterOCR
+from .inference import TROCR_CACHE, MeterOCR
+from .monitoring.features import extract_features, uploaded_size
+from .monitoring.logging_setup import get_serving_logger
+from .monitoring.outputs import CONFIDENCE_OK, derive_outputs
+from .monitoring.tracing import RequestTrace, TraceMiddleware
 
-CONFIDENCE_OK = 0.5  # abaixo disso, a leitura existe mas é tratada como incerta
+__all__ = ["CONFIDENCE_OK", "LeituristaService"]
+
+DEBUG_SLEEP_HEADER = "X-Debug-Sleep-Ms"
 
 
-@bentoml.service(name="leiturista")
+def check_model_weights() -> None:
+    """Sai com mensagem clara se os pesos do TrOCR não estão montados (a inferência não tem MLflow)."""
+    if not (TROCR_CACHE / "model.safetensors").exists():
+        raise SystemExit(f"Pesos do TrOCR ausentes em {TROCR_CACHE}/model.safetensors. Rode `just models` e suba o serviço de novo.")
+
+
+@bentoml.service(name="leiturista", workers=1)
 class LeituristaService:
     def __init__(self) -> None:
+        check_model_weights()
         self.ocr = MeterOCR()  # modelos carregam lazy, no primeiro predict
+        get_serving_logger()  # cria o handler do log AQUI, dentro do worker (nunca no import)
 
     @bentoml.api
-    def predict(self, image: pil.Image) -> dict:
+    def predict(self, image: pil.Image, ctx: bentoml.Context) -> dict:
         """Recebe a foto do medidor e devolve a extração de leitura."""
-        pred = self.ocr.predict_image(image)
+        trace: RequestTrace = ctx.request.state.trace
+        with trace.stage("invalid_image"):
+            features = extract_features(image, uploaded_size(image))  # decodifica a imagem
+        trace.log_request(features)
 
-        leitura_boxes = [b for b in pred.boxes if b.field == "leitura"]
-        confianca = max((b.conf for b in leitura_boxes), default=0.0) if pred.reading else 0.0
+        if os.environ.get("ALLOW_DEBUG_SLEEP") == "1":  # só p/ dar cauda ao histograma de latência
+            sleep_ms = ctx.request.headers.get(DEBUG_SLEEP_HEADER, "")
+            if sleep_ms.isdigit():
+                time.sleep(int(sleep_ms) / 1000)
 
-        if pred.reading is None:
-            funcao = "sem_leitura_detectada"
-        elif pred.legible and confianca >= CONFIDENCE_OK:
-            funcao = "leitura_normal"
-        else:
-            funcao = "leitura_incerta"
+        with trace.stage("inference_failed"):
+            pred = self.ocr.predict_image(image)
+        outputs = derive_outputs(pred)
+        trace.set_outputs(outputs)
 
         return {
             "numero_medidor": pred.serial,
-            "funcao": funcao,
+            "funcao": outputs.funcao,
             "consumo": pred.reading,
-            "confianca": round(float(confianca), 3),
+            "confianca": outputs.confianca,
             "legivel": pred.legible,
             "flags": pred.flags,
         }
+
+
+LeituristaService.add_asgi_middleware(TraceMiddleware, endpoints=("/predict",))

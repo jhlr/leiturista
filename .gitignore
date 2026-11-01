@@ -42,3 +42,7 @@ samples/*.png
 # Rotulagem real do cliente (o CSV de campo fica em data/, ja ignorado): NUNCA versionar
 docs/2026-09-21_llm_labels_distribuidora.jsonl
 docs/labels_distribiodora.jsonl
+
+# Monitoramento: log de servico e relatorios gerados (regeraveis)
+serving-logs/
+reports/
