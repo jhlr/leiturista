@@ -3,9 +3,9 @@
 
 RELEASE_URL := "https://github.com/jhlr/leiturista/releases/download/modelos-1.0/leiturista-models.tar.gz"
 
-# instala as dependências (uv.lock)
+# instala as dependências de todos os ambientes (uv.lock; --all-extras = inference + train + monitor)
 setup:
-    uv sync
+    uv sync --all-extras
 
 # baixa e extrai os pesos dos modelos (det/rec ONNX + TrOCR off-the-shelf), se ainda não existirem
 models:

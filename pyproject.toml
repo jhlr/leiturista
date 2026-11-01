@@ -8,6 +8,27 @@ version = "0.1.0"
 description = "Leiturista - visao computacional de medidores: leitura OCR + serial + validacao de cena (Projeto 4 / distribuidoras de energia eletrica)"
 requires-python = ">=3.11"
 dependencies = [
+    "pillow",
+    "numpy",
+]
+
+# Ambientes separados (docs/2026-11-01_sdd_monitoramento_mlops.md, secao 2.1):
+# cada um instala so o seu conjunto. `just setup` instala todos (--all-extras).
+[project.optional-dependencies]
+inference = [
+    "bentoml",
+    "prometheus_client",
+    "onnxruntime",
+    "opencv-python-headless",
+    "torch",
+    # transformers usa o backend torchvision do ViTImageProcessor (o mesmo do treino);
+    # sem ele cai num fallback com aviso.
+    "torchvision",
+    "transformers",
+    "sentencepiece",
+    "tokenizers",
+]
+train = [
     "torch",
     "torchvision",
     "transformers",
@@ -18,13 +39,19 @@ dependencies = [
     "pandas",
     "pyarrow",
     "duckdb",
-    "pillow",
-    "numpy",
     "onnxruntime",
     "opencv-python-headless",
     "mlflow",
     "streamlit",
+]
+monitor = [
     "bentoml",
+    "prometheus_client",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "httpx",
+    "openpyxl",
 ]
 
 [project.scripts]
@@ -43,4 +70,6 @@ dev = [
     "jupytext>=1.19.5",
     "kagglehub>=1.0.2",
     "matplotlib>=3.11.2",
+    "pytest>=8",
+    "mypy>=1.10",
 ]
