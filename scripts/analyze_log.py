@@ -142,11 +142,11 @@ def write_report(
         f"Janela: {report.n_window} imagens. Referencia: {report.n_reference} imagens (pequena: leia cada KS e PSI com essa ressalva).",
         f"Pior nivel entre os canais: **{report.worst.name}**.",
         "",
-        "## KS por canal (histogramas 0-255 agregados, n em imagens)",
+        "## KS por canal (histogramas 0-255 agregados com peso igual por imagem, n em imagens)",
         "",
         *channel_markdown(report),
         "",
-        "## PSI dos histogramas de pixels agregados (256 regrupados em 16 bins)",
+        "## PSI dos histogramas de pixels agregados, peso igual por imagem (256 regrupados em 16 bins)",
         "",
         *histogram_psi_markdown(reference, rows),
         "",
@@ -197,7 +197,7 @@ def plot_channel_histograms(out_dir: Path, reference: Reference, rows: Sequence[
         ch = report.channels[label]
         ax.set_title(f"{label}: D={fmt(ch.d)} ({ch.level.name})")
         ax.set_xlabel("valor 0-255")
-        ax.set_ylabel("fracao dos pixels")
+        ax.set_ylabel("fracao do total (peso igual por imagem)")
         ax.legend()
     fig.tight_layout()
     fig.savefig(out_dir / "hist_canais.png", dpi=110)

@@ -547,7 +547,7 @@
           "format": "time_series"
         }
       ],
-      "description": "D = máximo da diferença entre as CDFs do histograma agregado da janela e o da referência. Linhas: 0,05 (amarelo) e 0,10 (vermelho).",
+      "description": "D = máximo da diferença entre as CDFs do histograma agregado da janela e o da referência (peso igual por imagem). Linhas: 0,05 (amarelo) e 0,10 (vermelho).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"

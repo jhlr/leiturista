@@ -104,7 +104,7 @@
           ]
         }
       ],
-      "description": "Histograma 0-255 do canal L somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração dos pixels. Fonte: /data/summary via Infinity.",
+      "description": "Histograma 0-255 do canal L somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração do total, com peso igual por imagem (cada histograma é normalizado antes da soma, então fotos grandes não dominam). Fonte: /data/summary via Infinity.",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
@@ -246,7 +246,7 @@
           ]
         }
       ],
-      "description": "Histograma 0-255 do canal R somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração dos pixels. Fonte: /data/summary via Infinity.",
+      "description": "Histograma 0-255 do canal R somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração do total, com peso igual por imagem (cada histograma é normalizado antes da soma, então fotos grandes não dominam). Fonte: /data/summary via Infinity.",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
@@ -388,7 +388,7 @@
           ]
         }
       ],
-      "description": "Histograma 0-255 do canal G somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração dos pixels. Fonte: /data/summary via Infinity.",
+      "description": "Histograma 0-255 do canal G somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração do total, com peso igual por imagem (cada histograma é normalizado antes da soma, então fotos grandes não dominam). Fonte: /data/summary via Infinity.",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
@@ -530,7 +530,7 @@
           ]
         }
       ],
-      "description": "Histograma 0-255 do canal B somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração dos pixels. Fonte: /data/summary via Infinity.",
+      "description": "Histograma 0-255 do canal B somado sobre as imagens do intervalo (barras) contra o da referência (linha), como fração do total, com peso igual por imagem (cada histograma é normalizado antes da soma, então fotos grandes não dominam). Fonte: /data/summary via Infinity.",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"

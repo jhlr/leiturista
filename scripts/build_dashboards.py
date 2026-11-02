@@ -309,7 +309,7 @@ def barchart(title: str, targets: Sequence[Json], x_field: str, description: str
 
 
 def pixel_histogram(channel: str) -> Json:
-    """Histograma 0-255 da janela (barras) com o da referencia sobreposto (linha); ambos em fracao dos pixels."""
+    """Histograma 0-255 da janela (barras) com o da referencia sobreposto (linha); ambos em fracao do total (peso igual por imagem)."""
     key = channel
     root = (
         f"( $w := histograms.{key}.window; $r := histograms.{key}.reference; $sw := $sum($w); $sr := $sum($r); "
@@ -330,7 +330,7 @@ def pixel_histogram(channel: str) -> Json:
         f"Histograma {channel}: janela x referência",
         [target],
         f"Histograma 0-255 do canal {channel} somado sobre as imagens do intervalo (barras) contra o da referência (linha), "
-        "como fração dos pixels. Fonte: /data/summary via Infinity.",
+        "como fração do total, com peso igual por imagem (cada histograma é normalizado antes da soma, então fotos grandes não dominam). Fonte: /data/summary via Infinity.",
         fieldConfig={"defaults": {"unit": "percentunit", "custom": {"lineWidth": 1, "fillOpacity": 30, "showPoints": "never"}}, "overrides": overrides},
         options={"xField": "Valor (0-255)", "legend": {"displayMode": "list", "placement": "bottom", "showLegend": True}, "tooltip": {"mode": "multi"}},
     )
@@ -711,7 +711,7 @@ def build_drift() -> Board:
         timeseries(
             "KS D por canal (L, R, G, B)",
             [prom("leiturista_drift_ks_d", legend="{{channel}}")],
-            "D = máximo da diferença entre as CDFs do histograma agregado da janela e o da referência. Linhas: 0,05 (amarelo) e 0,10 (vermelho).",
+            "D = máximo da diferença entre as CDFs do histograma agregado da janela e o da referência (peso igual por imagem). Linhas: 0,05 (amarelo) e 0,10 (vermelho).",
             minimum=0,
             maximum=1,
             thresholds=ks_thresholds,

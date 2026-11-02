@@ -1,5 +1,7 @@
 # Monitoramento: resultados da análise de drift (cargas reais)
 
+**Registro histórico: todos os D e PSI de pixels abaixo foram calculados com histogramas agregados por CONTAGEM DE PIXELS (fotos grandes dominam).** Desde 2026-11-02 o agregado dá peso igual a cada imagem; os números recalculados estão em `docs/2026-11-02_monitoramento_drift_peso_igual.md`. Os valores por imagem (`luminance_mean` etc.) não mudam.
+
 Data: 2026-11-02 | Script: `scripts/analyze_log.py` (`just analyze`), que só chama `leiturista.monitoring.drift` para KS, PSI e
 Benjamini-Hochberg. Referência: 132 fotos Praekelt (pequena: leia cada número com essa ressalva). Cada linha abaixo é uma carga
 de `scripts/load_gen.py --n 20` (uma chamada por vez, serviço no Docker, CPU), analisada com `--since`/`--until` da própria carga,

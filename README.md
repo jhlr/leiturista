@@ -304,7 +304,7 @@ linhas mais recentes, então `limit` acima disso não devolve mais que isso. Ess
 ```python
 import httpx
 from leiturista.monitoring.drift import ks_channel, psi_numeric
-s = httpx.get("http://localhost:3002/data/summary").json()   # histogramas 0-255 agregados: janela e referência
+s = httpx.get("http://localhost:3002/data/summary").json()   # histogramas 0-255 agregados (peso igual por imagem): janela e referência
 l = s["histograms"]["L"]; print(ks_channel(l["reference"], l["window"], s["reference_images"], s["window_images"]))
 ref = [r["luminance_mean"] for r in httpx.get("http://localhost:3002/data/reference").json()]
 win = [r["in_luminance_mean"] for r in httpx.get("http://localhost:3002/data/variables").json() if r["in_luminance_mean"] is not None]
@@ -416,7 +416,9 @@ exceção nem o IP cru. Os nomes da distribuidora não aparecem em nenhum arquiv
 - Referência = 132 das 165 fotos Praekelt (divisão determinística, seed 0, `src/leiturista/monitoring/split.py`);
   as outras 33 são o controle "sem drift". `just build-reference` regrava `artifacts/reference.csv` e
   `artifacts/reference_hist.csv` rodando o `MeterOCR` real (cerca de 28 minutos em CPU, porque as fotos
-  são grandes). As fotos Praekelt vêm de outro país e de outra câmera que as fotos de campo da
+  são grandes). `uv run python scripts/build_reference.py --hist-only` regrava só `reference_hist.csv`, sem o OCR
+  (segundos). Os histogramas de pixels agregados dão peso igual a cada imagem (cada histograma é normalizado para
+  somar 1 antes da soma; o total da coluna é o número de imagens), para que fotos grandes não dominem o KS. As fotos Praekelt vêm de outro país e de outra câmera que as fotos de campo da
   distribuidora: drift em tráfego real é esperado e é, por si, um achado. Com 132 imagens a referência é
   pequena; leia qualquer KS ou PSI com isso em mente.
 - `GET /metrics` (formato Prometheus, embutido no BentoML) traz as séries do BentoML mais três próprias:
