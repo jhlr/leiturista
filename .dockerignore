@@ -1,0 +1,25 @@
+# Contexto de build enxuto: pesos, dados e logs entram so por montagem (SDD secao 2).
+.git
+.venv
+__pycache__
+*.pyc
+*.egg-info
+data/
+models/
+.model_cache/
+mlflow.db
+mlruns/
+logs/
+serving-logs/
+reports/
+graphify-out/
+FotosDistribuidora/
+leiturista-models.tar.gz
+docs/
+notebooks/
+lab-02/
+app/
+samples/
+tests/
+*.log
+.DS_Store

@@ -41,3 +41,38 @@ build-reference:
 # gera carga contra o serviço no ar (ex.: just load --n 100 --drift strong --traffic holdout)
 load *ARGS:
     uv run python scripts/load_gen.py {{ARGS}}
+
+# --- Docker: ambientes de inferencia e monitoramento separados (docs/2026-11-01_sdd_monitoramento_mlops.md, secao 2) ---
+
+# cria a rede compartilhada se ainda nao existir (os dois compose a declaram `external`)
+_luminus-net:
+    docker network inspect luminus-net >/dev/null 2>&1 || docker network create luminus-net
+
+# sobe a INFERENCIA em http://localhost:3000 (models/ e .model_cache/ somente leitura; log em ./serving-logs)
+up-inference: _luminus-net
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p serving-logs   # criado pelo usuario do host (senao o Docker cria como root)
+    export UID GID="$(id -g)" SERVICE_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    docker compose -f docker/inference/compose.yml up -d --build
+
+down-inference:
+    docker compose -f docker/inference/compose.yml down
+
+# sobe o MONITORAMENTO: Prometheus :9090, Loki :3100, Alloy :12345, Grafana :3001, monitor :3002 (independe da inferencia)
+up-monitoring: _luminus-net
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p serving-logs
+    export UID GID="$(id -g)" SERVICE_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    docker compose -f docker/monitoring/compose.yml up -d --build
+
+down-monitoring:
+    docker compose -f docker/monitoring/compose.yml down
+
+# o mesmo job de `build-reference`, dentro da imagem de inferencia (data/ somente leitura, artifacts/ gravavel)
+build-reference-docker: _luminus-net
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export UID GID="$(id -g)" SERVICE_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    docker compose -f docker/inference/compose.yml --profile tools run --rm --build build-reference

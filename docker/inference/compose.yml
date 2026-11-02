@@ -1,0 +1,47 @@
+# Ambiente de INFERENCIA. Subir com `just up-inference` (cria a rede `luminus-net` e exporta UID/GID/SERVICE_VERSION).
+name: leiturista-inference
+
+services:
+  inference:
+    image: leiturista-inference:0.1.0
+    build:
+      context: ../..
+      dockerfile: docker/inference/Dockerfile
+      args:
+        SERVICE_VERSION: ${SERVICE_VERSION:-unknown}
+    user: "${UID:-1000}:${GID:-1000}"  # o log sai com dono = usuario do host
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../models:/app/models:ro
+      - ../../.model_cache:/app/.model_cache:ro
+      - ../../serving-logs:/serving-logs  # unico ponto de escrita
+    environment:
+      SERVICE_VERSION: ${SERVICE_VERSION:-unknown}
+      SERVING_LOG_MAX_BYTES: ${SERVING_LOG_MAX_BYTES:-52428800}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:3000/readyz', timeout=20)"]
+      interval: 15s
+      timeout: 30s
+      retries: 10
+      start_period: 120s
+    restart: "no"
+    networks: [luminus-net]
+
+  # Job em lote (uma vez): gera artifacts/reference*.csv com o MeterOCR real. Dura cerca de 28 min em CPU.
+  #   docker compose -f docker/inference/compose.yml --profile tools run --rm build-reference
+  build-reference:
+    profiles: [tools]
+    image: leiturista-inference:0.1.0
+    user: "${UID:-1000}:${GID:-1000}"
+    command: ["python", "scripts/build_reference.py", "--out-dir", "/app/artifacts"]
+    network_mode: none  # job offline: nao precisa de rede
+    volumes:
+      - ../../data:/app/data:ro
+      - ../../models:/app/models:ro
+      - ../../.model_cache:/app/.model_cache:ro
+      - ../../artifacts:/app/artifacts
+
+networks:
+  luminus-net:
+    external: true
