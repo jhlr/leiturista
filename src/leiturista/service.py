@@ -25,6 +25,7 @@ from PIL import Image as pil
 from .inference import TROCR_CACHE, MeterOCR
 from .monitoring.features import extract_features, uploaded_size
 from .monitoring.logging_setup import get_serving_logger
+from .monitoring.metrics import DURATION_BUCKETS, get_metrics
 from .monitoring.outputs import CONFIDENCE_OK, derive_outputs
 from .monitoring.tracing import RequestTrace, TraceMiddleware
 
@@ -39,12 +40,13 @@ def check_model_weights() -> None:
         raise SystemExit(f"Pesos do TrOCR ausentes em {TROCR_CACHE}/model.safetensors. Rode `just models` e suba o serviço de novo.")
 
 
-@bentoml.service(name="leiturista", workers=1)
+@bentoml.service(name="leiturista", workers=1, metrics={"duration": {"buckets": list(DURATION_BUCKETS)}})
 class LeituristaService:
     def __init__(self) -> None:
         check_model_weights()
         self.ocr = MeterOCR()  # modelos carregam lazy, no primeiro predict
         get_serving_logger()  # cria o handler do log AQUI, dentro do worker (nunca no import)
+        self.metrics = get_metrics()  # idem: prometheus_client só depois do PROMETHEUS_MULTIPROC_DIR
 
     @bentoml.api
     def predict(self, image: pil.Image, ctx: bentoml.Context) -> dict:
@@ -63,6 +65,7 @@ class LeituristaService:
             pred = self.ocr.predict_image(image)
         outputs = derive_outputs(pred)
         trace.set_outputs(outputs)
+        self.metrics.observe(features, outputs)
 
         return {
             "numero_medidor": pred.serial,
