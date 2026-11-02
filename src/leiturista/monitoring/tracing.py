@@ -12,6 +12,7 @@ codigo fixo, nunca a mensagem; o IP so entra como hash.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 import uuid
@@ -28,6 +29,8 @@ from .outputs import OUTPUT_COLUMNS, OutputVariables
 
 REQUEST_ID_HEADER = "X-Request-ID"
 VALIDATION_ERROR = "ValidationError/invalid_request"
+TIMEOUT_STATUS = 504
+TIMEOUT_ERROR = "TimeoutError/request_timeout"
 
 Scope = MutableMapping[str, Any]
 Message = MutableMapping[str, Any]
@@ -129,6 +132,12 @@ class TraceMiddleware:
 
         try:
             await self.app(scope, receive, send_with_id)
+        except asyncio.CancelledError:
+            # O TimeoutMiddleware do BentoML (mais externo) cancela a requisicao que passa de `traffic.timeout` e ele
+            # mesmo envia o 504: a resposta nao passa por aqui, entao a linha `response` sai neste ponto.
+            trace.error = TIMEOUT_ERROR
+            trace.log_response(TIMEOUT_STATUS)
+            raise
         except Exception as exc:
             if trace.error is None:
                 trace.error = f"{type(exc).__name__}/unhandled_error"
