@@ -247,7 +247,7 @@ just models                                                         # 2  pesos (
 just samples                                                        # 3  imagens sintéticas para a carga
 just up-inference                                                   # 4  constrói a imagem e sobe a inferência em :3000
 just up-monitoring                                                  # 5  Prometheus, Loki, Alloy, Grafana e `monitor`
-just load --images-dir samples --n 20                               # 6  gera carga (uma por vez; o serviço leva ~10 s por foto em CPU)
+just load --images-dir samples --n 20                               # 6  gera carga (uma por vez; o serviço leva ~10 s por foto no host, que usa MPS; no Docker é CPU e leva de 10 a 40 s)
 tail -f serving-logs/inference.log                                  # 7  o log crescendo (no host, é um bind mount)
 curl -s "localhost:3002/data/drift?channel=all"                     # 8  drift calculado pelo `monitor`
 ```
