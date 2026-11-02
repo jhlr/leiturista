@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import Any, cast
 from pathlib import Path
 
 import httpx
@@ -30,16 +31,17 @@ def test_one_valid_and_one_invalid_request_write_exactly_three_lines(fresh_servi
     for event in events:
         assert len(str(event["ts"])) == TS_PATTERN_LEN
         parsed = datetime.fromisoformat(str(event["ts"]))
-        assert parsed.utcoffset() is not None and parsed.utcoffset().total_seconds() == 0
-        assert parsed.microsecond >= 0
+        offset = parsed.utcoffset()
+        assert offset is not None and offset.total_seconds() == 0
 
     request_id = valid.headers["x-request-id"]
     kinds = [(e["event"], e["request_id"]) for e in events]
     assert kinds.index(("request", request_id)) < kinds.index(("response", request_id))
     request = next(e for e in events if e["event"] == "request" and e["request_id"] == request_id)
-    pixels = int(request["in_width"]) * int(request["in_height"])  # type: ignore[call-overload]
+    pixels = cast(int, request["in_width"]) * cast(int, request["in_height"])
     for channel in ("l", "r", "g", "b"):
-        assert sum(request[f"in_hist_{channel}"]) == pixels  # type: ignore[arg-type]
+        histogram = request[f"in_hist_{channel}"]
+        assert isinstance(histogram, list) and sum(histogram) == pixels
     invalid_id = invalid.headers["x-request-id"]
     invalid_events = _event_lines(fresh_service, invalid_id)
     assert [e["event"] for e in invalid_events] == ["response"]
@@ -67,7 +69,7 @@ def test_log_is_append_only(service: LiveService) -> None:
 def test_concurrent_requests_do_not_cross_talk(service: LiveService) -> None:
     names = SAMPLE_NAMES * 3
 
-    def call(name: str) -> tuple[str, dict[str, object]]:
+    def call(name: str) -> tuple[str, dict[str, Any]]:
         response = service.predict(name)
         assert response.status_code == 200
         return response.headers["x-request-id"], response.json()

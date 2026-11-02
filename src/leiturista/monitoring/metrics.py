@@ -19,8 +19,9 @@ if TYPE_CHECKING:
 
 LUMINANCE_BUCKETS: tuple[float, ...] = tuple(float(v) for v in range(16, 256, 16))  # 16..240 (+Inf implicito)
 CONFIDENCE_BUCKETS: tuple[float, ...] = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-# Buckets do histograma de duracao do BentoML: ajustados com latencias reais (docs/*_metrics_analysis.md).
-DURATION_BUCKETS: tuple[float, ...] = (0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0)
+# Buckets do histograma de duracao do BentoML. A partida (0.05 ... 30) deixava 24 de 32 chamadas (75%) no bucket 10-30 s;
+# com 32 chamadas holdout reais (mediana 12,4 s) estes deixam no maximo 25% por bucket (docs/*_metrics_analysis.md).
+DURATION_BUCKETS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 20.0, 30.0, 60.0)
 
 
 @dataclass

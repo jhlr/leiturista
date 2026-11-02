@@ -72,4 +72,6 @@ dev = [
     "matplotlib>=3.11.2",
     "pytest>=8",
     "mypy>=1.10",
+    "scipy-stubs",
+    "types-openpyxl",
 ]

@@ -40,8 +40,7 @@ def check_model_weights() -> None:
         raise SystemExit(f"Pesos do TrOCR ausentes em {TROCR_CACHE}/model.safetensors. Rode `just models` e suba o serviço de novo.")
 
 
-@bentoml.service(name="leiturista", workers=1, metrics={"duration": {"buckets": list(DURATION_BUCKETS)}})
-class LeituristaService:
+class _Leiturista:
     def __init__(self) -> None:
         check_model_weights()
         self.ocr = MeterOCR()  # modelos carregam lazy, no primeiro predict
@@ -77,4 +76,6 @@ class LeituristaService:
         }
 
 
+# Forma funcional do decorador (equivale a `@bentoml.service` sobre a classe) para o tipo `Service` ficar visível.
+LeituristaService = bentoml.service(name="leiturista", workers=1, metrics={"duration": {"buckets": list(DURATION_BUCKETS)}})(_Leiturista)
 LeituristaService.add_asgi_middleware(TraceMiddleware, endpoints=("/predict",))

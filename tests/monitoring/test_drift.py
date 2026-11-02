@@ -34,8 +34,8 @@ def test_pvalue_uses_images_not_pixels_and_decreases_with_d() -> None:
 def test_psi_numeric_same_distribution_small_and_shift_large() -> None:
     rng = np.random.default_rng(1)
     ref = rng.normal(size=2000)
-    same = drift.psi_numeric(ref, rng.normal(size=2000))
-    shifted = drift.psi_numeric(ref, rng.normal(loc=2.0, size=2000))
+    same = drift.psi_numeric(ref.tolist(), rng.normal(size=2000).tolist())
+    shifted = drift.psi_numeric(ref.tolist(), rng.normal(loc=2.0, size=2000).tolist())
     assert same.value is not None and same.value < drift.PSI_MODERATE and same.band == "stable"
     assert shifted.value is not None and shifted.value > drift.PSI_SIGNIFICANT and shifted.band == "significant"
     assert same.n_bins == 10

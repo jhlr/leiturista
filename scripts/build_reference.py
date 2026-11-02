@@ -60,10 +60,10 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
     with (args.out_dir / "reference_hist.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(["bin", *CHANNELS])
+        hist_writer = csv.writer(handle)
+        hist_writer.writerow(["bin", *CHANNELS])
         for bin_index in range(HIST_BINS):
-            writer.writerow([bin_index, *(sums[channel][bin_index] for channel in CHANNELS)])
+            hist_writer.writerow([bin_index, *(sums[channel][bin_index] for channel in CHANNELS)])
     print(f"gravado: {args.out_dir / 'reference.csv'} ({len(rows)} linhas) e reference_hist.csv")
 
 

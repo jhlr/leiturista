@@ -36,7 +36,7 @@ def test_join_by_request_id_with_orphan_response(tmp_path: Path) -> None:
     assert reader.refresh() == 3
     rows = reader.rows()
     assert [r["request_id"] for r in rows] == ["a", "b"]
-    assert rows[0]["in_luminance_mean"] == 100.0 and rows[0]["out_funcao"] == "leitura_normal" and rows[0]["ts"].endswith("000001+00:00")  # type: ignore[union-attr]
+    assert rows[0]["in_luminance_mean"] == 100.0 and rows[0]["out_funcao"] == "leitura_normal" and str(rows[0]["ts"]).endswith("000001+00:00")
     assert rows[1]["in_luminance_mean"] is None and rows[1]["status_code"] == 400
     assert all(c not in rows[0] for c in INPUT_HIST_COLUMNS)
     with_hist = reader.rows(include_hist=True)

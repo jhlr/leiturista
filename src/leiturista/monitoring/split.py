@@ -32,6 +32,12 @@ def split_reference_images(
     return shuffled[:n_reference], shuffled[n_reference:]
 
 
+def list_images(directory: Path) -> list[Path]:
+    """PNG/JPEG de uma pasta qualquer, recursivo e ordenado (ex.: `samples/` do `just samples`)."""
+    suffixes = {".png", ".jpg", ".jpeg"}
+    return sorted(p for p in directory.rglob("*") if p.suffix.lower() in suffixes)
+
+
 def traffic_images(traffic: str, seed: int = DEFAULT_SEED, data_dir: Path | None = None) -> list[Path]:
     """Imagens de um conjunto de trafego: `holdout`, `henrik` (recursivo) ou `lcd`."""
     base = data_dir if data_dir is not None else DATA_DIR

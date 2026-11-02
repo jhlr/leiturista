@@ -81,7 +81,7 @@ numa rede razoável.
 
 ```bash
 git clone https://github.com/jhlr/leiturista.git && cd leiturista
-just setup      # uv sync — instala as dependências (uv.lock)
+just setup      # uv sync --all-extras — instala as dependências de todos os ambientes (uv.lock)
 just models     # baixa + extrai os pesos (release público modelos-1.0, 147 MB)
 just samples    # gera samples/*.png (sintéticas, seed fixa — não versionadas)
 just serve      # sobe o serviço em http://localhost:3000
@@ -91,7 +91,7 @@ Sem `just` instalado: `brew install just` (macOS) ou `cargo install just`. Os
 comandos equivalentes sem `just`:
 
 ```bash
-uv sync
+uv sync --all-extras
 curl -L https://github.com/jhlr/leiturista/releases/download/modelos-1.0/leiturista-models.tar.gz -o leiturista-models.tar.gz
 tar -xzf leiturista-models.tar.gz
 uv run python scripts/gen_sample_images.py
@@ -144,6 +144,7 @@ Casos de teste (`samples/`, todos sintéticos — ver seção 6):
 src/leiturista/
 ├── inference.py      # pipeline det+rec+TrOCR (MeterOCR) — o "modelo"
 ├── service.py         # ESTE serviço: envelopa MeterOCR num endpoint BentoML
+├── monitoring/        # log JSONL de requisição/resposta, métricas, drift (seção 8)
 ├── cli.py, data.py, train.py, eval.py, artifacts.py  # pipeline de treino/avaliação (fora do escopo desta nota)
 ├── distribuidora.py   # import do lote real de campo (dados não versionados)
 app/app.py              # demo Streamlit (fora do escopo desta nota — front-end)
@@ -209,6 +210,108 @@ aqui porque é o tipo de erro que passa batido se ninguém conferir o resultado)
 plano inicial também só previa imagens sintéticas pros testes de limite — foi pedido
 explicitamente rodar também contra fotos reais de campo antes de escrever a seção 2.
 Estilo de import do PIL foi corrigido por pedido direto, não por iniciativa da IA.
+
+## 8. Monitoramento
+
+Cada chamada de `/predict` deixa um rastro em arquivo: uma linha de **requisição** e uma de
+**resposta**, ligadas por `request_id`. Monitoramos **variáveis extraídas da imagem** e **variáveis da
+saída do modelo**, nunca a imagem, o serial ou o valor da leitura (ver "Privacidade" abaixo). Projeto
+técnico completo em `docs/2026-11-01_sdd_monitoramento_mlops.md`.
+
+### Caminho local (sem Docker): do clone a ver o log crescer
+
+```bash
+git clone https://github.com/jhlr/leiturista.git && cd leiturista   # 1
+just setup                                                          # 2  instala os ambientes (uv.lock)
+just models                                                         # 3  pesos dos modelos (147 MB)
+just samples                                                        # 4  imagens sintéticas em samples/
+just serve                                                          # 5  terminal A: serviço em :3000
+just load --images-dir samples --n 20 --rps 1                       # 6  terminal B: gera carga
+tail -f serving-logs/inference.log                                  # 7  terminal C: o log crescendo
+curl -s localhost:3000/metrics | grep -E "^(bentoml|leiturista)"    # 8  métricas Prometheus
+```
+
+`just load` sem argumentos usa o tráfego `holdout` (33 fotos Praekelt reservadas), que exige os
+datasets de `data/` (ver `docs/origem_dos_dados.md`); com `--images-dir samples` não precisa baixar nada.
+Outras opções: `--traffic henrik|lcd`, `--drift none|mild|strong`, `--invalid-pct`, `--slow-pct`.
+O caminho com Docker (`just up-inference`, `just up-monitoring`) ainda não existe nesta etapa.
+
+### Arquitetura e ambientes (alvo)
+
+Treino, inferência e monitoramento são **ambientes separados**, que só compartilham interfaces
+explícitas e somente leitura. Nesta etapa existem o ambiente de inferência e o log; o monitoramento
+completo (Prometheus, Loki, Grafana) vem na etapa seguinte.
+
+```
+ TREINO                      INFERÊNCIA                      MONITORAMENTO
+ (existente, intocado)       (docker/inference)              (docker/monitoring)
+ grupo uv `train`            imagem `leiturista-inference`   prometheus, loki, alloy,
+ CLI `leiturista train`      bentoml serve :3000             grafana, `monitor` (Bento)
+        |                    grava log JSONL                       ^        ^
+        |  models/ (arquivos) expõe /metrics  ----scrape-----------+        |
+        +--montagem ro------> lê models/                                    |
+                             ./serving-logs/ (bind mount) --montagem ro-----+
+```
+
+| Ambiente | Contém | Não contém |
+|---|---|---|
+| Treino (`uv sync --extra train`) | pipeline `leiturista`, MLflow, datasets | nada de serviço ou monitoramento |
+| Inferência (`uv sync --extra inference`) | biblioteca `leiturista`, BentoML, onnxruntime, torch+transformers, Pillow, numpy, código de log | MLflow, datasets, accelerate, Streamlit, scipy/pandas/matplotlib, qualquer análise de drift |
+| Monitoramento (`uv sync --extra monitor`) | BentoML leve, pandas, scipy, matplotlib, httpx | torch, transformers, onnxruntime, pesos |
+
+### O que é gravado (`serving-logs/inference.log`, JSON Lines)
+
+- Evento `request`: `ts` (UTC, microssegundos), `request_id`, `endpoint`, `method`, `service_version`,
+  `client_ip` (só um hash de 12 hex), e as variáveis da imagem com prefixo `in_`: `width`, `height`,
+  `file_bytes`, `format`, médias de luminância/R/G/B (0-255), histogramas 0-255 de L/R/G/B
+  (`in_hist_l`, `in_hist_r`, `in_hist_g`, `in_hist_b`), desvio-padrão, nitidez (variância do Laplaciano),
+  canal dominante, fração de pixels estourados/escuros, entropia, densidade de bordas, saturação,
+  orientação e faixa dinâmica.
+- Evento `response` (sempre, inclusive erros): `status_code`, `latency_ms`, as variáveis da saída com
+  prefixo `out_` (`funcao`, `confianca`, `legivel`, `has_reading`, `has_serial`, `reading_digits`,
+  `n_boxes`, `n_flags`, `flags`, `candidate_sharpness`; todas nulas se falhou) e `error` (classe da
+  exceção + código fixo, sem mensagem).
+- Entrada inválida que o BentoML rejeita antes da função da API gera só a linha `response`
+  (campo `image` ausente e corpo vazio: 400; arquivo que não é imagem: 500, comportamento do BentoML).
+- O arquivo é **append-only**; rotaciona aos 50 MB, com 5 backups (no máximo 300 MB); só `/predict`
+  escreve (`/metrics`, `/livez`, `/readyz` não). **Um único worker** (`workers=1`): o handler de
+  rotação não é seguro entre processos. `latency_ms` inclui a espera na fila atrás desse worker e, na
+  primeira chamada, a carga dos modelos (cerca de 21 s medidos).
+- Variáveis de ambiente: `SERVING_LOG_DIR` (padrão `./serving-logs`), `SERVING_LOG_MAX_BYTES`,
+  `SERVICE_VERSION`.
+
+**Privacidade:** o log nunca contém a imagem, o número do medidor, o valor da leitura, mensagens de
+exceção nem o IP cru. Os nomes da distribuidora não aparecem em nenhum arquivo desta entrega.
+
+### Entendimento dos dados (CRISP-DM)
+
+| Grupo | Variáveis | Tipo | O que descreve |
+|---|---|---|---|
+| Entrada | `in_luminance_mean`, `in_r_mean`, `in_g_mean`, `in_b_mean`, `in_luminance_std`, `in_sharpness`, `in_width`, `in_height`, `in_file_bytes`, frações de clip, `in_edge_density` | numéricas | condições da foto: brilho, cor, nitidez, tamanho |
+| Entrada | `in_format`, `in_dominant_channel`, `in_orientation` | categóricas | formato, dominância de cor, orientação |
+| Saída | `out_confianca`, `out_reading_digits`, `out_n_boxes`, `out_n_flags`, `out_candidate_sharpness` | numéricas | comportamento do modelo |
+| Saída | `out_funcao`, `out_legivel`, `out_has_reading`, `out_has_serial` | categóricas | proporções de decisão |
+| Operação | `latency_ms`, `status_code` | numérica / categórica | saúde do serviço |
+
+1. As variáveis de imagem descrevem as condições da foto (brilho, cor, desfoque, tamanho).
+2. As variáveis de saída descrevem o comportamento do modelo (`confianca`, `legivel`, proporção de `funcao`, flags).
+3. Uma mudança de iluminação ou de câmera deve mexer primeiro nas entradas e depois nas saídas.
+4. `funcao`, `format` e `dominant_channel` são categóricas: acompanham-se por proporção, não por média.
+5. Latência e status são variáveis operacionais e se leem à parte das de dados.
+
+### Referência e métricas
+
+- Referência = 132 das 165 fotos Praekelt (divisão determinística, seed 0, `src/leiturista/monitoring/split.py`);
+  as outras 33 são o controle "sem drift". `just build-reference` regrava `artifacts/reference.csv` e
+  `artifacts/reference_hist.csv` rodando o `MeterOCR` real (cerca de 28 minutos em CPU, porque as fotos
+  são grandes). As fotos Praekelt vêm de outro país e de outra câmera que as fotos de campo da
+  distribuidora: drift em tráfego real é esperado e é, por si, um achado. Com 132 imagens a referência é
+  pequena; leia qualquer KS ou PSI com isso em mente.
+- `GET /metrics` (formato Prometheus, embutido no BentoML) traz as séries do BentoML mais três próprias:
+  `leiturista_input_luminance_mean`, `leiturista_prediction_confidence` e
+  `leiturista_prediction_funcao_total`. Como ler, com um exemplo real:
+  `docs/2026-11-01_monitoramento_metrics_analysis.md` e a planilha `.xlsx` com fórmulas vivas.
+- Execute os testes do monitoramento com `uv run pytest tests/monitoring` (sobem o serviço de verdade).
 
 ## Licença
 

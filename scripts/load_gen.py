@@ -4,7 +4,8 @@
   uv run python scripts/load_gen.py --n 100 --traffic henrik --drift strong
 
 `--traffic`: holdout (33 fotos Praekelt fora da referencia, controle sem drift), henrik, lcd.
-`--drift`: transformacao sintetica (Pillow) aplicada antes do envio: mild (brilho x0.75 e +15 de
+`--images-dir DIR` usa as imagens de uma pasta qualquer (ex.: `samples/` de `just samples`, sem baixar
+datasets). `--drift`: transformacao sintetica (Pillow) aplicada antes do envio: mild (brilho x0.75 e +15 de
 vermelho) ou strong (brilho x0.4, azulado e ruido gaussiano). `--invalid-pct` mistura requisicoes
 invalidas (bytes que nao sao imagem, corpo vazio, campo `image` ausente, JPEG truncado).
 `--slow-pct` pede ao servico (com ALLOW_DEBUG_SLEEP=1) uma espera extra, para dar cauda ao
@@ -27,7 +28,7 @@ import httpx
 import numpy as np
 from PIL import Image
 
-from leiturista.monitoring.split import DEFAULT_SEED, TRAFFIC_SETS, traffic_images
+from leiturista.monitoring.split import DEFAULT_SEED, TRAFFIC_SETS, list_images, traffic_images
 
 INVALID_KINDS = ("not_an_image", "empty_body", "missing_field", "truncated_jpeg")
 MAX_IN_FLIGHT = 16
@@ -115,6 +116,7 @@ def main() -> None:
     parser.add_argument("--n", type=int, default=200)
     parser.add_argument("--rps", type=float, default=2.0)
     parser.add_argument("--traffic", choices=TRAFFIC_SETS, default="holdout")
+    parser.add_argument("--images-dir", type=Path, default=None, help="usa as imagens desta pasta (ex.: samples) no lugar de --traffic")
     parser.add_argument("--drift", choices=("none", "mild", "strong"), default="none")
     parser.add_argument("--invalid-pct", type=float, default=5.0)
     parser.add_argument("--slow-pct", type=float, default=0.0)
@@ -122,9 +124,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = parser.parse_args()
 
-    images = traffic_images(args.traffic, args.seed)
+    images = list_images(args.images_dir) if args.images_dir else traffic_images(args.traffic, args.seed)
+    if not images:
+        raise SystemExit("nenhuma imagem encontrada; veja docs/origem_dos_dados.md ou use --images-dir samples (just samples)")
     jobs = build_jobs(images, args.n, args.invalid_pct, args.slow_pct, args.seed)
-    print(f"{len(jobs)} chamadas a {args.url}/predict, trafego={args.traffic} ({len(images)} imagens), drift={args.drift}, rps={args.rps}")
+    print(f"{len(jobs)} chamadas a {args.url}/predict, trafego={args.images_dir or args.traffic} ({len(images)} imagens), drift={args.drift}, rps={args.rps}")
 
     statuses: Counter[str] = Counter()
     kinds: Counter[str] = Counter()

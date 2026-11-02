@@ -1,0 +1,115 @@
+# HELP bentoml_service_last_request_timestamp_seconds Timestamp of the last received request
+# TYPE bentoml_service_last_request_timestamp_seconds gauge
+bentoml_service_last_request_timestamp_seconds{pid="43513",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.793579490943226e+09
+# HELP bentoml_service_request_in_progress Total number of runner RPC in progress now
+# TYPE bentoml_service_request_in_progress gauge
+bentoml_service_request_in_progress{endpoint="/readyz",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.0
+bentoml_service_request_in_progress{endpoint="/predict",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.0
+# HELP bentoml_service_request_total Total number of runner RPC
+# TYPE bentoml_service_request_total counter
+bentoml_service_request_total{endpoint="/predict",http_response_code="200",runner_name="leiturista",service_name="leiturista",service_version="not available"} 31.0
+bentoml_service_request_total{endpoint="/predict",http_response_code="500",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_total{endpoint="/readyz",http_response_code="200",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_total{endpoint="/predict",http_response_code="400",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+# HELP leiturista_prediction_funcao_total Predicoes por funcao do servico
+# TYPE leiturista_prediction_funcao_total counter
+leiturista_prediction_funcao_total{funcao="leitura_normal"} 23.0
+leiturista_prediction_funcao_total{funcao="leitura_incerta"} 5.0
+leiturista_prediction_funcao_total{funcao="sem_leitura_detectada"} 3.0
+# HELP leiturista_input_luminance_mean Luminancia media (0-255) da imagem de entrada
+# TYPE leiturista_input_luminance_mean histogram
+leiturista_input_luminance_mean_sum 4066.309940147862
+leiturista_input_luminance_mean_bucket{le="16.0"} 0.0
+leiturista_input_luminance_mean_bucket{le="32.0"} 0.0
+leiturista_input_luminance_mean_bucket{le="48.0"} 0.0
+leiturista_input_luminance_mean_bucket{le="64.0"} 0.0
+leiturista_input_luminance_mean_bucket{le="80.0"} 1.0
+leiturista_input_luminance_mean_bucket{le="96.0"} 3.0
+leiturista_input_luminance_mean_bucket{le="112.0"} 9.0
+leiturista_input_luminance_mean_bucket{le="128.0"} 20.0
+leiturista_input_luminance_mean_bucket{le="144.0"} 24.0
+leiturista_input_luminance_mean_bucket{le="160.0"} 26.0
+leiturista_input_luminance_mean_bucket{le="176.0"} 27.0
+leiturista_input_luminance_mean_bucket{le="192.0"} 29.0
+leiturista_input_luminance_mean_bucket{le="208.0"} 29.0
+leiturista_input_luminance_mean_bucket{le="224.0"} 30.0
+leiturista_input_luminance_mean_bucket{le="240.0"} 31.0
+leiturista_input_luminance_mean_bucket{le="+Inf"} 31.0
+leiturista_input_luminance_mean_count 31.0
+# HELP leiturista_prediction_confidence Confianca (confianca da resposta) das predicoes
+# TYPE leiturista_prediction_confidence histogram
+leiturista_prediction_confidence_sum 26.593999999999998
+leiturista_prediction_confidence_bucket{le="0.1"} 4.0
+leiturista_prediction_confidence_bucket{le="0.2"} 4.0
+leiturista_prediction_confidence_bucket{le="0.3"} 4.0
+leiturista_prediction_confidence_bucket{le="0.4"} 4.0
+leiturista_prediction_confidence_bucket{le="0.5"} 4.0
+leiturista_prediction_confidence_bucket{le="0.6"} 4.0
+leiturista_prediction_confidence_bucket{le="0.7"} 4.0
+leiturista_prediction_confidence_bucket{le="0.8"} 4.0
+leiturista_prediction_confidence_bucket{le="0.9"} 4.0
+leiturista_prediction_confidence_bucket{le="1.0"} 31.0
+leiturista_prediction_confidence_bucket{le="+Inf"} 31.0
+leiturista_prediction_confidence_count 31.0
+# HELP bentoml_service_request_duration_seconds runner RPC duration in seconds
+# TYPE bentoml_service_request_duration_seconds histogram
+bentoml_service_request_duration_seconds_sum{endpoint="/readyz",http_response_code="200",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.004565000001093722
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="0.25",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="0.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="1.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="2.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="5.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="7.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="10.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="12.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="15.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="20.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="30.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="60.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/readyz",http_response_code="200",le="+Inf",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_count{endpoint="/readyz",http_response_code="200",runner_name="leiturista",service_name="leiturista",service_version="not available"} 1.0
+bentoml_service_request_duration_seconds_sum{endpoint="/predict",http_response_code="200",runner_name="leiturista",service_name="leiturista",service_version="not available"} 438.90150074900157
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="0.25",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="0.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="1.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="2.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="5.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 4.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="7.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 6.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="10.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 9.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="12.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 15.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="15.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 18.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="20.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 23.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="30.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 31.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="60.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 31.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="200",le="+Inf",runner_name="leiturista",service_name="leiturista",service_version="not available"} 31.0
+bentoml_service_request_duration_seconds_count{endpoint="/predict",http_response_code="200",runner_name="leiturista",service_name="leiturista",service_version="not available"} 31.0
+bentoml_service_request_duration_seconds_sum{endpoint="/predict",http_response_code="500",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.07181620799747179
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="0.25",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="0.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="1.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="2.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="5.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="7.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="10.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="12.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="15.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="20.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="30.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="60.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="500",le="+Inf",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_count{endpoint="/predict",http_response_code="500",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_sum{endpoint="/predict",http_response_code="400",runner_name="leiturista",service_name="leiturista",service_version="not available"} 0.011484585000289371
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="0.25",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="0.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="1.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="2.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="5.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="7.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="10.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="12.5",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="15.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="20.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="30.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="60.0",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_bucket{endpoint="/predict",http_response_code="400",le="+Inf",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0
+bentoml_service_request_duration_seconds_count{endpoint="/predict",http_response_code="400",runner_name="leiturista",service_name="leiturista",service_version="not available"} 3.0

@@ -34,9 +34,9 @@ class LiveService:
     def log_file(self) -> Path:
         return self.log_dir / LOG_NAME
 
-    def predict(self, name: str = "exemplo_01.png", **kwargs: object) -> httpx.Response:
+    def predict(self, name: str = "exemplo_01.png") -> httpx.Response:
         with (SAMPLES / name).open("rb") as fh:
-            return httpx.post(f"{self.url}/predict", files={"image": (name, fh, "image/png")}, timeout=300, **kwargs)  # type: ignore[arg-type]
+            return httpx.post(f"{self.url}/predict", files={"image": (name, fh, "image/png")}, timeout=300)
 
     def log_lines(self) -> list[str]:
         if not self.log_file.exists():
