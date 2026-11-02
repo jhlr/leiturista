@@ -1,0 +1,1329 @@
+{
+  "uid": "leiturista-saida",
+  "title": "Leiturista: Saída (modelo)",
+  "description": "Comportamento do modelo: confiança, função, legibilidade, flags (Infinity e Prometheus).",
+  "tags": [
+    "leiturista"
+  ],
+  "timezone": "browser",
+  "editable": false,
+  "graphTooltip": 1,
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Leiturista",
+      "tags": [
+        "leiturista"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Confiança",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "histogram",
+      "title": "confianca",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200 and out_confianca != null], function($r){ {\"out_confianca\": $r.out_confianca} })",
+          "columns": [
+            {
+              "selector": "out_confianca",
+              "text": "confianca",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Distribuição da confiança da resposta (0 a 1) por imagem.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "combine": false,
+        "fillOpacity": 80,
+        "bucketSize": 0.05
+      },
+      "id": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "type": "volkovlabs-echarts-panel",
+      "title": "Boxplot de confianca",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/summary",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              }
+            ]
+          },
+          "root_selector": "$map([\"confianca\"], function($k){ ( $n := $lookup($$.numeric, $k); {\"variavel\": $k, \"w_min\": $n.window.min, \"w_q1\": $n.window.q1, \"w_median\": $n.window.median, \"w_q3\": $n.window.q3, \"w_max\": $n.window.max, \"r_min\": $n.reference.min, \"r_q1\": $n.reference.q1, \"r_median\": $n.reference.median, \"r_q3\": $n.reference.q3, \"r_max\": $n.reference.max} ) })",
+          "columns": [
+            {
+              "selector": "variavel",
+              "text": "variavel",
+              "type": "string"
+            },
+            {
+              "selector": "w_min",
+              "text": "w_min",
+              "type": "number"
+            },
+            {
+              "selector": "w_q1",
+              "text": "w_q1",
+              "type": "number"
+            },
+            {
+              "selector": "w_median",
+              "text": "w_median",
+              "type": "number"
+            },
+            {
+              "selector": "w_q3",
+              "text": "w_q3",
+              "type": "number"
+            },
+            {
+              "selector": "w_max",
+              "text": "w_max",
+              "type": "number"
+            },
+            {
+              "selector": "r_min",
+              "text": "r_min",
+              "type": "number"
+            },
+            {
+              "selector": "r_q1",
+              "text": "r_q1",
+              "type": "number"
+            },
+            {
+              "selector": "r_median",
+              "text": "r_median",
+              "type": "number"
+            },
+            {
+              "selector": "r_q3",
+              "text": "r_q3",
+              "type": "number"
+            },
+            {
+              "selector": "r_max",
+              "text": "r_max",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Box plot do intervalo do dashboard (azul) contra a referência (cinza): caixa Q1 a Q3, traço na mediana, bigodes no mínimo e no máximo. Painel Business Charts (ECharts, volkovlabs-echarts-panel 7.2.5) alimentado por /data/summary via Infinity.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "options": {
+        "renderer": "canvas",
+        "editorMode": "code",
+        "getOption": "const s = context.panel.data.series[0];if (!s) { return {}; }const col = (n) => { const f = s.fields.find((x) => x.name === n); return f ? Array.from(f.values) : []; };const ink = (context.grafana && context.grafana.theme && context.grafana.theme.colors.text.primary) || '#aaa';const names = col('variavel');const box = (p) => names.map((_, i) => [col(p + '_min')[i], col(p + '_q1')[i], col(p + '_median')[i], col(p + '_q3')[i], col(p + '_max')[i]]);return { textStyle: { color: ink }, tooltip: { trigger: 'item', confine: true }, legend: { data: ['Janela', 'Referência'], textStyle: { color: ink } }, grid: { left: 90, right: 20, top: 40, bottom: 30 }, xAxis: { type: 'category', data: names, axisLabel: { color: ink } }, yAxis: { type: 'value', scale: true, axisLabel: { color: ink }, splitLine: { lineStyle: { opacity: 0.2 } } }, series: [  { name: 'Janela', type: 'boxplot', data: box('w'), itemStyle: { color: 'rgba(61,133,222,0.35)', borderColor: '#3d85de' } },  { name: 'Referência', type: 'boxplot', data: box('r'), itemStyle: { color: 'rgba(150,150,150,0.35)', borderColor: '#8a8a8a' } } ] };",
+        "editor": {
+          "language": "javascript",
+          "format": "auto"
+        },
+        "visualEditor": {
+          "dataset": [],
+          "series": [],
+          "code": ""
+        },
+        "map": "none",
+        "themeEditor": {
+          "name": "default",
+          "config": "{}"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "id": 3,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "confianca ao longo do tempo",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200], function($r){ {\"Time\": $r.ts, \"confianca\": $r.out_confianca} })",
+          "columns": [
+            {
+              "selector": "Time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "confianca",
+              "text": "confianca",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Confiança de cada requisição.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [],
+      "id": 4,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      }
+    },
+    {
+      "id": 5,
+      "type": "row",
+      "title": "Função",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Proporção de funcao ao longo do tempo",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (funcao) (increase(leiturista_prediction_funcao_total[$__rate_interval]))",
+          "legendFormat": "{{funcao}}",
+          "format": "time_series"
+        }
+      ],
+      "description": "Barras empilhadas (100%) do incremento do contador leiturista_prediction_funcao_total por valor de funcao.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "percent",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [],
+      "id": 6,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      }
+    },
+    {
+      "type": "piechart",
+      "title": "funcao no intervalo (pizza)",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/summary",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              }
+            ]
+          },
+          "root_selector": "$each(categorical.funcao.window, function($v,$k){ {\"funcao\": $k, \"n\": $v} })",
+          "columns": [
+            {
+              "selector": "funcao",
+              "text": "funcao",
+              "type": "string"
+            },
+            {
+              "selector": "n",
+              "text": "imagens",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Contagem por funcao das imagens do intervalo. Fonte: /data/summary via Infinity.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "name",
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "transformations": [],
+      "id": 7,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      }
+    },
+    {
+      "id": 8,
+      "type": "row",
+      "title": "Taxas ao longo do tempo (média móvel de 10 imagens)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxas de legivel, has_reading e has_serial",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200], function($r){ {\"Time\": $r.ts, \"legivel\": $r.out_legivel ? 1 : 0, \"has_reading\": $r.out_has_reading ? 1 : 0, \"has_serial\": $r.out_has_serial ? 1 : 0} })",
+          "columns": [
+            {
+              "selector": "Time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "legivel",
+              "text": "legivel",
+              "type": "number"
+            },
+            {
+              "selector": "has_reading",
+              "text": "has_reading",
+              "type": "number"
+            },
+            {
+              "selector": "has_serial",
+              "text": "has_serial",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Média móvel das últimas 10 imagens de cada indicador (1 = sim, 0 = não). Fonte: /data/variables via Infinity.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "windowFunctions",
+            "alias": "legivel (taxa)",
+            "window": {
+              "field": "legivel",
+              "reducer": "mean",
+              "windowAlignment": "trailing",
+              "windowSize": 10,
+              "windowSizeMode": "fixed"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "windowFunctions",
+            "alias": "has_reading (taxa)",
+            "window": {
+              "field": "has_reading",
+              "reducer": "mean",
+              "windowAlignment": "trailing",
+              "windowSize": 10,
+              "windowSizeMode": "fixed"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "windowFunctions",
+            "alias": "has_serial (taxa)",
+            "window": {
+              "field": "has_serial",
+              "reducer": "mean",
+              "windowAlignment": "trailing",
+              "windowSize": 10,
+              "windowSizeMode": "fixed"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^(Time|.* \\(taxa\\))$"
+            }
+          }
+        }
+      ],
+      "id": 9,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Contagens",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "panels": []
+    },
+    {
+      "type": "histogram",
+      "title": "reading_digits",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200 and out_reading_digits != null], function($r){ {\"out_reading_digits\": $r.out_reading_digits} })",
+          "columns": [
+            {
+              "selector": "out_reading_digits",
+              "text": "reading_digits",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Número de dígitos da leitura (nunca o valor).",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "combine": false,
+        "fillOpacity": 80,
+        "bucketSize": 1
+      },
+      "id": 11,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 28
+      }
+    },
+    {
+      "type": "histogram",
+      "title": "n_flags",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200 and out_n_flags != null], function($r){ {\"out_n_flags\": $r.out_n_flags} })",
+          "columns": [
+            {
+              "selector": "out_n_flags",
+              "text": "n_flags",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Quantidade de flags por resposta.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "combine": false,
+        "fillOpacity": 80,
+        "bucketSize": 1
+      },
+      "id": 12,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 28
+      }
+    },
+    {
+      "type": "table",
+      "title": "Flags mais frequentes",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($distinct($.out_flags)[$type($)=\"string\"], function($x){ {\"flag\": $x, \"n\": $count($$.out_flags[$=$x])} })^(>n)",
+          "columns": [
+            {
+              "selector": "flag",
+              "text": "flag",
+              "type": "string"
+            },
+            {
+              "selector": "n",
+              "text": "ocorrências",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Frases fixas de flags (dígitos removidos) contadas no intervalo. Fonte: /data/variables via Infinity.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "flag": 0,
+              "ocorrências": 1
+            }
+          }
+        }
+      ],
+      "id": 13,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 28
+      }
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "Nitidez do candidato e confiança (Prometheus)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "panels": []
+    },
+    {
+      "type": "histogram",
+      "title": "candidate_sharpness",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200 and out_candidate_sharpness != null], function($r){ {\"out_candidate_sharpness\": $r.out_candidate_sharpness} })",
+          "columns": [
+            {
+              "selector": "out_candidate_sharpness",
+              "text": "candidate_sharpness",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Nitidez do recorte candidato a display, por imagem.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "combine": false,
+        "fillOpacity": 80,
+        "bucketCount": 20
+      },
+      "id": 15,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 37
+      }
+    },
+    {
+      "type": "volkovlabs-echarts-panel",
+      "title": "Boxplot de candidate_sharpness",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/summary",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              }
+            ]
+          },
+          "root_selector": "$map([\"candidate_sharpness\"], function($k){ ( $n := $lookup($$.numeric, $k); {\"variavel\": $k, \"w_min\": $n.window.min, \"w_q1\": $n.window.q1, \"w_median\": $n.window.median, \"w_q3\": $n.window.q3, \"w_max\": $n.window.max, \"r_min\": $n.reference.min, \"r_q1\": $n.reference.q1, \"r_median\": $n.reference.median, \"r_q3\": $n.reference.q3, \"r_max\": $n.reference.max} ) })",
+          "columns": [
+            {
+              "selector": "variavel",
+              "text": "variavel",
+              "type": "string"
+            },
+            {
+              "selector": "w_min",
+              "text": "w_min",
+              "type": "number"
+            },
+            {
+              "selector": "w_q1",
+              "text": "w_q1",
+              "type": "number"
+            },
+            {
+              "selector": "w_median",
+              "text": "w_median",
+              "type": "number"
+            },
+            {
+              "selector": "w_q3",
+              "text": "w_q3",
+              "type": "number"
+            },
+            {
+              "selector": "w_max",
+              "text": "w_max",
+              "type": "number"
+            },
+            {
+              "selector": "r_min",
+              "text": "r_min",
+              "type": "number"
+            },
+            {
+              "selector": "r_q1",
+              "text": "r_q1",
+              "type": "number"
+            },
+            {
+              "selector": "r_median",
+              "text": "r_median",
+              "type": "number"
+            },
+            {
+              "selector": "r_q3",
+              "text": "r_q3",
+              "type": "number"
+            },
+            {
+              "selector": "r_max",
+              "text": "r_max",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Box plot do intervalo do dashboard (azul) contra a referência (cinza): caixa Q1 a Q3, traço na mediana, bigodes no mínimo e no máximo. Painel Business Charts (ECharts, volkovlabs-echarts-panel 7.2.5) alimentado por /data/summary via Infinity.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "options": {
+        "renderer": "canvas",
+        "editorMode": "code",
+        "getOption": "const s = context.panel.data.series[0];if (!s) { return {}; }const col = (n) => { const f = s.fields.find((x) => x.name === n); return f ? Array.from(f.values) : []; };const ink = (context.grafana && context.grafana.theme && context.grafana.theme.colors.text.primary) || '#aaa';const names = col('variavel');const box = (p) => names.map((_, i) => [col(p + '_min')[i], col(p + '_q1')[i], col(p + '_median')[i], col(p + '_q3')[i], col(p + '_max')[i]]);return { textStyle: { color: ink }, tooltip: { trigger: 'item', confine: true }, legend: { data: ['Janela', 'Referência'], textStyle: { color: ink } }, grid: { left: 90, right: 20, top: 40, bottom: 30 }, xAxis: { type: 'category', data: names, axisLabel: { color: ink } }, yAxis: { type: 'value', scale: true, axisLabel: { color: ink }, splitLine: { lineStyle: { opacity: 0.2 } } }, series: [  { name: 'Janela', type: 'boxplot', data: box('w'), itemStyle: { color: 'rgba(61,133,222,0.35)', borderColor: '#3d85de' } },  { name: 'Referência', type: 'boxplot', data: box('r'), itemStyle: { color: 'rgba(150,150,150,0.35)', borderColor: '#8a8a8a' } } ] };",
+        "editor": {
+          "language": "javascript",
+          "format": "auto"
+        },
+        "visualEditor": {
+          "dataset": [],
+          "series": [],
+          "code": ""
+        },
+        "map": "none",
+        "themeEditor": {
+          "name": "default",
+          "config": "{}"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "id": 16,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 37
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Confiança: métrica customizada do Prometheus",
+      "targets": [
+        {
+          "refId": "Q0",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.1\"}[$__range])))",
+          "legendFormat": "≤ 0.1",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q1",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.2\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.1\"}[$__range])))",
+          "legendFormat": "0.1 a 0.2",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q2",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.3\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.2\"}[$__range])))",
+          "legendFormat": "0.2 a 0.3",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q3",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.4\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.3\"}[$__range])))",
+          "legendFormat": "0.3 a 0.4",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q4",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.5\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.4\"}[$__range])))",
+          "legendFormat": "0.4 a 0.5",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q5",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.6\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.5\"}[$__range])))",
+          "legendFormat": "0.5 a 0.6",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q6",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.7\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.6\"}[$__range])))",
+          "legendFormat": "0.6 a 0.7",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q7",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.8\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.7\"}[$__range])))",
+          "legendFormat": "0.7 a 0.8",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q8",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.9\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.8\"}[$__range])))",
+          "legendFormat": "0.8 a 0.9",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q9",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"1.0\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"0.9\"}[$__range])))",
+          "legendFormat": "0.9 a 1",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q10",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(leiturista_prediction_confidence_bucket{le=\"+Inf\"}[$__range]))) - round(sum(increase(leiturista_prediction_confidence_bucket{le=\"1.0\"}[$__range])))",
+          "legendFormat": "> 1",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Histograma leiturista_prediction_confidence (buckets de 0,1 em 0,1) no intervalo do dashboard, subtraindo buckets `le` consecutivos.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "faixa",
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        },
+        "xTickLabelRotation": -45
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "mode": "seriesToRows",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Field": "faixa",
+              "Last *": "observações"
+            }
+          }
+        }
+      ],
+      "id": 17,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 37
+      }
+    }
+  ]
+}

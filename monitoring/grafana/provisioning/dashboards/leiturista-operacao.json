@@ -1,0 +1,1140 @@
+{
+  "uid": "leiturista-operacao",
+  "title": "Leiturista: Operação",
+  "description": "Tráfego, latência e erros do serviço de inferência (Prometheus; log via Infinity).",
+  "tags": [
+    "leiturista"
+  ],
+  "timezone": "browser",
+  "editable": false,
+  "graphTooltip": 1,
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Leiturista",
+      "tags": [
+        "leiturista"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Visão geral",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Total de requisições (/predict)",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(bentoml_service_request_total{endpoint=\"/predict\"})",
+          "legendFormat": "__auto",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Contador acumulado desde que o processo de inferência subiu (zera ao reiniciar).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 2,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Taxa de 5xx agora",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(bentoml_service_request_total{endpoint=\"/predict\",http_response_code=~\"5..\"}[5m]))",
+          "legendFormat": "__auto",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Respostas 5xx por segundo na média dos últimos 5 minutos.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.0001
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 3,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Requisições em andamento",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(bentoml_service_request_in_progress{endpoint=\"/predict\"})",
+          "legendFormat": "__auto",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Com um único worker, mais de 1 significa fila.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 4,
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Taxa de erro 4xx (5 min)",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(bentoml_service_request_total{endpoint=\"/predict\",http_response_code=~\"4..\"}[5m])) or vector(0)) / sum(rate(bentoml_service_request_total{endpoint=\"/predict\"}[5m]))",
+          "legendFormat": "__auto",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Entradas inválidas (cliente): fração das requisições dos últimos 5 minutos.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 5,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Taxa de erro 5xx (5 min)",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(bentoml_service_request_total{endpoint=\"/predict\",http_response_code=~\"5..\"}[5m])) or vector(0)) / sum(rate(bentoml_service_request_total{endpoint=\"/predict\"}[5m]))",
+          "legendFormat": "__auto",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Falhas do servidor (inclui 504 de timeout): fração das requisições dos últimos 5 minutos.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.01
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "id": 6,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "Tráfego",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Requisições por segundo por código de status",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (http_response_code) (rate(bentoml_service_request_total{endpoint=\"/predict\"}[$__rate_interval]))",
+          "legendFormat": "{{http_response_code}}",
+          "format": "time_series"
+        }
+      ],
+      "description": "rate() do contador bentoml_service_request_total em /predict, por código HTTP.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [],
+      "id": 8,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de erro 4xx e 5xx",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(bentoml_service_request_total{endpoint=\"/predict\",http_response_code=~\"4..\"}[5m])) or vector(0)) / sum(rate(bentoml_service_request_total{endpoint=\"/predict\"}[5m]))",
+          "legendFormat": "4xx (entrada inválida)",
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(bentoml_service_request_total{endpoint=\"/predict\",http_response_code=~\"5..\"}[5m])) or vector(0)) / sum(rate(bentoml_service_request_total{endpoint=\"/predict\"}[5m]))",
+          "legendFormat": "5xx (servidor)",
+          "format": "time_series"
+        }
+      ],
+      "description": "Fração das requisições com erro, janela de 5 minutos. 4xx = cliente, 5xx = servidor.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [],
+      "id": 9,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Latência",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência p50, p95 e p99",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\"}[5m])))",
+          "legendFormat": "p50",
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\"}[5m])))",
+          "legendFormat": "p95",
+          "format": "time_series"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\"}[5m])))",
+          "legendFormat": "p99",
+          "format": "time_series"
+        }
+      ],
+      "description": "histogram_quantile sobre os buckets de bentoml_service_request_duration_seconds (janela de 5 min). Interpola linearmente dentro do bucket.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [],
+      "id": 11,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "type": "heatmap",
+      "title": "Heatmap de latência",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (le) (increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\"}[$__rate_interval]))",
+          "legendFormat": "{{le}}",
+          "format": "heatmap"
+        }
+      ],
+      "description": "Distribuição da duração por bucket `le` ao longo do tempo (escuro = poucas, claro = muitas observações).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "axisPlacement": "left",
+          "unit": "s"
+        },
+        "rowsFrame": {
+          "layout": "le"
+        },
+        "color": {
+          "mode": "scheme",
+          "scheme": "Oranges",
+          "scale": "exponential",
+          "fill": "dark-orange",
+          "steps": 32
+        },
+        "cellGap": 1,
+        "legend": {
+          "show": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "yHistogram": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "id": 12,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Histograma de latência (intervalo do dashboard)",
+      "targets": [
+        {
+          "refId": "Q0",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"0.25\"}[$__range])))",
+          "legendFormat": "≤ 0.25",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q1",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"0.5\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"0.25\"}[$__range])))",
+          "legendFormat": "0.25 a 0.5",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q2",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"1.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"0.5\"}[$__range])))",
+          "legendFormat": "0.5 a 1",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q3",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"2.5\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"1.0\"}[$__range])))",
+          "legendFormat": "1 a 2.5",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q4",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"5.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"2.5\"}[$__range])))",
+          "legendFormat": "2.5 a 5",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q5",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"7.5\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"5.0\"}[$__range])))",
+          "legendFormat": "5 a 7.5",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q6",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"10.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"7.5\"}[$__range])))",
+          "legendFormat": "7.5 a 10",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q7",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"12.5\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"10.0\"}[$__range])))",
+          "legendFormat": "10 a 12.5",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q8",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"15.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"12.5\"}[$__range])))",
+          "legendFormat": "12.5 a 15",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q9",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"20.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"15.0\"}[$__range])))",
+          "legendFormat": "15 a 20",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q10",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"30.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"20.0\"}[$__range])))",
+          "legendFormat": "20 a 30",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q11",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"60.0\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"30.0\"}[$__range])))",
+          "legendFormat": "30 a 60",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "Q12",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"+Inf\"}[$__range]))) - round(sum(increase(bentoml_service_request_duration_seconds_bucket{endpoint=\"/predict\",le=\"60.0\"}[$__range])))",
+          "legendFormat": "> 60",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "description": "Observações por faixa de duração (segundos) no intervalo selecionado, obtidas subtraindo buckets `le` consecutivos (os buckets são acumulados).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "faixa",
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        },
+        "xTickLabelRotation": -45
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "mode": "seriesToRows",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Field": "faixa",
+              "Last *": "observações"
+            }
+          }
+        }
+      ],
+      "id": 13,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência por requisição (log)",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map($[status_code=200], function($r){ {\"Time\": $r.ts, \"latency_ms\": $r.latency_ms} })",
+          "columns": [
+            {
+              "selector": "Time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "latency_ms",
+              "text": "latency_ms",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "Latência em ms de cada requisição respondida com 200, direto do log (inclui fila atrás do worker único e o carregamento preguiçoso do primeiro pedido).",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "transformations": [],
+      "id": 14,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Requisições mais lentas",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "20 requisições mais lentas (ordenadas por latency_ms)",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity"
+          },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://monitor:3000/data/variables",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "since",
+                "value": "${__from:date:iso}"
+              },
+              {
+                "key": "until",
+                "value": "${__to:date:iso}"
+              },
+              {
+                "key": "limit",
+                "value": "10000"
+              }
+            ]
+          },
+          "root_selector": "$map(($[status_code=200]^(>latency_ms))[[0..19]], function($r){ { \"ts\": $r.ts, \"request_id\": $r.request_id, \"latency_ms\": $r.latency_ms, \"status\": $r.status_code, \"funcao\": $r.out_funcao, \"largura\": $r.in_width, \"altura\": $r.in_height, \"bytes\": $r.in_file_bytes } })",
+          "columns": [
+            {
+              "selector": "ts",
+              "text": "Quando",
+              "type": "timestamp"
+            },
+            {
+              "selector": "request_id",
+              "text": "request_id",
+              "type": "string"
+            },
+            {
+              "selector": "latency_ms",
+              "text": "latency_ms",
+              "type": "number"
+            },
+            {
+              "selector": "status",
+              "text": "status",
+              "type": "number"
+            },
+            {
+              "selector": "funcao",
+              "text": "funcao",
+              "type": "string"
+            },
+            {
+              "selector": "largura",
+              "text": "largura",
+              "type": "number"
+            },
+            {
+              "selector": "altura",
+              "text": "altura",
+              "type": "number"
+            },
+            {
+              "selector": "bytes",
+              "text": "bytes",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "description": "De /data/variables via Infinity, intervalo do dashboard, ordenadas por latency_ms.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latency_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Quando": 0,
+              "request_id": 1,
+              "latency_ms": 2,
+              "status": 3,
+              "funcao": 4,
+              "largura": 5,
+              "altura": 6,
+              "bytes": 7
+            }
+          }
+        }
+      ],
+      "id": 16,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      }
+    }
+  ]
+}

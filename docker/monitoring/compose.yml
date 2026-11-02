@@ -49,12 +49,15 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_AUTH_DISABLE_LOGIN_FORM: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
+      # Infinity le as rotas /data/* do `monitor`; Business Charts (ECharts) desenha os box plots (o Grafana nao tem box plot nativo).
+      # Os plugins sao baixados do grafana.com na primeira subida (precisa de internet) e ficam no volume grafana-data.
+      GF_PLUGINS_PREINSTALL_SYNC: yesoreyeram-infinity-datasource@4.1.5,volkovlabs-echarts-panel@7.2.5
     ports:
       - "3001:3000"
     volumes:
       - ../../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana-data:/var/lib/grafana
-    depends_on: [prometheus, loki]
+    depends_on: [prometheus, loki, monitor]
     networks: [luminus-net]
 
   monitor:
