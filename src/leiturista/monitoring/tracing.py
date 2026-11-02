@@ -1,6 +1,7 @@
 """Rastro de uma requisicao `/predict`: objeto mutavel + middleware ASGI (SDD secao 5.3).
 
-O middleware gera o `request_id`, cronometra e grava a linha `response` ao final. A funcao da API
+O middleware gera o `request_id`, cronometra e grava a linha `response` quando a resposta esta pronta
+(logo antes de enviar o ultimo trecho do corpo, para o log nunca ficar atras do que o cliente ve). A funcao da API
 recebe o mesmo `RequestTrace` por `ctx.request.state.trace` (nao por ContextVar: o BentoML roda
 APIs sincronas numa thread com contexto copiado), grava a linha `request` assim que a imagem
 decodifica e preenche as variaveis de saida. Dono unico dos eventos do log.
@@ -122,6 +123,8 @@ class TraceMiddleware:
             if message["type"] == "http.response.start":
                 status = int(message["status"])
                 MutableHeaders(scope=message)[REQUEST_ID_HEADER] = trace.request_id
+            elif message["type"] == "http.response.body" and not message.get("more_body", False):
+                trace.log_response(status)  # a linha existe no arquivo antes de o cliente ver o fim da resposta
             await send(message)
 
         try:
