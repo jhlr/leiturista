@@ -18,20 +18,23 @@ from leiturista.monitoring.logging_setup import LOG_FILE_NAME, LOGGER_NAME
 from leiturista.monitoring.tracing import Message, Receive, Scope, Send, TraceMiddleware
 
 
-@pytest.fixture()
-def log_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
-    monkeypatch.setenv("SERVING_LOG_DIR", str(tmp_path))
+def _reset_serving_logger() -> None:
+    """Tira os handlers (o do arquivo e os que o pytest/outros testes deixaram) para o logger recriar o seu."""
     logger = logging.getLogger(LOGGER_NAME)
     for handler in list(logger.handlers):
         logger.removeHandler(handler)
         handler.close()
+
+
+@pytest.fixture()
+def log_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
+    monkeypatch.setenv("SERVING_LOG_DIR", str(tmp_path))
     yield tmp_path / LOG_FILE_NAME
-    for handler in list(logger.handlers):
-        logger.removeHandler(handler)
-        handler.close()
+    _reset_serving_logger()
 
 
 def test_cancelled_request_still_gets_a_response_line(log_file: Path) -> None:
+    _reset_serving_logger()
     async def slow_app(scope: Scope, receive: Receive, send: Send) -> None:
         await asyncio.sleep(60)
 
