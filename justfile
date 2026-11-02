@@ -42,6 +42,10 @@ build-reference:
 load *ARGS:
     uv run --extra monitor python scripts/load_gen.py {{ARGS}}
 
+# analise de drift sobre o log (KS por canal, PSI, boxplots) em reports/<label>/ (ex.: just analyze --last 20 --label strong)
+analyze *ARGS:
+    uv run --extra monitor python scripts/analyze_log.py {{ARGS}}
+
 # --- Docker: ambientes de inferencia e monitoramento separados (docs/2026-11-01_sdd_monitoramento_mlops.md, secao 2) ---
 
 # cria a rede compartilhada se ainda nao existir (os dois compose a declaram `external`)
