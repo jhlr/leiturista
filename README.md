@@ -263,8 +263,19 @@ marca o alvo `inference` como DOWN). Os dois comandos só retornam com os contê
 | `localhost:3002` | `monitor`: `GET /data/{variables,reference,reference/hist,summary,drift}` e `GET /metrics` (gauges `leiturista_drift_*`) |
 | `localhost:9090` | Prometheus (alvos em `/targets`) |
 | `localhost:3100` | Loki (API; consulta por LogQL) |
-| `localhost:3001` | Grafana (visitante anônimo; as fontes Prometheus e Loki já vêm provisionadas) |
+| `localhost:3001` | Grafana (visitante anônimo; fontes Prometheus, Loki e Infinity e cinco dashboards já vêm provisionados) |
 | `localhost:12345` | interface do Grafana Alloy |
+
+**Grafana** (`localhost:3001`, sem login): cinco dashboards, todos provisionados por arquivo (nada de configuração manual):
+*Operação*, *Entrada (imagem)*, *Saída (modelo)*, *Drift* e *Logs (Loki)*. As séries de tempo vêm do Prometheus e do Loki; o
+que o Prometheus não guarda (valores por imagem, histogramas de 256 bins, quartis) vem das rotas `/data/*` do `monitor`, lidas pelo
+plugin Infinity. O Grafana não tem box plot nativo: os box plots usam o painel Business Charts (ECharts, plugin
+`volkovlabs-echarts-panel` 7.2.5). Os plugins são baixados do grafana.com na primeira subida (precisa de internet). Os JSONs
+são gerados por `scripts/build_dashboards.py` e versionados. O intervalo padrão é "últimas 3 horas"; ajuste no seletor de tempo
+para cobrir a sua carga. Lista de todos os gráficos: `docs/2026-11-02_monitoramento_checklist_graficos.md`.
+
+**Análise de drift pelo script** (lê `serving-logs/` direto, sem subir nada): `just analyze --last 20 --label strong` escreve
+`reports/strong/` com `drift.md`, `drift.csv` e PNGs (histogramas 0-255, histogramas e box plots das variáveis).
 
 **Imagens medidas** (Docker Desktop no Mac, aarch64, 8 CPUs; `docker build --no-cache`, imagem-base `python:3.13.13-slim-bookworm` já baixada):
 
@@ -336,8 +347,8 @@ fecha enquanto nenhum backup foi descartado.
 
 Treino, inferência e monitoramento são **ambientes separados**, que só compartilham interfaces
 explícitas e somente leitura. Inferência e monitoramento têm cada um seu `Dockerfile` e seu `compose.yml`
-(`docker/inference/`, `docker/monitoring/`); os dashboards do Grafana e o script de análise de drift
-ainda não existem nesta etapa.
+(`docker/inference/`, `docker/monitoring/`); os dashboards do Grafana ficam em
+`monitoring/grafana/provisioning/dashboards/` e o script de análise de drift em `scripts/analyze_log.py`.
 
 ```
  TREINO                      INFERÊNCIA                      MONITORAMENTO
