@@ -33,3 +33,11 @@ predict:
 
 # setup + download de modelos + geração dos exemplos, um comando só
 all: setup models samples
+
+# gera o conjunto de referencia do monitoramento (artifacts/reference*.csv) com o MeterOCR real
+build-reference:
+    uv run python scripts/build_reference.py
+
+# gera carga contra o serviço no ar (ex.: just load --n 100 --drift strong --traffic holdout)
+load *ARGS:
+    uv run python scripts/load_gen.py {{ARGS}}
