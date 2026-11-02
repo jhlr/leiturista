@@ -1,6 +1,6 @@
 """Gerador de carga: cliente HTTP que chama `POST /predict` (SDD secao 8).
 
-  just load                       # 200 chamadas, 2 por segundo, trafego holdout, sem drift
+  just load                       # 200 chamadas, uma por vez, trafego holdout, sem drift
   uv run python scripts/load_gen.py --n 100 --traffic henrik --drift strong
 
 `--traffic`: holdout (33 fotos Praekelt fora da referencia, controle sem drift), henrik, lcd.
@@ -8,6 +8,10 @@
 datasets). `--drift`: transformacao sintetica (Pillow) aplicada antes do envio: mild (brilho x0.75 e +15 de
 vermelho) ou strong (brilho x0.4, azulado e ruido gaussiano). `--invalid-pct` mistura requisicoes
 invalidas (bytes que nao sao imagem, corpo vazio, campo `image` ausente, JPEG truncado).
+Carga em laco fechado: `--concurrency` (padrao 1) e o numero de chamadas em andamento ao mesmo tempo; a
+proxima so sai quando uma anterior termina, como convem a um servico que leva ~10 s por foto em CPU com um
+unico worker. Despejar chamadas a uma taxa fixa (`--rps`, opcional) acima da capacidade forma fila no
+servidor e estoura o timeout de 60 s do BentoML (504). `--rps` so limita o ritmo maximo de envio.
 `--slow-pct` pede ao servico (com ALLOW_DEBUG_SLEEP=1) uma espera extra, para dar cauda ao
 histograma de latencia.
 """
@@ -31,7 +35,6 @@ from PIL import Image
 from leiturista.monitoring.split import DEFAULT_SEED, TRAFFIC_SETS, list_images, traffic_images
 
 INVALID_KINDS = ("not_an_image", "empty_body", "missing_field", "truncated_jpeg")
-MAX_IN_FLIGHT = 16
 NOISE_SIGMA = 12.0
 
 
@@ -114,7 +117,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--url", default="http://localhost:3000")
     parser.add_argument("--n", type=int, default=200)
-    parser.add_argument("--rps", type=float, default=2.0)
+    parser.add_argument("--concurrency", type=int, default=1, help="chamadas em andamento ao mesmo tempo (laco fechado)")
+    parser.add_argument("--rps", type=float, default=None, help="limite opcional de chamadas enviadas por segundo")
     parser.add_argument("--traffic", choices=TRAFFIC_SETS, default="holdout")
     parser.add_argument("--images-dir", type=Path, default=None, help="usa as imagens desta pasta (ex.: samples) no lugar de --traffic")
     parser.add_argument("--drift", choices=("none", "mild", "strong"), default="none")
@@ -123,23 +127,28 @@ def main() -> None:
     parser.add_argument("--slow-ms", type=int, default=1500)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = parser.parse_args()
+    if args.concurrency < 1:
+        raise SystemExit("--concurrency deve ser >= 1")
+    if args.rps is not None and args.rps <= 0:
+        raise SystemExit("--rps deve ser > 0")
 
     images = list_images(args.images_dir) if args.images_dir else traffic_images(args.traffic, args.seed)
     if not images:
         raise SystemExit("nenhuma imagem encontrada; veja docs/origem_dos_dados.md ou use --images-dir samples (just samples)")
     jobs = build_jobs(images, args.n, args.invalid_pct, args.slow_pct, args.seed)
-    print(f"{len(jobs)} chamadas a {args.url}/predict, trafego={args.images_dir or args.traffic} ({len(images)} imagens), drift={args.drift}, rps={args.rps}")
+    print(f"{len(jobs)} chamadas a {args.url}/predict, trafego={args.images_dir or args.traffic} ({len(images)} imagens), drift={args.drift}, concorrencia={args.concurrency}, rps={'sem limite' if args.rps is None else args.rps}")
 
     statuses: Counter[str] = Counter()
     kinds: Counter[str] = Counter()
     latencies: list[float] = []
     started = time.perf_counter()
-    with httpx.Client(timeout=300) as client, ThreadPoolExecutor(max_workers=MAX_IN_FLIGHT) as pool:
+    with httpx.Client(timeout=300) as client, ThreadPoolExecutor(max_workers=args.concurrency) as pool:
         futures = []
         for index, job in enumerate(jobs):
-            delay = started + index / args.rps - time.perf_counter()
-            if delay > 0:
-                time.sleep(delay)
+            if args.rps is not None:
+                delay = started + index / args.rps - time.perf_counter()
+                if delay > 0:
+                    time.sleep(delay)
             futures.append((job, pool.submit(send, client, args.url, job, args.drift, args.seed, args.slow_ms)))
         for job, future in futures:
             status, latency = future.result()

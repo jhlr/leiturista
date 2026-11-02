@@ -226,14 +226,15 @@ just setup                                                          # 2  instala
 just models                                                         # 3  pesos dos modelos (147 MB)
 just samples                                                        # 4  imagens sintéticas em samples/
 just serve                                                          # 5  terminal A: serviço em :3000
-just load --images-dir samples --n 20 --rps 1                       # 6  terminal B: gera carga
+just load --images-dir samples --n 20                               # 6  terminal B: gera carga (uma chamada por vez)
 tail -f serving-logs/inference.log                                  # 7  terminal C: o log crescendo
 curl -s localhost:3000/metrics | grep -E "^(bentoml|leiturista)"    # 8  métricas Prometheus
 ```
 
 `just load` sem argumentos usa o tráfego `holdout` (33 fotos Praekelt reservadas), que exige os
 datasets de `data/` (ver `docs/origem_dos_dados.md`); com `--images-dir samples` não precisa baixar nada.
-Outras opções: `--traffic henrik|lcd`, `--drift none|mild|strong`, `--invalid-pct`, `--slow-pct`.
+Outras opções: `--traffic henrik|lcd`, `--drift none|mild|strong`, `--invalid-pct`, `--slow-pct`, `--concurrency` (padrão 1)
+e `--rps` (limite opcional de envio). Com ~10 s por foto, 20 chamadas levam uns 3 a 4 minutos.
 O caminho com Docker está logo abaixo.
 
 ### Caminho com Docker: inferência e monitoramento em ambientes separados
@@ -246,7 +247,7 @@ just models                                                         # 2  pesos (
 just samples                                                        # 3  imagens sintéticas para a carga
 just up-inference                                                   # 4  constrói a imagem e sobe a inferência em :3000
 just up-monitoring                                                  # 5  Prometheus, Loki, Alloy, Grafana e `monitor`
-just load --images-dir samples --n 20 --rps 0.05                    # 6  gera carga (o serviço leva ~12 s por foto em CPU)
+just load --images-dir samples --n 20                               # 6  gera carga (uma por vez; o serviço leva ~10 s por foto em CPU)
 tail -f serving-logs/inference.log                                  # 7  o log crescendo (no host, é um bind mount)
 curl -s "localhost:3002/data/drift?channel=all"                     # 8  drift calculado pelo `monitor`
 ```
@@ -369,8 +370,8 @@ ainda não existem nesta etapa.
   exceção + código fixo, sem mensagem).
 - Requisição que passa de 60 s (o `traffic.timeout` do BentoML; com um worker de ~12 s por foto, fila longa estoura isso)
   recebe 504 do próprio BentoML e gera só a linha `response` com `status_code` 504 e `error`
-  `TimeoutError/request_timeout`; a foto já em processamento continua rodando em segundo plano. Use `--rps` baixo
-  (até ~0,07 em CPU) no `just load`.
+  `TimeoutError/request_timeout`; a foto já em processamento continua rodando em segundo plano. O `just load` já
+  evita isso enviando uma chamada por vez (`--concurrency 1`); `--concurrency` maior ou `--rps` alto formam fila.
 - Entrada inválida que o BentoML rejeita antes da função da API gera só a linha `response`
   (campo `image` ausente e corpo vazio: 400; arquivo que não é imagem: 500, comportamento do BentoML).
 - O arquivo é **append-only**; rotaciona aos 50 MB, com 5 backups (no máximo 300 MB); só `/predict`
