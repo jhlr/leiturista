@@ -18,8 +18,8 @@ from pathlib import Path
 
 import numpy as np
 
-from .drift import Level, PSIResult, ks_channel, psi_categorical, psi_numeric, worst_level
-from .features import CATEGORICAL_FEATURES, CHANNELS, HIST_BINS, SCALAR_FEATURES
+from .drift import Level, PSIResult, aggregate_histograms, ks_channel, psi_categorical, psi_numeric, worst_level
+from .features import CATEGORICAL_FEATURES, CHANNELS, SCALAR_FEATURES
 from .log_reader import LogReader
 from .outputs import CATEGORICAL_OUTPUTS, NUMERIC_OUTPUTS
 
@@ -49,7 +49,7 @@ class Reference:
     n_images: int
     numeric: dict[str, list[float | None]]
     categorical: dict[str, list[str]]
-    hist: dict[str, list[int]]  # canal minusculo -> 256 contagens somadas sobre o conjunto
+    hist: dict[str, list[float]]  # canal minusculo -> 256 bins, soma dos histogramas normalizados (total = n imagens)
     table: list[dict[str, str]]  # linhas cruas do reference.csv (para /data/reference)
     hist_table: list[dict[str, str]]  # linhas cruas do reference_hist.csv
 
@@ -70,7 +70,7 @@ def load_reference(directory: Path) -> Reference:
         hist_table = list(csv.DictReader(handle))
     numeric = {name: [_float_or_none(row[name]) for row in table] for name in NUMERIC_VARIABLES}
     categorical = {name: [row[name] for row in table] for name in CATEGORICAL_VARIABLES}
-    hist = {channel: [int(row[channel]) for row in hist_table] for channel in CHANNELS}
+    hist = {channel: [float(row[channel]) for row in hist_table] for channel in CHANNELS}
     return Reference(len(table), numeric, categorical, hist, table, hist_table)
 
 
@@ -97,15 +97,12 @@ def _category_values(rows: Sequence[Mapping[str, object]], column: str) -> list[
     return [str(row[column]) for row in rows if row.get(column) is not None]
 
 
-def window_histograms(rows: Sequence[Mapping[str, object]]) -> dict[str, list[int]]:
-    """Soma dos histogramas 0-255 de cada canal sobre as imagens da janela."""
-    total = {channel: np.zeros(HIST_BINS, dtype=np.int64) for channel in CHANNELS}
-    for row in rows:
-        for channel in CHANNELS:
-            values = row.get(f"in_hist_{channel}")
-            if isinstance(values, list):
-                total[channel] += np.asarray(values, dtype=np.int64)
-    return {channel: [int(v) for v in counts] for channel, counts in total.items()}
+def window_histograms(rows: Sequence[Mapping[str, object]]) -> dict[str, list[float]]:
+    """Histograma 0-255 de cada canal da janela, com peso igual por imagem (`aggregate_histograms`)."""
+    return {
+        channel: aggregate_histograms([values for row in rows if isinstance(values := row.get(f"in_hist_{channel}"), list)])
+        for channel in CHANNELS
+    }
 
 
 # -- drift ------------------------------------------------------------------------------------

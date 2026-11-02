@@ -62,3 +62,32 @@ def test_benjamini_hochberg_is_monotone_and_not_smaller() -> None:
     p = [0.001, 0.2, 0.03, 0.04]
     adj = drift.benjamini_hochberg(p)
     assert all(a >= b for a, b in zip(adj, p)) and max(adj) <= 1.0
+
+
+def _spike(bin_index: int, count: int) -> list[int]:
+    hist = [0] * 256
+    hist[bin_index] = count
+    return hist
+
+
+def test_aggregate_histograms_gives_every_image_the_same_weight() -> None:
+    # uma foto enorme (1.000.000 de pixels) e uma pequena (100 pixels) em bins diferentes
+    total = drift.aggregate_histograms([_spike(10, 1_000_000), _spike(200, 100)])
+    assert total[10] == pytest.approx(1.0)
+    assert total[200] == pytest.approx(1.0)
+    assert sum(total) == pytest.approx(2.0)  # total = numero de imagens
+
+
+def test_aggregate_histograms_huge_image_does_not_dominate_the_ks() -> None:
+    reference = drift.aggregate_histograms([_spike(10, 100)] * 5 + [_spike(200, 100)] * 5)
+    # janela com a mesma mistura 50/50 de imagens, mas a de bin 10 e 10.000x maior
+    window = drift.aggregate_histograms([_spike(10, 1_000_000)] * 5 + [_spike(200, 100)] * 5)
+    assert drift.ks_d(reference, window) == pytest.approx(0.0)
+    # com a soma crua de pixels a foto grande dominaria: D proximo de 0.5
+    raw = np.sum([_spike(10, 1_000_000)] * 5 + [_spike(200, 100)] * 5, axis=0)
+    assert drift.ks_d(reference, raw.tolist()) > 0.4
+
+
+def test_aggregate_histograms_ignores_empty_histograms_and_empty_input() -> None:
+    assert sum(drift.aggregate_histograms([_spike(3, 7), [0] * 256])) == pytest.approx(1.0)
+    assert drift.aggregate_histograms([]) == [0.0] * 256

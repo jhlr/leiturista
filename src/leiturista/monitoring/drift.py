@@ -1,7 +1,8 @@
 """KS, PSI e limiares de alerta (dono unico da matematica de drift, SDD secoes 3, 7 e 9).
 
 KS por canal (metodo do curso): D = max |F_ref - F_janela| sobre as CDFs dos histogramas
-0-255 agregados. O p-valor usa `scipy.stats.kstwobign` com `n_eff` calculado em IMAGENS (nao
+0-255 agregados com PESO IGUAL por imagem (`aggregate_histograms`: cada histograma e normalizado
+para somar 1 antes da soma, senao as fotos grandes dominam). O p-valor usa `scipy.stats.kstwobign` com `n_eff` calculado em IMAGENS (nao
 pixels, que dentro de uma foto nao sao independentes). D e a grandeza monitorada.
 
 PSI: 10 bins por quantis da referencia para numericas, 16 bins (regrupados de 256) para os
@@ -13,12 +14,14 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from collections.abc import Hashable, Sequence
+from collections.abc import Hashable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import IntEnum
 
 import numpy as np
 from scipy import stats
+
+from .features import HIST_BINS
 
 D_YELLOW = 0.05
 D_RED = 0.10
@@ -58,6 +61,25 @@ class PSIResult:
     @property
     def band(self) -> str | None:
         return None if self.value is None else psi_band(self.value)
+
+
+def aggregate_histograms(hists: Iterable[Sequence[float]]) -> list[float]:
+    """Dono unico da agregacao: soma dos histogramas de varias imagens com peso igual por imagem.
+
+    Cada histograma (256 bins) e normalizado para somar 1 e depois somado, entao o total e o
+    numero de imagens e uma foto de milhoes de pixels pesa o mesmo que uma pequena. Histogramas
+    vazios (soma 0) sao ignorados; sem imagens devolve 256 zeros. Usado pela referencia
+    (`reference_hist.csv`), pela janela, pelo `/data/summary`, pelos gauges e pelo `analyze_log`.
+    """
+    total = np.zeros(HIST_BINS, dtype=np.float64)
+    for hist in hists:
+        arr = np.asarray(hist, dtype=np.float64)
+        if arr.shape != total.shape:
+            raise ValueError("histograma com tamanho diferente de 256 bins")
+        mass = arr.sum()
+        if mass > 0:
+            total += arr / mass
+    return [float(v) for v in total]
 
 
 def ks_d(ref_hist: Sequence[float], win_hist: Sequence[float]) -> float:
