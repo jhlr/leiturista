@@ -40,7 +40,7 @@ build-reference:
 
 # gera carga contra o serviço no ar (ex.: just load --n 100 --drift strong --traffic holdout)
 load *ARGS:
-    uv run python scripts/load_gen.py {{ARGS}}
+    uv run --extra monitor python scripts/load_gen.py {{ARGS}}
 
 # --- Docker: ambientes de inferencia e monitoramento separados (docs/2026-11-01_sdd_monitoramento_mlops.md, secao 2) ---
 
@@ -54,7 +54,7 @@ up-inference: _luminus-net
     set -euo pipefail
     mkdir -p serving-logs   # criado pelo usuario do host (senao o Docker cria como root)
     export UID GID="$(id -g)" SERVICE_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
-    docker compose -f docker/inference/compose.yml up -d --build
+    docker compose -f docker/inference/compose.yml up -d --build --wait --wait-timeout 300
 
 down-inference:
     docker compose -f docker/inference/compose.yml down
@@ -65,7 +65,7 @@ up-monitoring: _luminus-net
     set -euo pipefail
     mkdir -p serving-logs
     export UID GID="$(id -g)" SERVICE_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
-    docker compose -f docker/monitoring/compose.yml up -d --build
+    docker compose -f docker/monitoring/compose.yml up -d --build --wait --wait-timeout 300
 
 down-monitoring:
     docker compose -f docker/monitoring/compose.yml down

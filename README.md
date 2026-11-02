@@ -234,13 +234,109 @@ curl -s localhost:3000/metrics | grep -E "^(bentoml|leiturista)"    # 8  métric
 `just load` sem argumentos usa o tráfego `holdout` (33 fotos Praekelt reservadas), que exige os
 datasets de `data/` (ver `docs/origem_dos_dados.md`); com `--images-dir samples` não precisa baixar nada.
 Outras opções: `--traffic henrik|lcd`, `--drift none|mild|strong`, `--invalid-pct`, `--slow-pct`.
-O caminho com Docker (`just up-inference`, `just up-monitoring`) ainda não existe nesta etapa.
+O caminho com Docker está logo abaixo.
 
-### Arquitetura e ambientes (alvo)
+### Caminho com Docker: inferência e monitoramento em ambientes separados
+
+Requer Docker (Compose v2), `just` e `uv` (o `just load` roda no host, é só um cliente HTTP).
+
+```bash
+git clone https://github.com/jhlr/leiturista.git && cd leiturista   # 1
+just models                                                         # 2  pesos (montados somente leitura, não vão na imagem)
+just samples                                                        # 3  imagens sintéticas para a carga
+just up-inference                                                   # 4  constrói a imagem e sobe a inferência em :3000
+just up-monitoring                                                  # 5  Prometheus, Loki, Alloy, Grafana e `monitor`
+just load --images-dir samples --n 20 --rps 0.05                    # 6  gera carga (o serviço leva ~12 s por foto em CPU)
+tail -f serving-logs/inference.log                                  # 7  o log crescendo (no host, é um bind mount)
+curl -s "localhost:3002/data/drift?channel=all"                     # 8  drift calculado pelo `monitor`
+```
+
+`just up-inference` e `just up-monitoring` criam a rede `luminus-net` se ela não existir, podem subir em
+qualquer ordem e são independentes: parar o monitoramento (`just down-monitoring`) não interrompe o log
+da inferência, e parar a inferência (`just down-inference`) não derruba o monitoramento (o Prometheus só
+marca o alvo `inference` como DOWN). Os dois comandos só retornam com os contêineres saudáveis.
+
+| Endereço | O que é |
+|---|---|
+| `localhost:3000` | inferência: `POST /predict`, `GET /metrics`, `GET /data/variables` |
+| `localhost:3002` | `monitor`: `GET /data/{variables,reference,reference/hist,summary,drift}` e `GET /metrics` (gauges `leiturista_drift_*`) |
+| `localhost:9090` | Prometheus (alvos em `/targets`) |
+| `localhost:3100` | Loki (API; consulta por LogQL) |
+| `localhost:3001` | Grafana (visitante anônimo; as fontes Prometheus e Loki já vêm provisionadas) |
+| `localhost:12345` | interface do Grafana Alloy |
+
+**Imagens medidas** (Docker Desktop no Mac, aarch64, 8 CPUs; `docker build --no-cache`, imagem-base `python:3.13.13-slim-bookworm` já baixada):
+
+| Imagem | Tamanho em disco | Tamanho comprimido | Build do zero |
+|---|---|---|---|
+| `leiturista-inference:0.1.0` | 1,64 GB | 358 MB | 86 s |
+| `leiturista-monitor:0.1.0` | 763 MB | 168 MB | 34 s |
+
+O torch da imagem de inferência é o `torch==2.14.0+cpu` do índice CPU-only da PyTorch (mesma versão do `uv.lock`, sem os
+pacotes CUDA). Nenhuma das duas imagens traz pesos nem dados. A de inferência não tem pandas, scipy nem MLflow; a do monitor
+não tem torch nem onnxruntime (`docker run --rm --entrypoint pip <imagem> list`).
+
+**Garantias do ambiente de inferência:** `models/` e `.model_cache/` entram **somente leitura** (escrever lá falha com
+"Read-only file system"); só `serving-logs/` é gravável, e o contêiner roda com `user: UID:GID` do host, então o
+arquivo de log pertence ao seu usuário. Se o `model.safetensors` do TrOCR não estiver montado, o contêiner sai na hora
+com a mensagem "Rode `just models`" (a inferência não tem MLflow e não baixa nada sozinha).
+
+**E2, rotas de dados (`GET /data/variables`):** o BentoML 1.4 só serve `POST` em `@bentoml.api`, então as rotas `GET /data/*`
+são um app ASGI montado com `@bentoml.asgi_app` (o recurso previsto no projeto). Parâmetros:
+`since`, `until` (ISO 8601), `limit` (padrão 10000, máximo 100000), `format=json|csv`, `include_hist=true|false`.
+A leitura é incremental (só os bytes novos do log) e a janela em memória guarda as `LOG_READER_MAX_ROWS` (padrão 10000)
+linhas mais recentes, então `limit` acima disso não devolve mais que isso. Essas rotas não escrevem no log.
+
+**Exemplo de KS e PSI a partir das rotas de dados** (5 linhas; rode com `uv run --extra monitor python`):
+
+```python
+import httpx
+from leiturista.monitoring.drift import ks_channel, psi_numeric
+s = httpx.get("http://localhost:3002/data/summary").json()   # histogramas 0-255 agregados: janela e referência
+l = s["histograms"]["L"]; print(ks_channel(l["reference"], l["window"], s["reference_images"], s["window_images"]))
+ref = [r["luminance_mean"] for r in httpx.get("http://localhost:3002/data/reference").json()]
+win = [r["in_luminance_mean"] for r in httpx.get("http://localhost:3002/data/variables").json() if r["in_luminance_mean"] is not None]
+print(psi_numeric(ref, win))   # PSI com 10 faixas por quantis da referência
+```
+
+**Drift no `/metrics` do `monitor`:** a janela deslizante (últimas `DRIFT_WINDOW_IMAGES`, padrão 100, imagens) é recalculada
+no máximo a cada 15 s e vira os gauges `leiturista_drift_ks_d{channel}`, `leiturista_drift_ks_pvalue{channel}`,
+`leiturista_drift_level{channel}` (-1 inconclusivo, 0 verde, 1 amarelo, 2 vermelho), `leiturista_drift_psi{variable}`
+(numéricas e categóricas) e `leiturista_drift_window_images`. Com poucas imagens na janela o nível é inconclusivo
+(menos de 8) e, com a referência de 132 imagens, KS e PSI de janelas pequenas são ruidosos.
+
+**Prometheus (E3):** `monitoring/prometheus.yml` raspa `inference:3000/metrics` e `monitor:3000/metrics` a cada 5 s; a
+retenção é de 15 dias. Três consultas de exemplo (em `localhost:9090/graph`):
+
+```promql
+histogram_quantile(0.95, sum by (le) (rate(bentoml_service_request_duration_seconds_bucket{endpoint="/predict"}[5m])))  # p95 da latência
+sum(rate(bentoml_service_request_total{http_response_code=~"5.."}[5m])) / sum(rate(bentoml_service_request_total[5m]))  # taxa de 5xx
+sum(rate(bentoml_service_request_total[1m]))                                                                           # requisições por segundo
+```
+
+**Loki e Alloy (E1):** o Loki guarda logs, mas não lê arquivos; um coletor lê o arquivo e envia as linhas para ele. O
+Grafana Alloy (`monitoring/alloy/config.alloy`) lê `serving-logs/inference.log*` (o ativo e os rotacionados, montados
+somente leitura), interpreta cada linha como JSON e envia ao Loki com os rótulos `job="leiturista"` e `event`
+(`request` ou `response`), nada mais. Exemplo de LogQL (Grafana, aba Explore, fonte Loki, ou a API do Loki):
+
+```logql
+{job="leiturista", event="response"} | json | status_code >= 500
+```
+
+O Alloy guarda a posição de leitura por **caminho** de arquivo, e a rotação renomeia `inference.log` para `.1` (e desloca os
+backups), então sem cuidado cada arquivo renomeado seria relido e duplicado no Loki (medido: 61 linhas no Loki para 21 no
+disco). A configuração usa o campo `ts` de cada linha como instante da entrada e não põe o caminho do arquivo nos rótulos;
+reler uma linha gera a mesma entrada (mesmo stream, mesmo instante, mesmo texto), que o Loki descarta. Medido depois disso, com
+rotação forçada (`SERVING_LOG_MAX_BYTES=12000`): 21 linhas no disco e 21 no Loki; após uma rotação, 25 e 25. Quando
+uma rotação apaga o 5º backup, o Loki continua com as linhas que o disco já perdeu (retenção diferente), por isso a conta só
+fecha enquanto nenhum backup foi descartado.
+
+### Arquitetura e ambientes
 
 Treino, inferência e monitoramento são **ambientes separados**, que só compartilham interfaces
-explícitas e somente leitura. Nesta etapa existem o ambiente de inferência e o log; o monitoramento
-completo (Prometheus, Loki, Grafana) vem na etapa seguinte.
+explícitas e somente leitura. Inferência e monitoramento têm cada um seu `Dockerfile` e seu `compose.yml`
+(`docker/inference/`, `docker/monitoring/`); os dashboards do Grafana e o script de análise de drift
+ainda não existem nesta etapa.
 
 ```
  TREINO                      INFERÊNCIA                      MONITORAMENTO
@@ -271,6 +367,10 @@ completo (Prometheus, Loki, Grafana) vem na etapa seguinte.
   prefixo `out_` (`funcao`, `confianca`, `legivel`, `has_reading`, `has_serial`, `reading_digits`,
   `n_boxes`, `n_flags`, `flags`, `candidate_sharpness`; todas nulas se falhou) e `error` (classe da
   exceção + código fixo, sem mensagem).
+- Requisição que passa de 60 s (o `traffic.timeout` do BentoML; com um worker de ~12 s por foto, fila longa estoura isso)
+  recebe 504 do próprio BentoML e gera só a linha `response` com `status_code` 504 e `error`
+  `TimeoutError/request_timeout`; a foto já em processamento continua rodando em segundo plano. Use `--rps` baixo
+  (até ~0,07 em CPU) no `just load`.
 - Entrada inválida que o BentoML rejeita antes da função da API gera só a linha `response`
   (campo `image` ausente e corpo vazio: 400; arquivo que não é imagem: 500, comportamento do BentoML).
 - O arquivo é **append-only**; rotaciona aos 50 MB, com 5 backups (no máximo 300 MB); só `/predict`
