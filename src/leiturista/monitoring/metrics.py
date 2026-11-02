@@ -9,11 +9,12 @@ processo unico, invisivel para o coletor multiprocesso do `/metrics`.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from prometheus_client import Counter, Histogram
+    from prometheus_client import Counter, Gauge, Histogram
 
+    from .analysis import DriftReport
     from .features import ImageFeatures
     from .outputs import OutputVariables
 
@@ -62,3 +63,48 @@ def get_metrics() -> ServingMetrics:
             funcao=funcao,
         )
     return _metrics
+
+
+@dataclass
+class DriftGauges:
+    """Gauges de drift do `monitor` (SDD secao 7): valores vindos de `analysis.DriftReport`.
+
+    Gauge no modo multiprocesso precisa de `multiprocess_mode`; `livemostrecent` mantem o ultimo valor
+    escrito pelo processo vivo. Valor indefinido (ex.: PSI de referencia constante) vai como NaN.
+    """
+
+    ks_d: Gauge
+    ks_pvalue: Gauge
+    level: Gauge
+    psi: Gauge
+    window_images: Gauge
+
+    def update(self, report: DriftReport) -> None:
+        nan = float("nan")
+        for label, channel in report.channels.items():
+            self.ks_d.labels(channel=label).set(nan if channel.d is None else channel.d)
+            self.ks_pvalue.labels(channel=label).set(nan if channel.p is None else channel.p)
+            self.level.labels(channel=label).set(int(channel.level))
+        for variable, result in report.psi.items():
+            self.psi.labels(variable=variable).set(nan if result.value is None else result.value)
+        self.window_images.set(report.n_window)
+
+
+_drift_gauges: DriftGauges | None = None
+
+
+def get_drift_gauges() -> DriftGauges:
+    """Cria (uma vez por processo) os gauges de drift; lazy pelo mesmo motivo de `get_metrics`."""
+    global _drift_gauges
+    if _drift_gauges is None:
+        from prometheus_client import Gauge
+
+        mode: Literal["livemostrecent"] = "livemostrecent"
+        _drift_gauges = DriftGauges(
+            ks_d=Gauge("leiturista_drift_ks_d", "KS D (max |F_ref - F_janela|) por canal", ["channel"], multiprocess_mode=mode),
+            ks_pvalue=Gauge("leiturista_drift_ks_pvalue", "p-valor do KS por canal (n em imagens)", ["channel"], multiprocess_mode=mode),
+            level=Gauge("leiturista_drift_level", "Nivel de alerta por canal: -1 inconclusivo, 0 verde, 1 amarelo, 2 vermelho", ["channel"], multiprocess_mode=mode),
+            psi=Gauge("leiturista_drift_psi", "PSI por variavel (janela x referencia)", ["variable"], multiprocess_mode=mode),
+            window_images=Gauge("leiturista_drift_window_images", "Imagens na janela deslizante de drift", multiprocess_mode=mode),
+        )
+    return _drift_gauges

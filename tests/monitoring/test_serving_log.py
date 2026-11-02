@@ -100,3 +100,14 @@ def test_log_never_contains_serial_reading_or_raw_ip(service: LiveService) -> No
 
 def test_log_dir_is_the_configured_one(service: LiveService) -> None:
     assert Path(service.log_file).exists()
+
+
+def test_data_variables_writes_no_log_lines_and_matches_the_log(service: LiveService) -> None:
+    service.predict("exemplo_01.png")
+    before = service.log_lines()
+    for query in ("", "?include_hist=true", "?format=csv", "?format=csv&include_hist=true"):
+        assert httpx.get(f"{service.url}/data/variables{query}", timeout=30).status_code == 200
+    assert service.log_lines() == before
+    distinct = {json.loads(line)["request_id"] for line in before}
+    rows = httpx.get(f"{service.url}/data/variables?format=csv", timeout=30).text.splitlines()
+    assert len(rows) - 1 == len(distinct)

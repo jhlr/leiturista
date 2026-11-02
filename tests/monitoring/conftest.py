@@ -53,12 +53,12 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def start_service(log_dir: Path, extra_env: dict[str, str] | None = None) -> LiveService:
+def start_service(log_dir: Path, extra_env: dict[str, str] | None = None, target: str = SERVICE_TARGET) -> LiveService:
     port = _free_port()
     log_dir.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "SERVING_LOG_DIR": str(log_dir), **(extra_env or {})}
     process = subprocess.Popen(
-        [sys.executable, "-m", "bentoml", "serve", SERVICE_TARGET, "--port", str(port)],
+        [sys.executable, "-m", "bentoml", "serve", target, "--port", str(port)],
         cwd=ROOT,
         env=env,
         stdout=subprocess.DEVNULL,

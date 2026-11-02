@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 from array import array
 from collections import OrderedDict, deque
 from dataclasses import dataclass
@@ -72,6 +73,7 @@ class LogReader:
         self._pending: OrderedDict[str, dict[str, object]] = OrderedDict()
         self._max_pending = max_pending
         self._offsets: dict[int, int] = {}  # inode -> bytes ja consumidos
+        self._lock = threading.RLock()  # handlers sincronos do BentoML rodam em threads
         self.stats = ReaderStats()
 
     # -- arquivos --------------------------------------------------------------
@@ -93,6 +95,10 @@ class LogReader:
     # -- parse -----------------------------------------------------------------
     def refresh(self) -> int:
         """Le so os bytes novos de cada arquivo; devolve quantas linhas novas foram parseadas."""
+        with self._lock:
+            return self._refresh()
+
+    def _refresh(self) -> int:
         parsed_before = self.stats.lines_parsed
         live_inodes: set[int] = set()
         for path in self._files():
@@ -168,17 +174,26 @@ class LogReader:
         until: str | datetime | None = None,
         limit: int | None = None,
         include_hist: bool = False,
+        require_input: bool = False,
     ) -> list[dict[str, object]]:
         """Linhas da janela, da mais antiga a mais nova, ficando com as `limit` mais recentes.
 
         Com `include_hist` os 4 histogramas voltam como listas; sem ele as colunas `in_hist_*` saem.
+        `require_input` descarta as linhas sem evento `request` (sem variaveis de entrada).
         """
         low, high = normalize_ts(since), normalize_ts(until)
-        selected = [
-            row
-            for row in self._rows
-            if (low is None or str(row["ts"]) >= low) and (high is None or str(row["ts"]) <= high)
-        ]
+        with self._lock:
+            selected = [
+                row
+                for row in self._rows
+                if (low is None or str(row["ts"]) >= low)
+                and (high is None or str(row["ts"]) <= high)
+                and (not require_input or row[INPUT_HIST_COLUMNS[0]] is not None)
+            ]
+            return self._copy_rows(selected, limit, include_hist)
+
+    @staticmethod
+    def _copy_rows(selected: list[dict[str, object]], limit: int | None, include_hist: bool) -> list[dict[str, object]]:
         if limit is not None:
             selected = selected[-limit:] if limit > 0 else []
         result: list[dict[str, object]] = []

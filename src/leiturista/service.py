@@ -8,6 +8,7 @@ triagem (número do medidor, função, consumo, confiança).
 Monitoramento (`leiturista.monitoring`): um middleware ASGI grava no log JSON Lines uma linha
 `request` e uma `response` por chamada de `/predict` (variáveis derivadas da imagem e da
 saída, nunca pixels, serial ou valor da leitura). Um único worker escreve o arquivo.
+`GET /data/variables` devolve as linhas do próprio log (rotas GET via `@bentoml.asgi_app`).
 
 Rodar:
   bentoml serve leiturista.service:LeituristaService --port 3000
@@ -23,6 +24,7 @@ import bentoml
 from PIL import Image as pil
 
 from .inference import TROCR_CACHE, MeterOCR
+from .monitoring.data_api import build_data_app
 from .monitoring.features import extract_features, uploaded_size
 from .monitoring.logging_setup import get_serving_logger
 from .monitoring.metrics import DURATION_BUCKETS, get_metrics
@@ -40,6 +42,7 @@ def check_model_weights() -> None:
         raise SystemExit(f"Pesos do TrOCR ausentes em {TROCR_CACHE}/model.safetensors. Rode `just models` e suba o serviço de novo.")
 
 
+@bentoml.asgi_app(build_data_app(), path="/data")  # GET /data/variables (o @bentoml.api so serve POST)
 class _Leiturista:
     def __init__(self) -> None:
         check_model_weights()
