@@ -29,7 +29,7 @@ import torch
 from PIL import Image
 
 from . import artifacts, paths
-from .models import configure_model, load_processor, load_trocr, resolve_device
+from .models import configure_model, load_processor, load_trocr, resolve_device, _device_to_torch
 
 DET_ONNX = Path(os.environ.get("LEITURISTA_DET_ONNX", paths.MODELS_DIR / "pp_ocr_v5_mobile_det_onnx" / "inference.onnx"))
 REC_ONNX = paths.MODELS_DIR / "pp_ocr_v6_tiny_rec_onnx" / "inference.onnx"
@@ -46,20 +46,46 @@ DET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 DET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 DET_THRESH = float(os.environ.get("LEITURISTA_DET_THRESH", 0.3))
 DET_BOX_THRESH = float(os.environ.get("LEITURISTA_DET_BOX_THRESH", 0.6))
-# 2º detector opcional (ex.: det fine-tunado p/ visor): candidatos = união dos dois, cada um com seu limiar
-# classificador de visor (opt-in): escolhe, entre TODAS as caixas, a de maior P(visor) no lugar de "mais dígitos"
-VISOR_CLS = os.environ.get("LEITURISTA_VISOR_CLS")
-VISOR_MIN_P = float(os.environ.get("LEITURISTA_VISOR_MIN_P", 0.5))
-DET2_ONNX = os.environ.get("LEITURISTA_DET2_ONNX")
+
+# Modelos especializados para visor (auto-ativados se presentes em models/)
+_VISOR_CLS_PATH = paths.MODELS_DIR / "visor_cls.pt"
+VISOR_CLS = os.environ.get("LEITURISTA_VISOR_CLS") or (str(_VISOR_CLS_PATH) if _VISOR_CLS_PATH.exists() else None)
+VISOR_MIN_P = float(os.environ.get("LEITURISTA_VISOR_MIN_P", 0.45))
+
+_DET2_PATH = paths.MODELS_DIR / "pp_ocr_v5_mobile_det_visor_onnx" / "inference.onnx"
+DET2_ONNX = os.environ.get("LEITURISTA_DET2_ONNX") or (str(_DET2_PATH) if _DET2_PATH.exists() else None)
 DET2_THRESH = float(os.environ.get("LEITURISTA_DET2_THRESH", 0.2))
 DET2_BOX_THRESH = float(os.environ.get("LEITURISTA_DET2_BOX_THRESH", 0.2))
-DET_UNCLIP = 1.5
+DET_UNCLIP = 1.6
 DET_MIN_SIZE = 3
 
 REC_IMG_H = 48
 REC_MAX_W = 3200
 
+# Mapa de substituição de confusões clássicas de OCR em dígitos
+_OCR_CHAR_TO_DIGIT = str.maketrans({
+    "O": "0", "o": "0", "D": "0", "Q": "0",
+    "I": "1", "i": "1", "l": "1", "|": "1", "!": "1", "[": "1", "]": "1",
+    "Z": "2", "z": "2",
+    "E": "3",
+    "A": "4",
+    "S": "5", "s": "5", "$": "5",
+    "b": "6", "G": "6",
+    "T": "7",
+    "B": "8", "&": "8",
+    "g": "9", "q": "9",
+})
+
+def _ocr_to_digits(text: str) -> str:
+    """Mapeia letras confundidas com números pelo OCR e extrai apenas os dígitos."""
+    if not text:
+        return ""
+    return re.sub(r"\D", "", text.translate(_OCR_CHAR_TO_DIGIT))
+
 SERIAL_RE = re.compile(r"[A-Za-z]")
+SERIAL_PREFIX_RE = re.compile(r"(?i)^(s/?n|sn|n[º°\.:]|nr[\.:]|ser[\.:]|serial[\.:]|med[\.:]|medidor[\.:])\s*([0-9a-zA-Z]+)")
+SERIAL_CLEAN_PREFIX_RE = re.compile(r"(?i)^(s/?n|sn|n[º°\.:]|nr[\.:]|ser[\.:]|serial[\.:]|med[\.:]|medidor[\.:])\s*")
+ELEC_SPEC_RE = re.compile(r"(?i)(\b\d+\s*v\b|\b\d+\s*hz\b|\b\d+\s*a\b|kwh|kw|monof|bif|trif|classe|constante|inmetro)")
 SPEC_CHARS = re.compile(r"[=°()%/\u00b7\"_~]|\.\.")
 LAPLACIAN_LEGIBLE = 25.0
 
@@ -101,10 +127,15 @@ class MeterOCR:
     def _load(self) -> None:
         if self._det is not None:
             return
-        self._det = ort.InferenceSession(str(DET_ONNX))
+        # Usa DmlExecutionProvider (DirectML — GPU AMD/Intel/NVIDIA no Windows)
+        # quando disponível; cai em CPU silenciosamente.
+        providers = ["DmlExecutionProvider", "CPUExecutionProvider"] \
+            if "DmlExecutionProvider" in ort.get_available_providers() \
+            else ["CPUExecutionProvider"]
+        self._det = ort.InferenceSession(str(DET_ONNX), providers=providers)
         if DET2_ONNX:
-            self._det2 = ort.InferenceSession(DET2_ONNX)
-        self._rec = ort.InferenceSession(str(REC_ONNX))
+            self._det2 = ort.InferenceSession(DET2_ONNX, providers=providers)
+        self._rec = ort.InferenceSession(str(REC_ONNX), providers=providers)
         self._chars = json.loads(DICT_FILE.read_text(encoding="utf-8"))
 
     def _load_trocr(self) -> tuple:
@@ -128,9 +159,10 @@ class MeterOCR:
         processor = load_processor(TROCR_CACHE)
         model = load_trocr(TROCR_CACHE)
         configure_model(model, processor.tokenizer)
-        model.to(device)
+        torch_device = _device_to_torch(device)
+        model.to(torch_device)
         model.eval()
-        self._trocr = (processor, model, device)
+        self._trocr = (processor, model, torch_device)
         return self._trocr
 
     # -- det ---------------------------------------------------------------
@@ -238,14 +270,14 @@ class MeterOCR:
         with torch.no_grad():
             ids = model.generate(
                 inputs["pixel_values"].to(device),
-                max_new_tokens=24, num_beams=4, do_sample=False,
+                max_new_tokens=24, num_beams=1, do_sample=False,
             )
         text = processor.batch_decode(ids, skip_special_tokens=True)[0]
         return re.sub(r"\s+", " ", text).strip()
 
     # -- crop rotacionado --------------------------------------------------
     @staticmethod
-    def _crop_rotated(img_bgr: np.ndarray, quad: np.ndarray, pad: int = 8) -> np.ndarray:
+    def _crop_rotated(img_bgr: np.ndarray, quad: np.ndarray, pad: int = 12) -> np.ndarray:
         (cx, cy), (w, h), ang = cv2.minAreaRect(quad.astype(np.float32))
         if w < h:
             ang += 90
@@ -262,20 +294,40 @@ class MeterOCR:
     # -- classificação leitura/serial ---------------------------------------
     @staticmethod
     def _classify(text: str) -> str:
-        """leitura = majoritariamente dígitos (tolerante a ruído do OCR: letra/símbolo
-        solto); serial = alfanumérico longo sem símbolos de especificação."""
+        """leitura = display (3 a 6 dígitos numéricos);
+        serial = identificador do medidor (7 a 14 dígitos, ou prefixado por Nº/SERIAL, sem specs elétricas)."""
         t = text.strip()
         if not t:
             return "outro"
-        digits = re.findall(r"\d", t)
-        n_digits = len(digits)
-        ratio = n_digits / len(t)
-        if n_digits >= 2 and ratio >= 0.6 and len(t) <= 10:
-            return "leitura"
-        if (len(t) >= 6 and len(t) <= 24 and SERIAL_RE.search(t)
-                and n_digits >= 1 and ratio < 0.9
-                and SPEC_CHARS.search(t) is None):
+
+        # Rejeita especificações técnicas elétricas óbvias (220V, 60Hz, etc.)
+        if ELEC_SPEC_RE.search(t):
+            return "outro"
+
+        # Mapeia caracteres com confusão de OCR para contar dígitos reais
+        clean_prefix = SERIAL_CLEAN_PREFIX_RE.sub("", t).strip()
+        norm_digits = _ocr_to_digits(clean_prefix)
+        n_digits = len(norm_digits)
+        t_clean = re.sub(r"[\s\.\-/:_]", "", clean_prefix)
+        ratio = n_digits / max(len(t_clean), 1)
+
+        # 1. Serial explícito com prefixo (ex: "Nº 12345678", "SN 83015067")
+        if SERIAL_PREFIX_RE.search(t) and n_digits >= 5:
             return "serial"
+
+        # 2. Serial puramente numérico (7 a 14 dígitos — típico de código de barras / placa)
+        if 7 <= n_digits <= 14 and ratio >= 0.70:
+            return "serial"
+
+        # 3. Leitura do display (tipicamente 3 a 6 dígitos de consumo kWh)
+        if 2 <= n_digits <= 6 and ratio >= 0.60:
+            return "leitura"
+
+        # 4. Serial alfanumérico padrão (6 a 16 chars com letras e números, sem símbolos)
+        if (6 <= len(t) <= 16 and SERIAL_RE.search(t) and n_digits >= 2
+                and ratio < 0.85 and SPEC_CHARS.search(t) is None):
+            return "serial"
+
         return "outro"
 
     # -- merge de caixas (det fragmenta dígitos do display) ------------------
@@ -317,7 +369,9 @@ class MeterOCR:
             crop = self._crop_rotated(img_src, quad)
             if crop.size == 0:
                 continue
-            text = self._trocr_recognize(crop) or self._rec_recognize(crop)
+            # Prioriza PP-OCRv6 (GPU DirectML rápido e mais preciso em dígitos).
+            # TrOCR (CPU) atua como fallback se o PP-OCR não retornar nada.
+            text = self._rec_recognize(crop) or self._trocr_recognize(crop)
             field = self._classify(text)
             w = float(quad[:, 0].max() - quad[:, 0].min())
             h = float(quad[:, 1].max() - quad[:, 1].min())
@@ -334,7 +388,7 @@ class MeterOCR:
 
     @staticmethod
     def _digits(text: str) -> str:
-        return re.sub(r"[^\d]", "", text)
+        return _ocr_to_digits(text)
 
     @staticmethod
     def _best_reading(boxes: list[Box]) -> Box | None:
@@ -347,17 +401,31 @@ class MeterOCR:
                 return boxes[i]
         readings = [b for b in boxes if b.field == "leitura"]
         if not readings:
+            # Fallback: candidatos com 3 a 6 dígitos que não sejam termos elétricos
+            readings = [
+                b for b in boxes
+                if 3 <= len(MeterOCR._digits(b.text)) <= 6 and not ELEC_SPEC_RE.search(b.text)
+            ]
+        if not readings:
             return None
 
         def pure_digits(b: Box) -> bool:
             t = re.sub(r"[\s.,]", "", b.text)
-            return bool(t) and re.fullmatch(r"\d+", t)
+            return bool(t) and bool(re.fullmatch(r"\d+", t))
 
         pool = [b for b in readings if pure_digits(b)] or readings
-        # preferência: texto só-dígitos (exclui placa tipo ': 83415801' que o
-        # TrOCR injeta); depois mais dígitos. NÃO priorizar fonte invertida —
-        # display preto-no-branco (contador mecânico) perderia pra ruído.
-        return max(pool, key=lambda b: (len(MeterOCR._digits(b.text)), b.conf))
+
+        # O display tem tipicamente 4 a 6 dígitos e fica mais no topo (menor y) que a placa
+        def reading_priority(b: Box) -> tuple:
+            d = MeterOCR._digits(b.text)
+            d_len = len(d)
+            # Faixa ideal para display: 4 a 6 dígitos
+            ideal = 2.0 if 4 <= d_len <= 6 else (1.0 if d_len == 3 else 0.0)
+            y_center = float(b.quad[:, 1].mean())
+            # Prioriza: faixa ideal de dígitos, confiança, e menor y (mais acima)
+            return (ideal, b.conf, -y_center)
+
+        return max(pool, key=reading_priority)
 
     @staticmethod
     def _signature(boxes: list[Box]) -> tuple[str, list[str]]:
@@ -477,8 +545,41 @@ class MeterOCR:
             cv2.putText(annotated, label, (int(b.quad[:, 0].min()), max(y, 16)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
 
-        serial_box = max((b for b in boxes if b.field == "serial"), key=lambda b: b.conf) if any(b.field == "serial" for b in boxes) else None
-        serial = serial_box.text.strip() if serial_box else None
+        # Seleção do serial (não pode ser a mesma caixa da leitura):
+        serial_cands = [b for b in boxes if b.field == "serial" and b != reading_box]
+        # Fallback: caixas numéricas longas (7 a 14 dígitos) que não sejam a leitura nem especificações
+        if not serial_cands:
+            serial_cands = [
+                b for b in boxes
+                if b != reading_box
+                and 7 <= len(self._digits(b.text)) <= 14
+                and not ELEC_SPEC_RE.search(b.text)
+            ]
+
+        def serial_priority(b: Box) -> tuple:
+            d_len = len(self._digits(b.text))
+            ideal = 2.0 if 7 <= d_len <= 11 else 1.0
+            y_center = float(b.quad[:, 1].mean())
+            # O serial/código de barras fica abaixo do display (maior y)
+            return (ideal, b.conf, y_center)
+
+        serial_box = max(serial_cands, key=serial_priority) if serial_cands else None
+        serial = None
+        if serial_box:
+            raw = serial_box.text.strip()
+            # Limpa prefixos como SN, S/N, Nº, N:, SERIAL:, MEDIDOR:
+            clean = SERIAL_CLEAN_PREFIX_RE.sub("", raw).strip()
+            # Remove pontuações comuns (pontos, traços, barras, espaços, dois-pontos)
+            clean_nopunct = re.sub(r"[\s\.\-/:_]", "", clean)
+            # Converte letras confundidas pelo OCR em dígitos (ex: S->5, B->8, O->0)
+            d = self._digits(clean_nopunct)
+            # O serial da distribuidora é estritamente numérico
+            if len(d) >= 6:
+                serial = d
+            elif d:
+                serial = d
+            else:
+                serial = re.sub(r"[^\w]", "", clean) or None
         if reading is None:
             flags.append("leitura não detectada (medidor ausente, display ilegível ou foto fora de foco)")
         if serial is None:

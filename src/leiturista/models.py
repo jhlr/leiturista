@@ -23,11 +23,32 @@ from transformers import (
 
 
 def resolve_device() -> str:
+    """Escolhe o melhor device disponível: cuda > dml (DirectML/AMD/Intel) > mps > cpu.
+
+    DirectML permite rodar PyTorch na GPU em Windows sem CUDA (AMD, Intel, NVIDIA).
+    Requer `torch-directml` instalado (pip install torch-directml). Em Python 3.14+
+    o pacote ainda não existe no PyPI — cai em CPU silenciosamente.
+    """
     if torch.cuda.is_available():
         return "cuda"
+    try:
+        import torch_directml  # type: ignore[import-untyped]
+        # Verifica se há de fato um dispositivo DML disponível
+        if torch_directml.device_count() > 0:
+            return "dml"
+    except Exception:
+        pass
     if torch.backends.mps.is_available():
         return "mps"
     return "cpu"
+
+
+def _device_to_torch(device: str):
+    """Converte string de device para objeto torch (trata 'dml' especialmente)."""
+    if device == "dml":
+        import torch_directml  # type: ignore[import-untyped]
+        return torch_directml.device()
+    return torch.device(device)
 
 
 def _load_tokenizer(model_path: str) -> XLMRobertaTokenizer:
